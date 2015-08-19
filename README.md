@@ -2,7 +2,8 @@
 
 ```
 #!bash
-
+sudo apt-get install npm
+npm install -g grunt-cli
 npm install grunt-screeps
 
 ```
