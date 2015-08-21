@@ -7,9 +7,9 @@ module.exports = function(grunt) {
     grunt.initConfig({
         screeps: {
             options: {
-                email: 'github@ericjmartin.com',
+                email: 'vanquish2@gmail.com',
                 password: config.password,
-                branch: 'default'
+                branch: 'vanquish-industries'
             },
             dist: {
                 src: ['dist/*.js']
