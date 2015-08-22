@@ -10,7 +10,7 @@ var myPeople = population.census();
 
 for (var i in myPeople) {
 	var role = myPeople[i];
-	console.log(role.name);
+	console.log('There are ' + role.toString() + ' ' + i + 's');
 }
 
 // Every tick update creep logic
