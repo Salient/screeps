@@ -5,13 +5,12 @@ var guard = require('guard');
 var builder = require('builder');
 var creepUtil = require('creepUtility');
 
-
-//var myPeople = population.census(Game.rooms.W7N9);
+// var myPeople = population.census(Game.rooms.W7N9);
 //
-//for ( var i in myPeople) {
-//	var role = myPeople[i];
-//	console.log('There are ' + role.toString() + ' ' + i + 's');
-//}
+// for ( var i in myPeople) {
+// var role = myPeople[i];
+// console.log('There are ' + role.toString() + ' ' + i + 's');
+// }
 
 // Every tick update creep logic
 for ( var name in Game.creeps) {
@@ -33,16 +32,19 @@ for ( var name in Game.creeps) {
 	}
 }
 
-// Every 300 seconds check the population
-if (!Game.time % 300) {
-	for ( var i in Game.rooms) {
+for ( var i in Game.rooms) {
+	var nextRoom = Game.rooms[i];
+
+	// Every 300 seconds check the population
+	if (!Game.time % 300) {
 		console.log("Updating population tracking for room " + i);
-		var nextRoom = Game.rooms[i];
 		nextRoom.memory.currentPopulation = population.census(nextRoom);
 	}
-} 
-
-population.breed();
+	//Check unit production every 10 seconds
+	if (!Game.time % 10) {
+		population.breed(nextRoom);
+	}
+}
 
 // Prototype extensions
 Structure.prototype.needsRepair = function(name) {
