@@ -19,7 +19,7 @@ module.exports = function(creep) {
 		return;
 	}
 
-	if (creep.memory.myTargetId == null) {
+	if (creep.memory.myTargetId == null || typeof Game.structures[creep.memory.myTargetId] === 'undefined') {
 		creep.memory.myTargetId = newTarget(creep);
 		console.log('New Target for ' + creep.name + ': '
 				+ creep.memory.myTargetId);
@@ -72,6 +72,7 @@ function needsRepair(target) {
 }
 
 function newTarget(creep) {
+	
 	var constructionSites = creep.room.find(FIND_CONSTRUCTION_SITES), site = null, target = null;
 
 	if (constructionSites.length) {
