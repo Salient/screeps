@@ -51,7 +51,12 @@ var census = function(room) {
 	var roomCreeps = room.find(FIND_MY_CREEPS);
 	for ( var i in roomCreeps) {
 		var youThere = roomCreeps[i];
-
+		
+		//Display the type of creep
+		if (room.memory.showRole == 'yes')
+			youThere.say(youThere.memory.role);
+	
+			
 		if (typeof youThere.memory.role === 'undefined') { // Check for aliens
 			youThere.memory.role = 'freeAgent';
 		}

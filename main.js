@@ -41,7 +41,6 @@ for ( var i in Game.rooms) {
 	}
 	//Check unit production every 10 seconds
 	if (!(Game.time % 10)) {
-		console.log("Bow chicka bow chicka bow wooww");
 		population.breed(nextRoom);
 	}
 }
