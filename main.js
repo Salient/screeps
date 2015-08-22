@@ -23,7 +23,7 @@ for(var name in Game.creeps) {
         builder(creep);
   }
 }
-
+//screp
 
 
 // Every 30 seconds update housekeeping things
