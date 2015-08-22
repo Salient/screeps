@@ -31,14 +31,14 @@ module.exports.census = function () {
 	for (var i in Game.creeps) {
 		var youThere = Game.creeps[i];
 		
-		if (typeof youThere.role === 'undefined') { // Check for aliens
-			youThere.role = 'freeAgent';
+		if (typeof youThere.memory.role === 'undefined') { // Check for aliens
+			youThere.memory.role = 'freeAgent';
 		}
 		
-		if (typeof roles[youThere.role] === 'undefined')
-			roles[youThere.role] = 1
+		if (typeof roles[youThere.memory.role] === 'undefined')
+			roles[youThere.memory.role] = 1
 		else
-			roles[youThere.role]++;
+			roles[youThere.memory.role]++;
 	}
 	return roles; //Should be a list of roles and the number of each in existence
 }
