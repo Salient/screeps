@@ -28,7 +28,7 @@ for(var name in Game.creeps) {
 
 // Every 30 seconds update housekeeping things
 if (Game.time % 10 == 0) {
-    population();
+    population.tick();
 } else if (Game.time % 11 == 0) {
     creepUtil.zapZombies();
 }
