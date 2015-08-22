@@ -77,11 +77,10 @@ module.exports.breed = function(room) {
 	if (typeof room.memory.currentPopulation === 'undefined')
 		room.memory.currentPopulation = census(room);
 
-	var toBuild = nextPriority(room);
+	nextPriority(room);
 
 	var currentPop = room.memory.currentPopulation;
-	create('harvester');
-}
+	}
 
 /**
  * Try to find a free spawner to create requested unit type
