@@ -20,6 +20,7 @@ function nextPriority(room) {
 	if (typeof room.memory.currentPopulation === 'undefined') {
 		room.memory.currentPopulation = census(room);
 	}
+	var currentPopulation = room.memory.currentPopulation[i];
 	var totalPop = room.find(FIND_MY_CREEPS).length;
 
 	console.log('Determining what unit to build next. Current population is ' + totalPop);
