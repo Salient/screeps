@@ -27,7 +27,7 @@ function nextPriority() {
 }
 
 	
-function census(room) {
+var census = function(room) {
 	var roles = { 
 			"freeAgent": 0
 	};
@@ -83,12 +83,6 @@ function cull(type) {
 }
 
 
-function census() {
-	var population;
-	for (var i in Game.creeps) {
-		
-	}
-}
 function updateRealPop() {
     var role, name;
     clearRealPop();
@@ -132,7 +126,7 @@ function buffDesign(design) {
 }
 
 
-module.exports.census = census(room);
+module.exports.census = census;
 
 
 
