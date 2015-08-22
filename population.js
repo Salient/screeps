@@ -25,6 +25,9 @@ function nextPriority(room) {
 
 	console.log('Determining what unit to build next. Current population is ' + totalPop);
 	for ( var i in goalDemographics) {
+		if (typeof currentPopulation[i] === 'undefined') {
+			currentPopulation[i] = 0;
+		}
 		console.log('I have ' + currentPopulation[i] + ' of type ' + i +' and that makes ' + currentPopulation[i] / totalPop + ' of the population' );
 		console.log('Goal percentage is ' + goalDemographics[i]);
 		if (currentPopulation[i] / totalPop < goalDemographics[i]) {
