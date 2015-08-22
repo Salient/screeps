@@ -1,8 +1,8 @@
 var design = {
-	"harvester" : [ WORK, CARRY, CARRY, MOVE, MOVE ],
-	"upgrade" : [ WORK, WORK, WORK, MOVE, MOVE, CARRY, CARRY ],
-	"builder" : [ WORK, WORK, MOVE, MOVE, CARRY, CARRY, CARRY, CARRY, CARRY ],
-	"guard" : [ TOUGH, ATTACK, MOVE, MOVE ]
+	"workerBee" : [ WORK, CARRY, CARRY, MOVE, MOVE ],
+	"engineer" : [ WORK, WORK, WORK, MOVE, MOVE, CARRY, CARRY ],
+	"construction" : [ WORK, WORK, MOVE, MOVE, CARRY, CARRY, CARRY, CARRY ],
+	"footSoldier" : [ TOUGH, ATTACK, MOVE, MOVE ]
 };
 
 var popLimit = 1;
