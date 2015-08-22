@@ -7,14 +7,16 @@ module.exports = function(creep) {
 		for ( var s in nearStructures) {
 			var structure = nearStructures[s];
 			if (structure.structureType == 'STRUCTURE_EXTENSION')
+				console.log('looking for energy in structure ' + s);
 				if (structure.energy > 0) {
 					creep.moveTo(structure);
 					structure.transferEnergy(creep);
+					return;
 				}
 		}
 		// If we are here, seems there is no extension with energy
-		console.log('We require more Vespene Gas...converting to workerBee');
-		harvester(creep);
+		workerBee(creep);
+		return;
 	}
 
 	if (creep.memory.myTargetId == null) {
@@ -25,7 +27,7 @@ module.exports = function(creep) {
 
 	var target = Game.getObjectById(creep.memory.myTargetId);
 	if (target === null) {
-		console.log('No target, temporary upgarder');
+//		console.log('No target, temporary upgarder');
 		upgrader(creep);
 		return;
 	}
