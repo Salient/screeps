@@ -42,6 +42,8 @@ if (!Game.time % 300) {
 	}
 } 
 
+population.breed();
+
 // Prototype extensions
 Structure.prototype.needsRepair = function(name) {
 	return this.hits < this.hitsMax * .8;

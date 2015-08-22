@@ -26,8 +26,11 @@ function nextPriority() {
 	return type;
 }
 
-module.exports.census = function (room) {
-	var roles = {};
+	
+function census(room) {
+	var roles = { 
+			"freeAgent": 0
+	};
 	var roomCreeps = room.find(FIND_MY_CREEPS);
 	for (var i in roomCreeps) {
 		var youThere = roomCreeps[i];
@@ -48,7 +51,9 @@ var importance = ["guard", "harvester", "builder", "upgrade"];
 var realPop = Memory.realPop;
 
 module.exports.breed = function (room) {
-    var creeps = Game.creeps;
+	if (typeof room.memory.currentPopulation === 'undefined')
+		
+    var currentPop = room.memory.currentPopulation;
     create('harvester');
 }
 
@@ -126,6 +131,8 @@ function buffDesign(design) {
     }
 }
 
+
+module.exports.census = census(room);
 
 
 
