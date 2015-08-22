@@ -5,6 +5,14 @@ var guard = require('guard');
 var builder = require('builder');
 var creepUtil = require('creepUtility');
 
+console.log('Dumping roles');
+var myPeople = population.census();
+
+for (var i in myPeople) {
+	var role = myPeople[i];
+	console.log(role.name)
+}
+
 // Every tick update creep logic
 for(var name in Game.creeps) {
   var creep = Game.creeps[name];
