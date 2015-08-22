@@ -9,7 +9,7 @@ var design = {
 var popLimit=1;
 var techLimit=1;
 
-var currentDemographics = {
+var goalDemographics = {
 		"workerBee": 0.4,
 		"footSoldier": 0.1,
 		"engineer": 0.25,
@@ -26,10 +26,11 @@ function nextPriority() {
 	return type;
 }
 
-module.exports.census = function () {
+module.exports.census = function (room) {
 	var roles = {};
-	for (var i in Game.creeps) {
-		var youThere = Game.creeps[i];
+	var roomCreeps = room.find(FIND_MY_CREEPS);
+	for (var i in roomCreeps) {
+		var youThere = roomCreeps[i];
 		
 		if (typeof youThere.memory.role === 'undefined') { // Check for aliens
 			youThere.memory.role = 'freeAgent';
@@ -40,14 +41,13 @@ module.exports.census = function () {
 		else
 			roles[youThere.memory.role]++;
 	}
-	return roles; //Should be a list of roles and the number of each in existence
+	return roles; //Should be a list of roles and the number of each in the room
 }
 
 var importance = ["guard", "harvester", "builder", "upgrade"];
 var realPop = Memory.realPop;
 
-module.exports.tick = function () {
-	
+module.exports.breed = function (room) {
     var creeps = Game.creeps;
     create('harvester');
 }
