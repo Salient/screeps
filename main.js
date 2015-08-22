@@ -5,12 +5,13 @@ var guard = require('guard');
 var builder = require('builder');
 var creepUtil = require('creepUtility');
 
-var myPeople = population.census();
 
-for ( var i in myPeople) {
-	var role = myPeople[i];
-	console.log('There are ' + role.toString() + ' ' + i + 's');
-}
+//var myPeople = population.census(Game.rooms.W7N9);
+//
+//for ( var i in myPeople) {
+//	var role = myPeople[i];
+//	console.log('There are ' + role.toString() + ' ' + i + 's');
+//}
 
 // Every tick update creep logic
 for ( var name in Game.creeps) {
@@ -36,7 +37,7 @@ if (!Game.time % 300) {
 	for ( var i in Game.rooms) {
 		console.log("Updating population tracking for room " + i);
 		var nextRoom = Game.rooms[i];
-		nextRoom.memory.currentPopulation = population.census();
+		nextRoom.memory.currentPopulation = population.census(nextRoom);
 	}
 } 
 
