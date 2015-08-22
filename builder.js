@@ -1,12 +1,23 @@
 var upgrader = require('upgrader');
+var workerBee = require('harvester');
 
 module.exports = function(creep) {
-//TODO: This apparently fails badly if the building is still under construction
-//    if(creep.carry.energy === 0) {
-//      creep.moveTo(creep.room.storage);
-//      creep.room.storage.transferEnergy(creep);
-//      return;
-//    } 
+    if(creep.carry.energy === 0) {
+ 
+    	if (creep.room.extension.length !== 0) {
+    		  for(var x in creep.room.extension) {
+    			  var xtens =  creep.room.extension[x];
+    			  if (xtens.energy > 0) {
+    			      creep.moveTo(xtens);
+        		      xtens.transferEnergy(creep);
+        		      return;
+    			  }
+    		  }
+    	} else {
+    		console.log('We require more Vespene Gas...converting to workerBee');
+    		harvester(creep);
+    	}
+    } 
 
     if(creep.memory.myTargetId == null) {
         creep.memory.myTargetId = newTarget(creep);

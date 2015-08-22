@@ -70,9 +70,6 @@ var census = function(room) {
 					// room
 }
 
-var importance = [ "guard", "harvester", "builder", "upgrade" ];
-var realPop = Memory.realPop;
-
 module.exports.breed = function(room) {
 	if (typeof room.memory.currentPopulation === 'undefined')
 		room.memory.currentPopulation = census(room);
