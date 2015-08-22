@@ -1,12 +1,12 @@
 var upgrader = require('upgrader');
 
 module.exports = function(creep) {
-
-    if(creep.carry.energy === 0) {
-      creep.moveTo(creep.room.storage);
-      creep.room.storage.transferEnergy(creep);
-      return;
-    } 
+//TODO: This apparently fails badly if the building is still under construction
+//    if(creep.carry.energy === 0) {
+//      creep.moveTo(creep.room.storage);
+//      creep.room.storage.transferEnergy(creep);
+//      return;
+//    } 
 
     if(creep.memory.myTargetId == null) {
         creep.memory.myTargetId = newTarget(creep);
