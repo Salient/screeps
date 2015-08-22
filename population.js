@@ -10,9 +10,9 @@ var techLimit = 1;
 
 var goalDemographics = { // unit types will be built in order listed
 	"workerBee" : 0.4,
-	"footSoldier" : 0.1,
+	"construction" : 0.25,
 	"engineer" : 0.25,
-	"construction" : 0.25
+	"footSoldier" : 0.1
 }
 
 function nextPriority(room) {
@@ -20,7 +20,7 @@ function nextPriority(room) {
 	if (typeof room.memory.currentPopulation === 'undefined') {
 		room.memory.currentPopulation = census(room);
 	}
-	var currentPopulation = room.memory.currentPopulation[i];
+	var currentPopulation = room.memory.currentPopulation;
 	var totalPop = room.find(FIND_MY_CREEPS).length;
 
 	console.log('Determining what unit to build next. Current population is ' + totalPop);
@@ -32,7 +32,9 @@ function nextPriority(room) {
 		console.log('Goal percentage is ' + goalDemographics[i]);
 		if (currentPopulation[i] / totalPop < goalDemographics[i]) {
 			create(i);
-			console.log("Creating unit type " + 'i');
+			//TODO: create error handling.
+			console.log("Creating unit type " + i);
+			// update census? or just pop++ ?
 			return;
 		} else {
 			console.log('Don\'t need anymore ' + i);

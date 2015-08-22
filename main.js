@@ -16,18 +16,17 @@ var creepUtil = require('creepUtility');
 for ( var name in Game.creeps) {
 	var creep = Game.creeps[name];
 
-	if (creep.memory.role == 'harvester') {
-		builder(creep);
+	if (creep.memory.role == 'workerBee') {
 		harvester(creep);
 	}
 
-	if (creep.memory.role == 'upgrade') {
+	if (creep.memory.role == 'engineer') {
 		upgrader(creep);
 	}
-	if (creep.memory.role == 'guard') {
+	if (creep.memory.role == 'footSoldier') {
 		guard(creep);
 	}
-	if (creep.memory.role == 'builder') {
+	if (creep.memory.role == 'construction') {
 		builder(creep);
 	}
 }
