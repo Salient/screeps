@@ -49,32 +49,7 @@ var realPop = Memory.realPop;
 module.exports.tick = function () {
 	
     var creeps = Game.creeps;
-    var currentPop = 
-    delta = {};
-
-    updateRealPop();
-
-    for(var type in DesiredPop) {
-        var count = DesiredPop[type];
-        log(type + ' ' + realPop[type] + "/" + count);
-
-        if (realPop[type] < count) {
-            //console.log("Need more " + type);
-            delta[type] = 1;
-        } else if (realPop[type] > count) {
-            delta[type] = -1;
-        }
-    }
-
-    for(var i in importance) {
-        var type = importance[i];
-        if(delta[type] == 1) {
-            // Return so we don't try to create more than 1 per tick - last will win
-            return create(type);
-        } else if (delta[type] == -1) {
-            cull(type);
-        }
-    }
+    create('harvester');
 }
 
 /**
