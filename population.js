@@ -1,3 +1,4 @@
+
 var design = {
     "harvester": [WORK, CARRY, CARRY, MOVE, MOVE],
     "upgrade":   [WORK, WORK, WORK, MOVE, MOVE, CARRY, CARRY],
@@ -5,25 +6,50 @@ var design = {
     "guard": [TOUGH, ATTACK, MOVE, MOVE]
 };
 
-var DesiredPop = {
-    "harvester": 4,
-    "upgrade": 2,
-    "builder": 4,
-    "guard": 2
-};
+var popLimit=1;
+var techLimit=1;
 
-var emptyPop = {
-    "harvester": 0,
-    "upgrade": 0,
-    "builder": 0,
-    "guard": 0
+var currentDemographics = {
+		"workerBee": 0.4,
+		"footSoldier": 0.1,
+		"engineer": 0.25,
+		"construction": 0.25
+}
+
+function nextPriority() {
+	var type;
+	for (var i in currentDemographics){
+		
+	}
+	
+	
+	return type;
+}
+
+module.exports.census = function () {
+	var roles = {};
+	for (var i in Game.creeps) {
+		var youThere = Game.creeps[i];
+		
+		if (typeof youThere.role === 'undefined') { // Check for aliens
+			youThere.role = 'freeAgent';
+		}
+		
+		if (typeof roles[youThere.role] === 'undefined')
+			roles[youThere.role] = 1
+		else
+			roles[youThere.role]++;
+	}
+	return roles; //Should be a list of roles and the number of each in existence
 }
 
 var importance = ["guard", "harvester", "builder", "upgrade"];
 var realPop = Memory.realPop;
 
-module.exports = function () {
-    var creeps = Game.creeps,
+module.exports.tick = function () {
+	
+    var creeps = Game.creeps;
+    var currentPop = 
     delta = {};
 
     updateRealPop();
@@ -76,6 +102,13 @@ function create(type) {
 function cull(type) {
 }
 
+
+function census() {
+	var population;
+	for (var i in Game.creeps) {
+		
+	}
+}
 function updateRealPop() {
     var role, name;
     clearRealPop();
@@ -110,16 +143,6 @@ function clearRealPop() {
 function log(msg) {
     console.log('[Pop] ' + msg);
 }
-
-
-
-
-
-
-
-
-
-
 
 /// Scratch area
 function buffDesign(design) {
