@@ -23,6 +23,11 @@ function nextPriority(room) {
 	var currentPopulation = room.memory.currentPopulation;
 	var totalPop = room.find(FIND_MY_CREEPS).length;
 
+	// Edge case if there are no creeps yet
+	if (!totalPop) {
+		create(i);
+		return;
+	}
 	if (room.memory.populationDebug)
 		console
 				.log('Determining what unit to build next. Current population is '
