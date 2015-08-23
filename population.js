@@ -25,8 +25,9 @@ function nextPriority(room) {
 
 	// Edge case if there are no creeps yet
 	if (!totalPop) {
-		create(i);
-		return;
+		for (var first in goalDemographics)
+			create(first);
+			return;
 	}
 	if (room.memory.populationDebug)
 		console
