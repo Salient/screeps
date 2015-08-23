@@ -39,10 +39,11 @@ function nextPriority(room) {
 			create(first);
 		return;
 	}
-	if (room.memory.populationDebug)
+	if (room.memory.populationDebug) {
 		console
 				.log('Determining what unit to build next. Current population is '
 						+ totalPop);
+	}
 
 	for ( var i in goalDemographics) {
 		if (typeof currentPopulation[i] === 'undefined') {
@@ -57,20 +58,22 @@ function nextPriority(room) {
 		if (currentPopulation[i] / totalPop < goalDemographics[i]) {
 			create(i);
 			// TODO: create error handling.
-			if (room.memory.populationDebug)
+			if (room.memory.populationDebug) {
 				console.log("Creating unit type " + i);
+			}
 			// update census? or just pop++ ?
 			return;
 		} else {
-			if (room.memory.populationDebug)
+			if (room.memory.populationDebug) {
 				console.log('Don\'t need anymore ' + i);
+			}
 		}
 	}
 
 	return type;
 }
 
-var census = function(room) {
+module.exports.census = function(room) {
 	var roles = {
 		"freeAgent" : 0
 	};
@@ -79,25 +82,28 @@ var census = function(room) {
 		var youThere = roomCreeps[i];
 
 		// Display the type of creep
-		if (room.memory.showRole == 'yes')
+		if (room.memory.showRole == 'yes') {
 			youThere.say(youThere.memory.role);
+		}
 
 		if (typeof youThere.memory.role === 'undefined') { // Check for aliens
 			youThere.memory.role = 'freeAgent';
 		}
 
-		if (typeof roles[youThere.memory.role] === 'undefined')
+		if (typeof roles[youThere.memory.role] === 'undefined') {
 			roles[youThere.memory.role] = 1
-		else
+		} else {
 			roles[youThere.memory.role]++;
+		}
 	}
 	return roles; // Should be a list of roles and the number of each in the
 	// room
 }
 
 module.exports.breed = function(room) {
-	if (typeof room.memory.currentPopulation === 'undefined')
+	if (typeof room.memory.currentPopulation === 'undefined') {
 		room.memory.currentPopulation = census(room);
+	}
 
 	nextPriority(room);
 
@@ -109,7 +115,7 @@ module.exports.breed = function(room) {
  */
 function create(type) {
 	// Convert an idle
-	if (Memory.idle != null && Memory.idle.length != 0) {
+	if ((Memory.idle != null) && (Memory.idle.length != 0)) {
 		var creep = Memory.idle.pop();
 		creep.memory.role = type;
 		log("Putting " + creep.name + " to work as a " + type);
@@ -131,37 +137,6 @@ function create(type) {
 function cull(type) {
 }
 
-function updateRealPop() {
-	var role, name;
-	clearRealPop();
-
-	for (name in Game.creeps) {
-		var creep = Game.creeps[name];
-		if (!creep.my) {
-			continue;
-		}
-
-		if ("role" in creep.memory) {
-			role = creep.memory['role'];
-			realPop[role]++;
-		} else {
-			if (Memory.idle == null) {
-				log('Initializing idle list');
-				Memory.idle = [];
-			}
-			Memory.idle.push(creep);
-			log('Warning: ' + creep.name + ' has no role.');
-		}
-	}
-}
-
-function genDesiredPop(room) {
-}
-
-function clearRealPop() {
-	Memory.realPop = emptyPop;
-}
-
 function log(msg) {
 	console.log('[Pop] ' + msg);
 }
@@ -172,5 +147,3 @@ function buffDesign(design) {
 	for ( var i in design) {
 	}
 }
-
-module.exports.census = census;

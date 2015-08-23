@@ -36,10 +36,10 @@ for ( var i in Game.rooms) {
 
 	// Every 300 seconds check the population
 	if (!(Game.time % 300)) {
-		console.log("Updating population tracking for room " + i);
+		// console.log("Updating population tracking for room " + i);
 		nextRoom.memory.currentPopulation = population.census(nextRoom);
 	}
-	//Check unit production every 10 seconds
+	// Check unit production every 10 seconds
 	if (!(Game.time % 10)) {
 		population.breed(nextRoom);
 	}
