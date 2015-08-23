@@ -8,18 +8,20 @@ module.exports = function(creep) {
 			var structure = nearStructures[s];
 			if (structure.structureType == 'STRUCTURE_EXTENSION')
 				console.log('looking for energy in structure ' + s);
-				if (structure.energy > 0) {
-					creep.moveTo(structure);
-					structure.transferEnergy(creep);
-					return;
-				}
+			if (structure.energy > 0) {
+				creep.moveTo(structure);
+				structure.transferEnergy(creep);
+				return;
+			}
 		}
 		// If we are here, seems there is no extension with energy
 		workerBee(creep);
 		return;
 	}
 
-	if (creep.memory.myTargetId == null || typeof Game.structures[creep.memory.myTargetId] === 'undefined') {
+	if (creep.memory.myTargetId == null
+			|| typeof Game.structures[creep.memory.myTargetId] === 'undefined') {
+
 		creep.memory.myTargetId = newTarget(creep);
 		console.log('New Target for ' + creep.name + ': '
 				+ creep.memory.myTargetId);
@@ -27,7 +29,7 @@ module.exports = function(creep) {
 
 	var target = Game.getObjectById(creep.memory.myTargetId);
 	if (target === null) {
-//		console.log('No target, temporary upgarder');
+		// console.log('No target, temporary upgarder');
 		upgrader(creep);
 		return;
 	}
@@ -72,11 +74,14 @@ function needsRepair(target) {
 }
 
 function newTarget(creep) {
-	
+
 	var constructionSites = creep.room.find(FIND_CONSTRUCTION_SITES), site = null, target = null;
 
 	if (constructionSites.length) {
-		site = constructionSites[0];
+		site = constructionSites[Math.floor((Math.random() * 10)
+				% constructionSites.length)]; // Try to spread out
+												// construction a bit to make
+												// pathing easier
 	}
 
 	var structures = creep.room.find(FIND_STRUCTURES);
@@ -85,6 +90,11 @@ function newTarget(creep) {
 	for ( var i in structures) {
 		var s = structures[i];
 
+		// Check if path exists!! Otherwise, builders can block each other
+		var path = creep.moveTo(s);
+		if (path)
+			continue; //Can't do it for some reason. 
+		if (creep)
 		if (s.hits === null) {
 			continue;
 		} else if (needsRepair(s)) {

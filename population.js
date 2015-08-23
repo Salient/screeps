@@ -23,21 +23,31 @@ function nextPriority(room) {
 	var currentPopulation = room.memory.currentPopulation;
 	var totalPop = room.find(FIND_MY_CREEPS).length;
 
-	console.log('Determining what unit to build next. Current population is ' + totalPop);
+	if (room.memory.populationDebug)
+		console
+				.log('Determining what unit to build next. Current population is '
+						+ totalPop);
+
 	for ( var i in goalDemographics) {
 		if (typeof currentPopulation[i] === 'undefined') {
 			currentPopulation[i] = 0;
 		}
-		console.log('I have ' + currentPopulation[i] + ' of type ' + i +' and that makes ' + currentPopulation[i] / totalPop + ' of the population' );
-		console.log('Goal percentage is ' + goalDemographics[i]);
+		if (room.memory.populationDebug) {
+			console.log('I have ' + currentPopulation[i] + ' of type ' + i
+					+ ' and that makes ' + currentPopulation[i] / totalPop
+					+ ' of the population');
+			console.log('Goal percentage is ' + goalDemographics[i]);
+		}
 		if (currentPopulation[i] / totalPop < goalDemographics[i]) {
 			create(i);
-			//TODO: create error handling.
-			console.log("Creating unit type " + i);
+			// TODO: create error handling.
+			if (room.memory.populationDebug)
+				console.log("Creating unit type " + i);
 			// update census? or just pop++ ?
 			return;
 		} else {
-			console.log('Don\'t need anymore ' + i);
+			if (room.memory.populationDebug)
+				console.log('Don\'t need anymore ' + i);
 		}
 	}
 
@@ -51,12 +61,11 @@ var census = function(room) {
 	var roomCreeps = room.find(FIND_MY_CREEPS);
 	for ( var i in roomCreeps) {
 		var youThere = roomCreeps[i];
-		
-		//Display the type of creep
+
+		// Display the type of creep
 		if (room.memory.showRole == 'yes')
 			youThere.say(youThere.memory.role);
-	
-			
+
 		if (typeof youThere.memory.role === 'undefined') { // Check for aliens
 			youThere.memory.role = 'freeAgent';
 		}
@@ -67,7 +76,7 @@ var census = function(room) {
 			roles[youThere.memory.role]++;
 	}
 	return roles; // Should be a list of roles and the number of each in the
-					// room
+	// room
 }
 
 module.exports.breed = function(room) {
@@ -77,7 +86,7 @@ module.exports.breed = function(room) {
 	nextPriority(room);
 
 	var currentPop = room.memory.currentPopulation;
-	}
+}
 
 /**
  * Try to find a free spawner to create requested unit type
