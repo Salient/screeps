@@ -8,6 +8,16 @@ var design = {
 var popLimit = 1;
 var techLimit = 1;
 
+var cost = {
+	"WORK" : 100,
+	"CARRY" : 50,
+	"TOUGH" : 10,
+	"ATTACK" : 80,
+	"MOVE" : 50,
+	"HEAL" : 250,
+	"RANGED_ATTACK" : 150
+}
+
 var goalDemographics = { // unit types will be built in order listed
 	"workerBee" : 0.4,
 	"construction" : 0.25,
@@ -25,9 +35,9 @@ function nextPriority(room) {
 
 	// Edge case if there are no creeps yet
 	if (!totalPop) {
-		for (var first in goalDemographics)
+		for ( var first in goalDemographics)
 			create(first);
-			return;
+		return;
 	}
 	if (room.memory.populationDebug)
 		console
