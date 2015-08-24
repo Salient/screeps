@@ -5,9 +5,6 @@ var design = {
 	"footSoldier" : [ TOUGH, ATTACK, MOVE, MOVE ]
 };
 
-var popLimit = 1;
-var techLimit = 1;
-
 var cost = {
 	"WORK" : 100,
 	"CARRY" : 50,
@@ -26,54 +23,78 @@ var goalDemographics = { // unit types will be built in order listed
 }
 
 function nextPriority(room) {
-	var type;
+
+	// If for some reason the room doesn't know what we have in the room
 	if (typeof room.memory.currentPopulation === 'undefined') {
 		room.memory.currentPopulation = census(room);
 	}
+
 	var currentPopulation = room.memory.currentPopulation;
 	var totalPop = room.find(FIND_MY_CREEPS).length;
 
-	// Edge case if there are no creeps yet
+	// Edge case if there are no creeps yet, build the first in line
 	if (!totalPop) {
 		for ( var first in goalDemographics)
-			create(first);
-		return;
-	}
-	if (room.memory.populationDebug) {
-		console
-				.log('Determining what unit to build next. Current population is '
-						+ totalPop);
+			return (first);
 	}
 
+	// if (room.memory.populationDebug) {
+	// console
+	// .log('Determining what unit to build next. Current population is '
+	// + totalPop);
+	// }
+
+	// Let's see what we want the room to look like vs. what is here
 	for ( var i in goalDemographics) {
+		// If a unit we want isn't present yet, initialize the count for it
 		if (typeof currentPopulation[i] === 'undefined') {
 			currentPopulation[i] = 0;
 		}
-		if (room.memory.populationDebug) {
-			console.log('I have ' + currentPopulation[i] + ' of type ' + i
-					+ ' and that makes ' + currentPopulation[i] / totalPop
-					+ ' of the population');
-			console.log('Goal percentage is ' + goalDemographics[i]);
-		}
+
+		// if (room.memory.populationDebug) {
+		// console.log('I have ' + currentPopulation[i] + ' of type ' + i
+		// + ' and that makes ' + currentPopulation[i] / totalPop
+		// + ' of the population');
+		// console.log('Goal percentage is ' + goalDemographics[i]);
+		// }
+
+		// See if we need more of them
 		if (currentPopulation[i] / totalPop < goalDemographics[i]) {
-			create(i);
-			// TODO: create error handling.
-			if (room.memory.populationDebug) {
-				console.log("Creating unit type " + i);
-			}
-			// update census? or just pop++ ?
-			return;
-		} else {
-			if (room.memory.populationDebug) {
-				console.log('Don\'t need anymore ' + i);
-			}
+			return (i);
 		}
+		// else {
+		// if (room.memory.populationDebug) {
+		// console.log('Don\'t need anymore ' + i);
+		// }
+		// }
 	}
 
-	return type;
+	return null;
 }
 
-module.exports.census = function(room) {
+// Show current room unit types and percent of goal
+var printDemographics = function(room) {
+	if (typeof room.memory.currentPopulation === 'undefined') {
+		room.memory.currentPopulation = census(room);
+	}
+
+	var currentPopulation = room.memory.currentPopulation;
+	var creepInRoom = room.find(FIND_MY_CREEPS);
+	var totalPop = creepInRoom.length;
+
+	for ( var c in currentPopulation) {
+		var number = currentPopulation[c];
+		if (c !== 'freeAgent') {
+			console.log("There are " + number + " of type " + c
+					+ " creeps, making up "
+					+ (number / totalPop * 100).toFixed(2)
+					+ "% of the population. The goal is " + goalDemographics[c]
+					* 100 + "%");
+		}
+	}
+}
+
+var census = function(room) {
 	var roles = {
 		"freeAgent" : 0
 	};
@@ -100,39 +121,53 @@ module.exports.census = function(room) {
 	// room
 }
 
-module.exports.breed = function(room) {
-	if (typeof room.memory.currentPopulation === 'undefined') {
-		room.memory.currentPopulation = census(room);
+var breed = function(room) {
+
+	// Short circuit a lot of processing if we've already done it but couldn't
+	// finish
+	if ((room.memory.spawnWaiting != null)
+			&& !(typeof room.memory.spawnWaiting === 'undefined')) {
+		return create(room.memory.spawnWaiting);
 	}
 
-	nextPriority(room);
-
-	var currentPop = room.memory.currentPopulation;
+	// var popLimit = room.memory.maxPop;
+	create(nextPriority(room),room);
 }
 
 /**
  * Try to find a free spawner to create requested unit type
  */
-function create(type) {
-	// Convert an idle
-	if ((Memory.idle != null) && (Memory.idle.length != 0)) {
-		var creep = Memory.idle.pop();
-		creep.memory.role = type;
-		log("Putting " + creep.name + " to work as a " + type);
-		return creep.name;
-	}
+function create(type,room) {
 
-	for ( var i in Game.spawns) {
-		var spawn = Game.spawns[i];
-		if (spawn.canCreateCreep(design[type]) == OK) {
-			log("Creating a " + type);
-			return spawn.createCreep(design[type], null, {
-				role : type
-			});
+	var roomSpawns = room.find(FIND_MY_SPAWNS);
+	
+	for ( var i in roomSpawns) {
+		var spawn = roomSpawns[i];
+		var baby = spawn.canCreateCreep(design[type]);
+		
+			if (baby == OK) { // Create creep with a somewhat descriptive name
+				if (!(spawn.createCreep(design[type], room + "-" + type + (Math.floor((Math.random()*10000)))), { role : type, birthRoom : room })){
+				// Successful creation. Update census count. nextPriority
+				// function makes sure there is a valid one, no need to check
+				room.memory.currentPopulation[type]++;} else {log("Possible name collision trying to create a creep! Unusual.");}
+				} else {
+				// Disposition
+				switch (baby) {
+				case ERR_NOT_ENOUGH_ENERGY:
+					// Remember for next time, try again
+					room.memory.spawnWaiting = createType;
+					break;
+				case ERR_BUSY:
+					// Remember for next time, try again
+					room.memory.spawnWaiting = createType;
+					break;
+				case ERR_INVALID_ARGS:
+					log("Error birthing creep of type " + type + "!");
+					break;
+				}
+			}
 		}
 	}
-	return -4; // 'busy'
-}
 
 function cull(type) {
 }
@@ -147,3 +182,7 @@ function buffDesign(design) {
 	for ( var i in design) {
 	}
 }
+
+module.exports.census = census;
+module.exports.breed = breed;
+module.exports.printDemographics = printDemographics;
