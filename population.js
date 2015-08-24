@@ -1,9 +1,33 @@
-var design = {
-	"workerBee" : [ WORK, CARRY, CARRY, MOVE, MOVE ],
-	"engineer" : [ WORK, WORK, WORK, MOVE, MOVE, CARRY, CARRY ],
-	"construction" : [ WORK, WORK, MOVE, MOVE, CARRY, CARRY, CARRY, CARRY ],
-	"footSoldier" : [ TOUGH, ATTACK, MOVE, MOVE ]
+// ---------------- 
+//Main population knobs to tweak. Rest is mostly automatic
+// This will be updated by strategy as controller increases
+design = {
+	"miner" : [ WORK, WORK, MOVE, MOVE ],
+	// Cost 300, Can get to source, sit there and mine. Probably limit to
+	// three per source
+
+	"workerBee" : [ CARRY, CARRY, CARRY, MOVE, MOVE, MOVE ],
+// Cost 300, can shuttle dropped energy to storage
 };
+
+var goalDemographics = { // unit types will be built in order listed
+	"workerBee" : 0.4,
+	"miner" : 0.4,
+	"footSoldier" : 0.1
+}
+
+var minDemographics = { // Help bootstrap early game population
+	'miner' : 3,
+	'workerBee' : 3,
+	'footSoldier' : 2
+}
+
+var maxDemographics = { // Ostensibly prevents choking
+	'miner' : 3,
+	'workerBee' : 3,
+	'footSoldier' : 2
+}
+// ------------------
 
 var cost = {
 	"WORK" : 100,
@@ -15,11 +39,22 @@ var cost = {
 	"RANGED_ATTACK" : 150
 }
 
-var goalDemographics = { // unit types will be built in order listed
-	"workerBee" : 0.4,
-	"construction" : 0.25,
-	"engineer" : 0.25,
-	"footSoldier" : 0.1
+var getCost = function(design) {
+	// design should be an array of body parts
+	var cost = 0;
+	for ( var part in design)
+		cost += cost[design[part]];
+	// TODO some test logic here
+	return cost;
+}
+
+var isValidRole = function(role) {
+	for ( var type in design) {
+		if (design[type] == role) {
+			return true;
+		}
+	}
+	return false
 }
 
 function nextPriority(room) {
@@ -36,6 +71,17 @@ function nextPriority(room) {
 	if (!totalPop) {
 		for ( var first in goalDemographics)
 			return (first);
+	}
+
+	// Check minimum numbers
+	for ( var i in minDemographics) {
+		if (typeof currentPopulation[i] === 'undefined') {
+			currentPopulation[i] = 0;
+		}
+		// See if we need more of them
+		if (currentPopulation[i] < minDemographics[i]) {
+			return (i);
+		}
 	}
 
 	// if (room.memory.populationDebug) {
@@ -123,51 +169,65 @@ var census = function(room) {
 
 var breed = function(room) {
 
-	// Short circuit a lot of processing if we've already done it but couldn't
-	// finish
-	if ((room.memory.spawnWaiting != null)
-			&& !(typeof room.memory.spawnWaiting === 'undefined')) {
-		return create(room.memory.spawnWaiting);
-	}
+	// // Short circuit a lot of processing if we've already done it but
+	// couldn't
+	// // finish
+	// if ((room.memory.spawnWaiting != null)
+	// && !(typeof room.memory.spawnWaiting === 'undefined')) {
+	// if (!(create(room.memory.spawnWaiting, room))) {
+	// room.memory.spawnWaiting = null;
+	// }
+	// }
 
 	// var popLimit = room.memory.maxPop;
-	create(nextPriority(room),room);
+	create(nextPriority(room), room);
 }
 
 /**
  * Try to find a free spawner to create requested unit type
  */
-function create(type,room) {
+function create(type, room) {
 
 	var roomSpawns = room.find(FIND_MY_SPAWNS);
-	
+
 	for ( var i in roomSpawns) {
 		var spawn = roomSpawns[i];
 		var baby = spawn.canCreateCreep(design[type]);
-		
-			if (baby == OK) { // Create creep with a somewhat descriptive name
-				if (!(spawn.createCreep(design[type], room + "-" + type + (Math.floor((Math.random()*10000)))), { role : type, birthRoom : room })){
+
+		if (baby == OK) { // Create creep with a somewhat descriptive name
+			if (typeof (spawn.createCreep(design[type], room + "-" + type + '.'
+					+ (Math.floor((Math.random() * 10000))), {
+				"role" : type,
+				"birthRoom" : room.name,
+				"taskQueue" : []
+			})) === "string") {
 				// Successful creation. Update census count. nextPriority
 				// function makes sure there is a valid one, no need to check
-				room.memory.currentPopulation[type]++;} else {log("Possible name collision trying to create a creep! Unusual.");}
-				} else {
-				// Disposition
-				switch (baby) {
-				case ERR_NOT_ENOUGH_ENERGY:
-					// Remember for next time, try again
-					room.memory.spawnWaiting = createType;
-					break;
-				case ERR_BUSY:
-					// Remember for next time, try again
-					room.memory.spawnWaiting = createType;
-					break;
-				case ERR_INVALID_ARGS:
-					log("Error birthing creep of type " + type + "!");
-					break;
-				}
+				room.memory.currentPopulation[type]++;
+				return OK;
+			} else {
+				// Check error log here.
+				log("Possible name collision trying to create a creep! Unusual.");
+			}
+		} else {
+			// Disposition
+			switch (baby) {
+			case ERR_NOT_ENOUGH_ENERGY:
+				// Remember for next time, try again
+				room.memory.spawnWaiting = type;
+				break;
+			case ERR_BUSY:
+				// Remember for next time, try again
+				room.memory.spawnWaiting = type;
+				break;
+			case ERR_INVALID_ARGS:
+				log("Error birthing creep of type " + type + "!");
+				break;
 			}
 		}
 	}
+	return -1;
+}
 
 function cull(type) {
 }
@@ -183,6 +243,10 @@ function buffDesign(design) {
 	}
 }
 
+module.exports.design = design;
+module.exports.minDemographics = minDemographics;
+module.exports.maxDemographics = maxDemographics;
+module.exports.goalDemographics = goalDemographics;
 module.exports.census = census;
 module.exports.breed = breed;
 module.exports.printDemographics = printDemographics;

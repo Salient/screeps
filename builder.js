@@ -1,7 +1,16 @@
-var upgrader = require('upgrader');
-var workerBee = require('harvester');
+var strategy = require('strategy');
+var tasker = require('tasker');
+
+var buildExtension = function(creep) {
+
+}
 
 module.exports = function(creep) {
+
+	// Take a look around the room for something to do
+
+	// 
+
 	if (creep.carry.energy === 0) {
 		var nearStructures = creep.room.find(FIND_MY_STRUCTURES);
 		for ( var s in nearStructures) {
