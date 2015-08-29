@@ -1,7 +1,7 @@
 // ---------------- 
 //Main population knobs to tweak. Rest is mostly automatic
 // This will be updated by strategy as controller increases
-design = {
+var design = {
 	"miner" : [ WORK, WORK, MOVE, MOVE ],
 	// Cost 300, Can get to source, sit there and mine. Probably limit to
 	// three per source
@@ -54,7 +54,7 @@ var isValidRole = function(role) {
 			return true;
 		}
 	}
-	return false
+	return false;
 }
 
 function nextPriority(room) {
@@ -195,12 +195,16 @@ function create(type, room) {
 		var baby = spawn.canCreateCreep(design[type]);
 
 		if (baby == OK) { // Create creep with a somewhat descriptive name
-			if (typeof (spawn.createCreep(design[type], room + "-" + type + '.'
-					+ (Math.floor((Math.random() * 10000))), {
+
+			var result = spawn.createCreep(design[type], room.name + "-" + type
+					+ '.' + (Math.floor((Math.random() * 10000))), {
 				"role" : type,
 				"birthRoom" : room.name,
-				"taskQueue" : []
-			})) === "string") {
+				"taskList" : []
+			});
+
+			if (typeof result === "string") {
+
 				// Successful creation. Update census count. nextPriority
 				// function makes sure there is a valid one, no need to check
 				room.memory.currentPopulation[type]++;
@@ -221,15 +225,12 @@ function create(type, room) {
 				room.memory.spawnWaiting = type;
 				break;
 			case ERR_INVALID_ARGS:
-				log("Error birthing creep of type " + type + "!");
+				dlog("Error birthing creep of type " + type + "!");
 				break;
 			}
 		}
 	}
 	return -1;
-}
-
-function cull(type) {
 }
 
 function log(msg) {
@@ -241,6 +242,10 @@ function buffDesign(design) {
 	var buffedDesign = [];
 	for ( var i in design) {
 	}
+}
+
+function dlog(msg) {
+	console.log('[DEBUG] ' + msg);
 }
 
 module.exports.design = design;

@@ -1,38 +1,36 @@
 var strategy = require('strategy');
-var tasker = require('tasker');
 
 var buildExtension = function(creep) {
 
+	var numExts = 0;
+	var structs = creep.room.find(FIND_MY_STRUCTURES);
+	structs.forEach(function(s) {
+		if (structs[s].structureType == 'STRUCTURE_EXTESION') {
+			numExts++;
+		}
+	});
+
+	var maxExts = creep.room.memory.maxExts;
+	if (typeof maxExts !== 'undefined') {
+		if (numExts < maxExts) {
+
+			// build ext.
+		}
+	}
 }
 
 module.exports = function(creep) {
 
 	// Take a look around the room for something to do
 
-	// 
-
-	if (creep.carry.energy === 0) {
-		var nearStructures = creep.room.find(FIND_MY_STRUCTURES);
-		for ( var s in nearStructures) {
-			var structure = nearStructures[s];
-			if (structure.structureType == 'STRUCTURE_EXTENSION') {
-				// console.log('looking for energy in structure ' + s);
-			}
-			if (structure.energy > 0) {
-				creep.moveTo(structure);
-				structure.transferEnergy(creep);
-				return;
-			}
-		}
-		// If we are here, seems there is no extension with energy
-		workerBee(creep);
-		return;
-	}
+	// If we are here, seems there is no extension with energy
+	workerBee(creep);
+	return;
 
 	if ((creep.memory.myTargetId == null)
 			|| typeof Game.structures[creep.memory.myTargetId] === 'undefined') {
 
-		creep.memory.myTargetId = newTarget(creep);
+		creep.memory.myTargetId = constructSite(creep);
 		// console.log('New Target for ' + creep.name + ': '
 		// + creep.memory.myTargetId);
 	}
@@ -83,7 +81,30 @@ function needsRepair(target) {
 	return target.hits < (target.hitsMax / 2);
 }
 
-function newTarget(creep) {
+function repairDuty(creep) {
+
+	var structures = creep.room.find(FIND_STRUCTURES);
+	var options = [];
+
+	// TODO: can I sort structures in order of damage?
+	for ( var i in structures) {
+		var s = structures[i];
+
+		var intendedPath = creep.checkPath(s);
+		// Check if path exists!! Otherwise, builders can block each other
+
+		if (s.hits === null) {
+			continue;
+		}
+
+		if (s.needsRepair()) {
+			creep.moveTo(s);
+			creep.repair(s);
+		}
+	}
+}
+
+function constructionDuty(creep) {
 
 	var constructionSites = creep.room.find(FIND_CONSTRUCTION_SITES), site = null, target = null;
 
@@ -142,6 +163,41 @@ function newTarget(creep) {
 	}
 	// console.log('failed to find target');
 	return null;
+}
+
+var upgradeController = function(creep) {
+
+	var rc = creep.room.controller;
+
+	if (creep.pos.isNearTo(rc) && (creep.carry.energy > 0)) {
+		creep.say(completedPretty(rc) + "%");
+		creep.upgradeController(rc);
+	} else {
+		fillTank(creep);
+		creep.moveTo(rc);
+	}
+}
+
+function fillTank(creep) {
+	var structs = creep.room.find(FIND_MY_STRUCTURES);
+
+	creep.say('Filling up my tank');
+	while (creep.carry.energy < creep.carryCapacity) {
+		for ( var i in structs) {
+			var struct = structs[i];
+			if ((struct.structureType == STRUCTURE_EXTENSION)
+					|| (struct.structureType == 'spawn')
+					|| (struct.structureType == STRUCTURE_STORAGE)) {
+
+				if (struct.energy > 0) {
+					creep.moveTo(struct);
+					if (creep.pos.isNearTo(struct)) {
+						struct.transferEnergy(creep);
+					}
+				}
+			}
+		}
+	}
 }
 
 function completedPretty(target) {
