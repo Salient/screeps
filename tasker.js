@@ -20,14 +20,9 @@ module.exports.taskMinions = function(room) {
 		// upgrade(minions[dude]); // TEMP CODE
 	}
 }
-var dlog = function(msg) {
-	console.log('[DEBUG: TASKER] ' + msg);
-}
 
-function dumpObject(obj) {
-	for ( var x in obj) {
-		dlog('parameter: ' + x + ' is ' + obj[x]);
-	}
+function dlog(msg) {
+	util.dlog('TASKER', msg);
 }
 
 var performTask = function(creep) {

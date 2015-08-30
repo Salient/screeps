@@ -62,8 +62,11 @@ var util = require('common');
 // }
 //	
 
-module.exports.strategery = function(room) {
+function dlog(msg) {
+	util.dlog('STRATEGY', msg);
+}
 
+module.exports.strategery = function(room) {
 	var roomConfig = room.memory.strategy;
 	if (typeof roomConfig === 'undefined') {
 		roomConfig = {};
@@ -72,10 +75,14 @@ module.exports.strategery = function(room) {
 	if (typeof lev === 'undefined') {
 		roomConfig.curlvl = 0;
 	}
+
 	if (lev != room.controller.level) {
-		lev = room.controller.level;
-		util.dlog('Room level has changed. Revising all strategery with level '
-				+ lev + 'badassery.');
+		room.memory.strategy = {
+			"curlvl" : room.controller.level
+		};
+
+		dlog('Room level has changed. Revising all strategery with level '
+				+ lev + ' badassery.');
 
 	}
 
@@ -131,7 +138,7 @@ function bootstrap(room) {
 }
 
 var lvl1room = function(room) {
-	util.dlog("lvl1 strategy selected");
+	dlog("lvl1 strategy selected");
 
 	// Just checking if we can get off the ground properly
 	if (room.popCount < 3) {

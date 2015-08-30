@@ -19,6 +19,10 @@ var buildExtension = function(creep) {
 	}
 }
 
+function dlog(msg) {
+	util.dlog('CONSTRUCTION', msg);
+}
+
 module.exports = function(creep) {
 
 	// Take a look around the room for something to do

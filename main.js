@@ -2,15 +2,6 @@ var population = require('population');
 var taskMaster = require('tasker');
 var roomstrat = require('strategy');
 
-// Creep.prototype.tasktest = [];
-// Creep.memoryzzz.addTask = function(task) {
-
-Creep.prototype.tasktest = function(test) {
-	this.memory.wowza = [ 1, 2, test ];
-
-	console.log("i have a prototype");
-}
-
 // Prototype extensions
 Structure.prototype.needsRepair = function() {
 	return this.hits < this.hitsMax * .8;
@@ -47,7 +38,7 @@ Room.prototype.getError = function(msg) {
 	return (getError(msg));
 }
 Creep.prototype.getError = function(msg) {
-	return (getError(msg));
+	return (util.getError(msg));
 }
 
 Room.prototype.popCount = function() {
@@ -100,8 +91,9 @@ for ( var i in Game.rooms) {
 	}
 
 }
+
 function dlog(msg) {
-	console.log("[DEBUG MAIN] " + msg);
+	util.dlog('MAIN', msg);
 }
 // Housekeeping
 // Delete old memory entries

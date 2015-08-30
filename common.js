@@ -30,7 +30,14 @@ module.exports.getError = function(result) {
 	}
 }
 
-module.exports.dlog = function(msg) {
-	var from = this.constructor.name;
-	console.log('[DEBUG ' + from + "] " + msg)
+function dlog(module, msg) {
+	// var from = name;
+	console.log('[DEBUG ' + module + "] " + msg);
+}
+module.exports.dlog = dlog;
+
+module.exports.dumpObject = function(obj) {
+	for ( var x in obj) {
+		dlog('parameter: ' + x + ' is ' + obj[x]);
+	}
 }

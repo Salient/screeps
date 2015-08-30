@@ -193,7 +193,7 @@ var breed = function(room) {
 	// var popLimit = room.memory.maxPop;
 	var result = create(nextPriority(room), room);
 	if (result < 0) {
-		util.dlog("Error creating creep: " + util.getError(result));
+		dlog("Error creating creep: " + util.getError(result));
 	}
 }
 
@@ -230,8 +230,7 @@ function create(type, room) {
 				return OK;
 			} else {
 				// Check error log here.
-				util
-						.dlog("Possible name collision trying to create a creep! Unusual.");
+				dlog("Possible name collision trying to create a creep! Unusual.");
 			}
 		} else {
 			// Disposition
@@ -245,7 +244,7 @@ function create(type, room) {
 				room.memory.spawnWaiting = type;
 				break;
 			case ERR_INVALID_ARGS:
-				util.dlog("Error birthing creep of type " + type + "!");
+				dlog("Error birthing creep of type " + type + "!");
 				break;
 			}
 		}
@@ -265,7 +264,7 @@ function buffDesign(design) {
 }
 
 function dlog(msg) {
-	console.log('[DEBUG] ' + msg);
+	util.dlog('POPULATION', msg);
 }
 module.exports.census = census;
 module.exports.breed = breed;
