@@ -1,4 +1,4 @@
-var strategy = require('strategy');
+var util = require('common');
 
 var buildExtension = function(creep) {
 

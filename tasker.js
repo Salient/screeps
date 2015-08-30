@@ -2,6 +2,8 @@
  * 
  */
 
+var util = require('common');
+
 var debug = true; // Debug code
 
 var harvest = require('harvester');
@@ -42,12 +44,12 @@ var performTask = function(creep) {
 	// to prevent multiple units trying to work on the same thing
 
 	if (typeof taskList === 'undefined') {
-		dlog('duci ' + creep.name);
-		taskList = "weeeell?";
+		dlog('Undefined task list found: ' + creep.name);
+		taskList = [];
 	}
 
 	if (taskList[0] === 'undefined' || (taskList[0] == null)) {
-		dlog('dkdkdk ' + creep.name);
+		dlog('Empty task list found: ' + creep.name);
 		taskList[0] = getDefaultTask(creep);
 	}
 
@@ -59,98 +61,12 @@ var performTask = function(creep) {
 	case 'shuttle':
 		harvest.shuttle(creep);
 		break;
-	case 'harvestSortingHat':
+	case 'harvestSortingHat': // Shuttle creep have the parts to be useful
 		harvest.sortingHat(creep);
+	case 'gatherer':
+		harvest.gatherer(creep);
 	}
 
-	dlog('tik');
-	// var dlogId = dlog.id;
-	// var jobId = bleep.id;
-	// creep.memory.functionId = dlogId;
-
-	// dlog("thick");
-	//
-	// // bleep.test();
-	// for ( var i in creep.room) {
-	// dlog("property: " + i + ' is ' + creep[i]);
-	// }
-	// bleep.job("victory");
-	// var myArray = [];
-	// myArray.push(bleep);
-	// dlog(myArray);
-	// dlog(myArray[0]);
-	// myArray[0].job('awww jusss');
-	// // creep.memory.tddd = myArray;
-	// creep.memory.myArray = myArray;
-	// // dlog('keep');
-	// creep.memory.TEST = [ new taskObject('three', 'four', 300) ];
-
-	// var tasks = creep.memory.taskQueue;
-	//
-	// // Not sure when this would happen...
-	// if (typeof tasks === 'undefined' || (tasks == null)) {
-	// // tasks = [ assignDefaultTask(creep) ];
-	// // Assign default role task for next 5 minutes
-	// console.log('Error, creep found without a task list');
-	// creep.memory.taskQueue = [ 'one', 'threeder' ];
-	// }
-	//
-	// for ( var gig in tasks) {
-	// if ((tasks[gig] == null)
-	// || (Game.time - tasks[gig].startTime > tasks[gig].taskDuration)) {
-	// delete tasks[gig];
-	// }
-	// }
-	// tasks.sort(); // pull out any undefined tasks
-	//
-	// // if (debug) {
-	// // dlog('Checking if taskQueue empty');
-	// // }
-	//
-	// // return;
-	// if ((typeof tasks[0] === 'undefined') || (tasks[0] == null)) {
-	// console.log('assigning defult');
-	//
-	// tasks[0] = 'friday';
-	// tasks[1] = {
-	// 'one' : 1,
-	// 'two' : 2
-	// };
-	// dlog("well thats a first");
-	//
-	// // function test() {
-	// // }
-	// // tasks[3] = test;
-	//
-	// // (assignDefaultTask(creep));
-	// // return;
-	// // tasks.push('1');
-	// }
-
-	// if (tasks[tasks.length - 1]) {
-	// return;
-	// }
-	// debug
-	// for ( var frack in tasks)
-	// console.log('task index ' + frack + ' is ' + tasks[frack]
-	// + ', with length ' + tasks.length);
-	//
-	// tasks[3]();
-
-	// console.log(creep. name + ' is performing task ' + tasks[0].taskName);
-
-	// creep.say(tasks[0].taskName);
-	// var jobResult = tasks[0].job(creep); // perform first on todo list
-	// switch (jobResult) {
-	// case: OK
-	// // task done?
-	// break;
-	// case: ERR_NOT_ENOUGH_ENERGY
-	// break;
-	// // We require more vespene gas. Spend some amount of time harvesting
-	// // instead?
-	// }
-	// console.log(creep.name + ' is done son?');
 }
 
 // // Get
@@ -179,6 +95,10 @@ var getDefaultTask = function(creep) { // What to do if the creep has
 
 	if (role == 'workerBee') {
 		return 'harvestSortingHat';
+	}
+
+	if (role == 'gatherer') {
+		return 'gatherer';
 	}
 
 	if (creep.memory.role == 'construction') {

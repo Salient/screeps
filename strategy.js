@@ -3,6 +3,7 @@
  */
 
 var population = require('population');
+var util = require('common');
 
 // Basic strategy for building and fortifying a room
 // Controller lvl 1
@@ -61,17 +62,82 @@ var population = require('population');
 // }
 //	
 
-module.exports = function(room) {
+module.exports.strategery = function(room) {
 
-	var level = room.getLevel();
+	var roomConfig = room.memory.strategy;
+	if (typeof roomConfig === 'undefined') {
+		roomConfig = {};
+	}
+	var lev = roomConfig.curlvl;
+	if (typeof lev === 'undefined') {
+		roomConfig.curlvl = 0;
+	}
+	if (lev != room.controller.level) {
+		lev = room.controller.level;
+		util.dlog('Room level has changed. Revising all strategery with level '
+				+ lev + 'badassery.');
 
-	if (level == 1) {
+	}
+
+	var selectStrat = [ bootstrap, lvl1room, lvl2room, lvl3room, lvl4room,
+			lvl5room, lvl6room, lvl7room ];
+
+	selectStrat[room.controller.level](room);
+}
+
+function lvl3room(room) {
+}
+function lvl4room(room) {
+}
+function lvl5room(room) {
+}
+function lvl6room(room) {
+}
+function lvl7room(room) {
+}
+
+function bootstrap(room) {
+
+	// Set basic population control parameters
+	var roomConfig = room.memory.strategy;
+
+	roomConfig.latestModels = {
+		'gatherer' : [ WORK, WORK, CARRY, MOVE ],
+		"miner" : [ WORK, WORK, MOVE ],
+		"workerBee" : [ CARRY, CARRY, CARRY, MOVE, MOVE, MOVE ]
+	};
+
+	// demographics control build order
+	// This will build in sequence (assuming nobody dies)
+	// miner, worker, scout, miner, worker, tech, miner,worker,scout,tech?
+	roomConfig.goalDemographics = {
+		"gatherer" : 0.2,
+		"miner" : 0.4,
+		"workerBee" : 0.4,
+		"scout" : 0.2,
+		"technician" : 0.2
+	}
+	roomConfig.minDemographics = {} // No mins, the goalDemo and max will
+	// control build order this early in room
+	roomConfig.maxDemographics = {
+		"gatherer" : 3,
+		"workerBee" : 3,
+		"miner" : 3, // scouts should chill out until an enemy enters the
+	// // room.
+	// "technician" : 5
+	// Technicians should default to upgrading the
+	// controller
+	}
+}
+
+var lvl1room = function(room) {
+	util.dlog("lvl1 strategy selected");
+
+	// Just checking if we can get off the ground properly
+	if (room.popCount < 3) {
 		bootstrapRoom(room);
 	}
 
-}
-
-var bootstrapRoom = function(room) {
 	// Setup population goals
 	population.setDesign({
 		"miner" : [ WORK, WORK, MOVE ],
@@ -95,10 +161,10 @@ var bootstrapRoom = function(room) {
 		"miner" : 3,
 		"workerBee" : 3,
 		"scout" : 3, // scouts should chill out until an enemy enters the
-						// room.
+		// room.
 		"technician" : 5
 	// Technicians should default to upgrading the
-							// controller
+	// controller
 	}
 
 }

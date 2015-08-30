@@ -1,33 +1,36 @@
-// ---------------- 
-//Main population knobs to tweak. Rest is mostly automatic
-// This will be updated by strategy as controller increases
-var design = {
-	"miner" : [ WORK, WORK, MOVE, MOVE ],
-	// Cost 300, Can get to source, sit there and mine. Probably limit to
-	// three per source
+var util = require('common');
 
-	"workerBee" : [ CARRY, CARRY, CARRY, MOVE, MOVE, MOVE ],
-// Cost 300, can shuttle dropped energy to storage
-};
-
-var goalDemographics = { // unit types will be built in order listed
-	"workerBee" : 0.4,
-	"miner" : 0.4,
-	"footSoldier" : 0.1
-}
-
-var minDemographics = { // Help bootstrap early game population
-	'miner' : 3,
-	'workerBee' : 3,
-	'footSoldier' : 2
-}
-
-var maxDemographics = { // Ostensibly prevents choking
-	'miner' : 3,
-	'workerBee' : 3,
-	'footSoldier' : 2
-}
-// ------------------
+// // ----------------
+// // Main population knobs to tweak. Rest is mostly automatic
+// // This will be updated by strategy as controller increases
+// var design = {
+// 'babyHarvester' : [ WORK, WORK, CARRY, MOVE ],
+// "miner" : [ WORK, WORK, MOVE, MOVE ],
+// // Cost 300, Can get to source, sit there and mine. Probably limit to
+// // three per source
+//
+// "workerBee" : [ CARRY, CARRY, CARRY, MOVE, MOVE, MOVE ],
+// // Cost 300, can shuttle dropped energy to storage
+// };
+//
+// var goalDemographics = { // unit types will be built in order listed
+// "workerBee" : 0.4,
+// "miner" : 0.4,
+// "footSoldier" : 0.1
+// }
+//
+// var minDemographics = { // Help bootstrap early game population
+// 'miner' : 3,
+// 'workerBee' : 3,
+// 'footSoldier' : 2
+// }
+//
+// var maxDemographics = { // Ostensibly prevents choking
+// 'miner' : 3,
+// 'workerBee' : 3,
+// 'footSoldier' : 2
+// }
+// // ------------------
 
 var cost = {
 	"WORK" : 100,
@@ -59,15 +62,29 @@ var isValidRole = function(role) {
 
 function nextPriority(room) {
 
+	// Pull up memory
+	var strategy = room.memory.strategy;
+
+	// These basic five should be set/updated by strategy periodically
+	// Else, the previous value holds
+
+	var design = strategy.latestModels;
+	var goalDemographics = strategy.goalDemographics;
+	var maxDemographics = strategy.maxDemographics;
+	var minDemographics = strategy.minDemographics;
+
+	// Not set by strategy, set in main on timer
+	var currentPopulation = strategy.currentPopulation;
+
 	// If for some reason the room doesn't know what we have in the room
-	if (typeof room.memory.currentPopulation === 'undefined') {
-		room.memory.currentPopulation = census(room);
+	if (typeof currentPopulation === 'undefined') {
+		strategy.currentPopulation = census(room);
 	}
 
-	var currentPopulation = room.memory.currentPopulation;
 	var totalPop = room.find(FIND_MY_CREEPS).length;
 
 	// Edge case if there are no creeps yet, build the first in line
+	// else we might divide by the unholy zero
 	if (!totalPop) {
 		for ( var first in goalDemographics)
 			return (first);
@@ -97,13 +114,6 @@ function nextPriority(room) {
 			currentPopulation[i] = 0;
 		}
 
-		// if (room.memory.populationDebug) {
-		// console.log('I have ' + currentPopulation[i] + ' of type ' + i
-		// + ' and that makes ' + currentPopulation[i] / totalPop
-		// + ' of the population');
-		// console.log('Goal percentage is ' + goalDemographics[i]);
-		// }
-
 		// See if we need more of them
 		if (currentPopulation[i] / totalPop < goalDemographics[i]) {
 			return (i);
@@ -120,13 +130,14 @@ function nextPriority(room) {
 
 // Show current room unit types and percent of goal
 var printDemographics = function(room) {
-	if (typeof room.memory.currentPopulation === 'undefined') {
-		room.memory.currentPopulation = census(room);
+	var goalDemographics = room.memory.strategy.goalDemographics;
+	var currentPopulation = room.memory.strategy.currentPopulation;
+
+	if (typeof currentPopulation === 'undefined') {
+		room.memory.strategy.currentPopulation = census(room);
 	}
 
-	var currentPopulation = room.memory.currentPopulation;
-	var creepInRoom = room.find(FIND_MY_CREEPS);
-	var totalPop = creepInRoom.length;
+	var totalPop = room.find(FIND_MY_CREEPS).length;
 
 	for ( var c in currentPopulation) {
 		var number = currentPopulation[c];
@@ -180,13 +191,21 @@ var breed = function(room) {
 	// }
 
 	// var popLimit = room.memory.maxPop;
-	create(nextPriority(room), room);
+	var result = create(nextPriority(room), room);
+	if (result < 0) {
+		util.dlog("Error creating creep: " + util.getError(result));
+	}
 }
 
 /**
  * Try to find a free spawner to create requested unit type
  */
 function create(type, room) {
+
+	var strategy = room.memory.strategy;
+
+	var design = strategy.latestModels;
+	var currentPopulation = strategy.currentPopulation;
 
 	var roomSpawns = room.find(FIND_MY_SPAWNS);
 
@@ -207,11 +226,12 @@ function create(type, room) {
 
 				// Successful creation. Update census count. nextPriority
 				// function makes sure there is a valid one, no need to check
-				room.memory.currentPopulation[type]++;
+				currentPopulation[type]++;
 				return OK;
 			} else {
 				// Check error log here.
-				log("Possible name collision trying to create a creep! Unusual.");
+				util
+						.dlog("Possible name collision trying to create a creep! Unusual.");
 			}
 		} else {
 			// Disposition
@@ -225,7 +245,7 @@ function create(type, room) {
 				room.memory.spawnWaiting = type;
 				break;
 			case ERR_INVALID_ARGS:
-				dlog("Error birthing creep of type " + type + "!");
+				util.dlog("Error birthing creep of type " + type + "!");
 				break;
 			}
 		}
@@ -247,11 +267,6 @@ function buffDesign(design) {
 function dlog(msg) {
 	console.log('[DEBUG] ' + msg);
 }
-
-module.exports.design = design;
-module.exports.minDemographics = minDemographics;
-module.exports.maxDemographics = maxDemographics;
-module.exports.goalDemographics = goalDemographics;
 module.exports.census = census;
 module.exports.breed = breed;
 module.exports.printDemographics = printDemographics;

@@ -1,10 +1,14 @@
+var util = require('common');
+
+var DEBUG_HARVEST = true;
+
 module.exports.miner = function(creep) {
 	var mySource = creep.memory.mySource;
 	if (typeof mySource === 'undefined') {
 		mySource = null;
 	}
-
-	dlog('Starting miner function for ' + creep.name);
+	//
+	// dlog('Starting miner function for ' + creep.name);
 	// New miner check
 	if ((mySource == null)) {
 		mySource = 'invalid';
@@ -15,22 +19,21 @@ module.exports.miner = function(creep) {
 		};
 
 		var gimmeSummin = creep.room.find(FIND_SOURCES);
-		var miners = creep.room.find(FIND_MY_CREEPS, {
-			filter : {
-				role : 'miner'
-			}
-		});
+		var miners = [];
+		var creeps = creep.room.find(FIND_MY_CREEPS)
 
-		dlog("All sources in room: ");
+		for ( var unit in creeps) {
+			if (creeps[unit].memory.role == 'miner') {
+				miners.push(creeps[unit]);
+			}
+		}
+
 		// initialize possible values
 		for ( var x in gimmeSummin) {
-			dlog('parameter ' + x + ' is ' + gimmeSummin[x]);
 			var sid = gimmeSummin[x].id;
-			dlog("Counting number of miners assigned to each source")
 			sourceAssignments[sid] = 0;
 			for ( var unit in miners) {
 				if (miners[unit].memory.mySource == sid) {
-					dlog('Unit ' + unit + ' is assigned to ' + sid);
 					sourceAssignments[sid]++;
 				}
 			}
@@ -41,13 +44,13 @@ module.exports.miner = function(creep) {
 		// source targeted
 
 		// Current limit per source is 3
-
-		dlog('List of assignements to each source: ');
-
 		for ( var source in sourceAssignments) {
-			dlog(' parameter ' + source + " is " + sourceAssignments[source]);
+			util.dlog(' parameter ' + source + " is "
+					+ sourceAssignments[source]);
 			if (sourceAssignments[source] < 3) {
-				mySource = source;
+				util.dlog("Source found, assigning " + source + " to "
+						+ creep.name);
+				creep.memory.mySource = source;
 			}
 		}
 
@@ -64,7 +67,7 @@ module.exports.miner = function(creep) {
 	// We should have a valid source, should check to make sure
 
 	creep.moveTo(Game.getObjectById(mySource));
-	creep.say("Workin' on the rail road...");
+	creep.say("Mining...");
 	creep.harvest(Game.getObjectById(mySource));
 }
 
@@ -75,7 +78,9 @@ function dumpObject(obj) {
 }
 
 function dlog(msg) {
-	console.log("[DEBUG HARVESTER] " + msg);
+	if (DEBUG_HARVEST) {
+		console.log("[DEBUG HARVESTER] " + msg);
+	}
 }
 // Try and keep shuttles and miners balanced in the room
 module.exports.sortingHat = function(creep) {
@@ -90,12 +95,6 @@ module.exports.sortingHat = function(creep) {
 			task : 'shuttle'
 		}
 	});
-
-	dlog('wtf...okay so');
-	dlog('shuttles; ' + shuttles.length + ' and ' + miners.length);
-	dlog('creep name ' + creep.name);
-	dlog('creep memory ');
-	dumpObject(creep.memory);
 
 	if (shuttles.length < miners.length) {
 		creep.memory.taskList.push('shuttle');
@@ -117,39 +116,101 @@ module.exports.shuttle = function(creep) {
 			}
 		});
 	} else {
+		var mySink = Game.getObjectById(creep.memory.sinkid);
+
+		if ((mySink == null) || isFull(mySink)) {
+			mySink = findSink(creep);
+		}
+
+		if ((mySink == null) || isFull(mySink)) {
+			dlog('No valid energy storage available!!');
+			return;
+		}
+
+		var dd = creep.moveTo(mySink);
+		if (dd == ERR_NO_PATH) {
+			mySink = null;
+		}
+		if (dd != 0) {
+
+			util.dlog("Creep " + creep.name + " cannot move! "
+					+ util.getError(dd));
+		}
+
+		var result = creep.transferEnergy(mySink);
+		if (!result) {
+			util.dlog("Creep " + creep.name + " cannot unload! "
+					+ util.getError(result));
+		}
+	}
+}
+
+module.exports.gatherer = function(creep) {
+
+	var mySource = creep.room.find(FIND_SOURCES)[0];
+
+	if (creep.carry.energy == 0) {
+		creep.moveTo(mySource);
+		creep.harvest(mySource);
+	} else if ((creep.carry.energy < creep.carryCapacity)
+			&& creep.pos.isNearTo(mySource)) {
+		creep.harvest(mySource);
+	} else {
 		var mySink = creep.memory.sink;
 
 		if ((mySink == null) || isFull(mySink)) {
 			mySink = findSink(creep);
 		}
-		dlog('move');
-		var dd = creep.moveTo(mySink);
-		if (dd == ERR_NO_PATH) {
-			mySink = null;
-		}
-		dlog('result is ' + dd);
-		dlog('trans');
-		var result = creep.transferEnergy(mySink);
-
-		dlog('result is ' + result);
+		creep.moveTo(mySink);
+		creep.transferEnergy(mySink);
 	}
+}
+function distance(p1, p2) {
+	return Math.sqrt(Math.pow((p1.x - p2.x), 2) + Math.pow((p1.y - p2.y), 2));
 }
 
 function findSink(creep) {
 	var structs = creep.room.find(FIND_MY_STRUCTURES);
+	var distances = {};
+
+	util.dlog('Finding sink for ' + creep.name);
 
 	for ( var i in structs) {
 		var struct = structs[i];
+		var structid = struct.id;
+
 		if ((struct.structureType == STRUCTURE_EXTENSION)
 				|| (struct.structureType == 'spawn')) {
 			if (!isFull(struct)) {
 				// check tehre is a path
+				util.dlog('storage candidate found, checking path');
+
 				if (creep.moveTo(struct) != ERR_NO_PATH) {
-					return struct;
+					// calculate distance
+					util.dlog('Path exists, adding to list')
+					distances[structid] = distance(creep.pos, struct.pos);
+					util.dlog('ID ' + structid + ' distance is '
+							+ distances[structid]);
 				}
 			}
 		}
 	}
+
+	var closest = 'empty';
+	var sourceId;
+	;
+	for ( var candidate in distances) {
+		if (closest == 'empty') {
+			closest = distances[candidate];
+			sourceId = candidate;
+		}
+		if (distances[candidate] < closest) {
+			closest = distances[candidate];
+			sourceId = candidate;
+		}
+	}
+	util.dlog("closest determined to be " + sourceId);
+	return sourceId;
 
 	// TODO: Add storage logic
 	// if ([ STRUCTURE_EXTENSION, 'storage' ].indexOf(struct.structureType)
