@@ -67,29 +67,32 @@ function dlog(msg) {
 }
 
 module.exports.strategery = function(room) {
-	var roomConfig = room.memory.strategy;
-	if (typeof roomConfig === 'undefined') {
-		roomConfig = {};
+
+	if (typeof room.memory.strategy === 'undefined') {
+		room.memory.strategy = {};
 	}
-	var lev = roomConfig.curlvl;
-	if (typeof lev === 'undefined') {
+
+	var roomConfig = room.memory.strategy;
+
+	if (typeof roomConfig.curlvl === 'undefined') {
 		roomConfig.curlvl = 0;
 	}
-
-	if (lev != room.controller.level) {
-		room.memory.strategy = {
-			"curlvl" : room.controller.level
-		};
+	if (typeof room.controller === 'undefined') {
+		dlog("No controller found in room. Strategy uncertain.");
+		return;
+	}
+	if (roomConfig.curlvl != room.controller.level) {
+		roomConfig.curlvl = room.controller.level;
 
 		dlog('Room level has changed. Revising all strategery with level '
-				+ lev + ' badassery.');
+				+ roomConfig.curlvl + ' badassery.');
 
 	}
 
 	var selectStrat = [ bootstrap, lvl1room, lvl2room, lvl3room, lvl4room,
 			lvl5room, lvl6room, lvl7room ];
 
-	selectStrat[room.controller.level](room);
+	selectStrat[roomConfig.curlvl](room);
 }
 
 function lvl3room(room) {
@@ -104,13 +107,17 @@ function lvl7room(room) {
 }
 
 function bootstrap(room) {
-
+	if (room.popCount() >= 6) {
+		// Enough bootstrapping, proceed to Phase II of the Plan
+		return lvl1room(room);
+	}
 	// Set basic population control parameters
 	var roomConfig = room.memory.strategy;
 
 	roomConfig.latestModels = {
 		'gatherer' : [ WORK, WORK, CARRY, MOVE ],
 		"miner" : [ WORK, WORK, MOVE ],
+		"scout" : [ TOUGH, ATTACK, MOVE, MOVE ],
 		"workerBee" : [ CARRY, CARRY, CARRY, MOVE, MOVE, MOVE ]
 	};
 
@@ -119,52 +126,52 @@ function bootstrap(room) {
 	// miner, worker, scout, miner, worker, tech, miner,worker,scout,tech?
 	roomConfig.goalDemographics = {
 		"gatherer" : 0.2,
+		"scout" : 0.2,
 		"miner" : 0.4,
 		"workerBee" : 0.4,
-		"scout" : 0.2,
 		"technician" : 0.2
 	}
-	roomConfig.minDemographics = {} // No mins, the goalDemo and max will
-	// control build order this early in room
+	roomConfig.minDemographics = {
+		"gatherer" : 1
+	// Build two of these first thing
+	}
 	roomConfig.maxDemographics = {
 		"gatherer" : 3,
+		"scout" : 2,
 		"workerBee" : 3,
-		"miner" : 3, // scouts should chill out until an enemy enters the
-	// // room.
-	// "technician" : 5
-	// Technicians should default to upgrading the
-	// controller
+		"miner" : 3,
 	}
 }
 
 var lvl1room = function(room) {
-	dlog("lvl1 strategy selected");
-
+	var roomConfig = room.memory.strategy;
 	// Just checking if we can get off the ground properly
-	if (room.popCount < 3) {
-		bootstrapRoom(room);
+	if (room.popCount() <= 3) {
+		return bootstrap(room);
 	}
-
+	dlog('lvl1 proper, pop counted ' + room.popCount());
 	// Setup population goals
-	population.setDesign({
+	roomConfig.latestModels = {
 		"miner" : [ WORK, WORK, MOVE ],
 		"workerBee" : [ CARRY, CARRY, CARRY, MOVE, MOVE, MOVE ],
 		"scout" : [ TOUGH, ATTACK, MOVE, MOVE ],
 		"technician" : [ MOVE, MOVE, WORK, CARRY, CARRY ]
-	});
+	};
 
 	// demographics control build order
 	// This will build in sequence (assuming nobody dies)
 	// miner, worker, scout, miner, worker, tech, miner,worker,scout,tech?
-	population.goalDemographics = {
+	roomConfig.goalDemographics = {
 		"miner" : 0.4,
 		"workerBee" : 0.4,
 		"scout" : 0.2,
 		"technician" : 0.2
-	}
-	population.minDemographics = {} // No mins, the goalDemo and max will
+	};
+
+	roomConfig.minDemographics = {} // No mins, the goalDemo and max will
 	// control build order this early in room
-	population.maxDemographics = {
+	roomConfig.maxDemographics = {
+		"gatherer" : 5,
 		"miner" : 3,
 		"workerBee" : 3,
 		"scout" : 3, // scouts should chill out until an enemy enters the

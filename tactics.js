@@ -5,3 +5,5 @@
 // target.hits
 // doNotEngage();
 // Find rampart
+module.exports.duty = function() {
+}

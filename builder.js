@@ -28,8 +28,8 @@ module.exports = function(creep) {
 	// Take a look around the room for something to do
 
 	// If we are here, seems there is no extension with energy
-	workerBee(creep);
-	return;
+	// workerBee(creep);
+	// return;
 
 	if ((creep.memory.myTargetId == null)
 			|| typeof Game.structures[creep.memory.myTargetId] === 'undefined') {
@@ -169,7 +169,7 @@ function constructionDuty(creep) {
 	return null;
 }
 
-var upgradeController = function(creep) {
+module.exports.upgradeController = function(creep) {
 
 	var rc = creep.room.controller;
 

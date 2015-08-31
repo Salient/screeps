@@ -7,6 +7,7 @@ module.exports.miner = function(creep) {
 	if (typeof mySource === 'undefined') {
 		mySource = null;
 	}
+
 	//
 	// dlog('Starting miner function for ' + creep.name);
 	// New miner check
@@ -18,8 +19,8 @@ module.exports.miner = function(creep) {
 			"invalid" : 0
 		};
 
-		var gimmeSummin = creep.room.find(FIND_SOURCES);
 		var miners = [];
+		var distances = [];
 		var creeps = creep.room.find(FIND_MY_CREEPS)
 
 		for ( var unit in creeps) {
@@ -28,38 +29,55 @@ module.exports.miner = function(creep) {
 			}
 		}
 
+		var gimmeSummin = creep.room.find(FIND_SOURCES);
+
 		// initialize possible values
 		for ( var x in gimmeSummin) {
 			var sid = gimmeSummin[x].id;
-			sourceAssignments[sid] = 0;
+			var source = gimmeSummin[x];
+			var numAss = 0;
+
 			for ( var unit in miners) {
 				if (miners[unit].memory.mySource == sid) {
-					sourceAssignments[sid]++;
+					numAss++;
 				}
 			}
-		}
-
-		// Should have an array of sources and the number of miners which have
-		// that
-		// source targeted
-
-		// Current limit per source is 3
-		for ( var source in sourceAssignments) {
-			dlog(' parameter ' + source + " is " + sourceAssignments[source]);
-			if (sourceAssignments[source] < 3) {
-				dlog("Source found, assigning " + source + " to " + creep.name);
-				creep.memory.mySource = source;
+			// Limit miners to three a source
+			if (numAss > 3) {
+				continue;
 			}
+			// If less than three, write it down
+			distances.push({
+				'sourceId' : sid,
+				'distance' : distance(creep.pos, source.pos),
+			});
 		}
 
-		// If we are still invalid, we have counted 3 or more miners targeting
-		// all sources
-
-		if (mySource == 'invalid') {
+		if (!distances.length) {
+			// no open sources found
 			dlog('Too many miners.');
 			creep.say("AAAAHHHH MOTHERLAND!!");
 			// creep.suicide(); // Nothing else to really do with a miner
 		}
+
+		// Should have an array of sources with less than 3 miners already
+		// assigned
+		// along with how far away they are.
+
+		// Sort by distance
+		distances.sort(function(a, b) {
+			if (a.distance > b.distance) {
+				return 1;
+			} else if (a.distance < b.distance) {
+				return -1;
+			} else {
+				return 0;
+			}
+		});
+		dlog("Source found, assigning " + distances[0].sourceId + " to "
+				+ creep.name);
+		creep.memory.mySource = distances[0].sourceId;
+
 	}
 
 	// We should have a valid source, should check to make sure
@@ -121,7 +139,7 @@ module.exports.shuttle = function(creep) {
 		mySink = Game.getObjectById(creep.memory.sinkId);
 
 		if ((mySink == null) || isFull(mySink)) {
-			dlog('No valid energy storage available!!');
+			// dlog('No valid energy storage available!!');
 			return;
 		}
 
@@ -134,16 +152,33 @@ module.exports.shuttle = function(creep) {
 			dlog("Creep " + creep.name + " cannot move! " + util.getError(dd));
 		}
 
-		var result = creep.transferEnergy(mySink);
-		if (!result) {
-			dlog("Creep " + creep.name + " cannot unload! "
-					+ util.getError(result));
+		if (creep.pos.isNearTo(mySink)) {
+			var result = creep.transferEnergy(mySink);
+			if (result != 0) {
+				dlog("Creep " + creep.name + " cannot unload! "
+						+ util.getError(result));
+			}
 		}
 	}
 }
 
 module.exports.gatherer = function(creep) {
 
+	var scrounge = creep.room.find(FIND_DROPPED_ENERGY);
+
+	if (scrounge.length) {
+		for ( var s in scrounge) {
+
+			if (creep.carry.energy == creep.carryCapacity) {
+				continue;
+			}
+			creep.moveTo(s);
+			creep.pickup(s);
+		}
+		;
+	}
+
+	// TODO standardize sinks
 	var mySource = creep.room.find(FIND_SOURCES)[0];
 
 	if (creep.carry.energy == 0) {
@@ -188,6 +223,49 @@ function findSink(creep) {
 				}
 			}
 		}
+	}
+
+	var closest = 'empty';
+	var sinkId;
+	;
+	for ( var candidate in distances) {
+		if (closest == 'empty') {
+			closest = distances[candidate];
+			sinkId = candidate;
+		}
+		if (distances[candidate] < closest) {
+			closest = distances[candidate];
+			sinkId = candidate;
+		}
+	}
+	// dlog("closest determined to be " + sinkId);
+	return sinkId;
+
+	// TODO: Add storage logic
+	// if ([ STRUCTURE_EXTENSION, 'storage' ].indexOf(struct.structureType)
+	// == -1) {
+	// continue;
+	// }
+
+	// All extensions and spawns are full. Hit up the controller then
+	// for ( var i in structs) {
+	// var struct = structs[i];
+	// if ((struct.structureType == STRUCTURE_CONTROLLER)) {
+	// return struct;
+	// }
+	// }
+}
+
+function findSource(creep) {
+	var sources = creep.room.find(FIND_SOURCES);
+	var distances = {};
+
+	dlog('Finding source for ' + creep.name);
+
+	for ( var i in sources) {
+		var source = sources[i];
+		var sourceid = source.id;
+		distances[sourceid] = distance(creep.pos, struct.pos);
 	}
 
 	var closest = 'empty';

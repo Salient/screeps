@@ -1,6 +1,7 @@
 var population = require('population');
 var taskMaster = require('tasker');
 var roomstrat = require('strategy');
+var util = require('common');
 
 // Prototype extensions
 Structure.prototype.needsRepair = function() {
@@ -51,9 +52,9 @@ Creep.prototype.checkPath = function(structure) {
 }
 
 // Quickstart for sims
-if (Game.time <= 2) {
+if (Game.time <= 20) {
 	// skip timeouts
-	population.breed(Game.rooms.sim);
+	roomstrat.strategery(Game.rooms.sim);
 }
 // Welcome to the HiveMind (v0.1)
 // Basic aim is to build up a room, fortify, and then spawn into adjacent rooms.
@@ -71,7 +72,7 @@ for ( var i in Game.rooms) {
 
 	// Needs to happen before population breeding, because it sets some
 	// parameters. Should update every 61 seconds or so.
-	if (!(Game.time % 2)) {
+	if (!(Game.time % 20)) {
 		roomstrat.strategery(curRoom);
 	}
 	// Update minion tasks every tick

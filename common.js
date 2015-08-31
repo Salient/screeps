@@ -37,6 +37,7 @@ function dlog(module, msg) {
 module.exports.dlog = dlog;
 
 module.exports.dumpObject = function(obj) {
+	dlog('Dumping Object...');
 	for ( var x in obj) {
 		dlog('parameter: ' + x + ' is ' + obj[x]);
 	}

@@ -4,14 +4,11 @@
 
 var util = require('common');
 
-var debug = true; // Debug code
-
 var harvest = require('harvester');
 var build = require('builder');
+var military = require('tactics');
 
-// var upgrade = require('upgrader');
-var patrol = require('guard');
-// var population = require('population');
+var debug = true; // Debug code
 
 module.exports.taskMinions = function(room) {
 	var minions = room.find(FIND_MY_CREEPS);
@@ -26,12 +23,6 @@ function dlog(msg) {
 }
 
 var performTask = function(creep) {
-
-	// dlog('performing task for ' + creep.name);
-	// // dumpObject(creep);
-	// dlog('creep mems');
-	// dumpObject(creep.memory);
-
 	var taskList = creep.memory.taskList;
 
 	// Two types of tasks: default role task, and special assigned tasks
@@ -47,7 +38,6 @@ var performTask = function(creep) {
 		dlog('Empty task list found: ' + creep.name);
 		taskList[0] = getDefaultTask(creep);
 	}
-
 	// Global behavior definitions
 	switch (taskList[taskList.length - 1]) {
 	case 'miner':
@@ -58,10 +48,17 @@ var performTask = function(creep) {
 		break;
 	case 'harvestSortingHat': // Shuttle creep have the parts to be useful
 		harvest.sortingHat(creep);
+		break;
 	case 'gatherer':
 		harvest.gatherer(creep);
+		break;
+	case 'military':
+		military.duty(creep);
+		break;
+	case 'technician':
+		build.upgradeController(creep);
+		break;
 	}
-
 }
 
 // // Get
@@ -83,45 +80,22 @@ var performTask = function(creep) {
 var getDefaultTask = function(creep) { // What to do if the creep has
 	// nothing to do
 	var role = creep.memory.role;
-
-	if (role == 'miner') {
-		return role;
-	}
-
-	if (role == 'workerBee') {
+	dlog('assigning default task');
+	switch (role) {
+	case 'workerBee':
 		return 'harvestSortingHat';
+	case 'gatherer':
+	case 'miner':
+	case 'technician':
+	case 'construction':
+		return role;
+	case 'scout':
+	case 'footSoldier':
+	case 'cavalry':
+	case 'enforcer':
+		return 'military';
+	default:
+		console.log('unmatched unit found!');
+		return 'freeAgent';
 	}
-
-	if (role == 'gatherer') {
-		return 'gatherer';
-	}
-
-	if (creep.memory.role == 'construction') {
-		if (debug) {
-			dlog('Assigning default role to engineer ' + creep.name);
-		}
-
-		return new taskObject('Building/Upgrading', build.construction, 300);
-	}
-
-	if (creep.memory.role == 'footSoldier') {
-		if (debug) {
-			dlog('Assigning default role to soldier ' + creep.name);
-		}
-		return new taskObject('Patrolling Base', patrol, 300);
-	}
-
-	if (creep.memory.role == 'engineer') {
-		if (debug) {
-			dlog('Assigning default role to conbot ' + creep.name);
-		}
-
-		return new taskObject('Laying some pipe', builder.engineer, 300);
-	}
-
-	console.log('unmatched unit found!');
-	return 'freeAgent';
-	// return new taskObject('I have no job!!!', creep.say('who am i'), 30);
 }
-
-// module.exports.taskMinions = performTask;

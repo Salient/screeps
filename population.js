@@ -51,9 +51,18 @@ var getCost = function(design) {
 	return cost;
 }
 
-var isValidRole = function(role) {
+var isValidRole = function(room, role) {
+
+	dlog('testing if ' + role + ' is valid for room ' + room);
+
+	var design = room.memory.strategy.latestModels;
+
+	util.dumpObject(design);
+
 	for ( var type in design) {
-		if (design[type] == role) {
+		dlog(' is ' + type + ' what im looking for?');
+		if (type == role) {
+			dlog('herpaderp derp');
 			return true;
 		}
 	}
@@ -95,8 +104,10 @@ function nextPriority(room) {
 		if (typeof currentPopulation[i] === 'undefined') {
 			currentPopulation[i] = 0;
 		}
+		dlog("checking minimums for " + i);
 		// See if we need more of them
 		if (currentPopulation[i] < minDemographics[i]) {
+			dlog('Must build a minimum of ' + minDemographics[i] + ' ' + i);
 			return (i);
 		}
 	}
@@ -115,8 +126,25 @@ function nextPriority(room) {
 		}
 
 		// See if we need more of them
-		if (currentPopulation[i] / totalPop < goalDemographics[i]) {
-			return (i);
+		dlog('checking if we need more ' + i);
+		if (typeof goalDemographics === 'undefined') {
+			dlog(i + ' type is no longer in goal demographic.');
+			continue;
+		}
+		if ((currentPopulation[i] / totalPop) < goalDemographics[i]) {
+			dlog('We have less ' + i + ' than the goal percentage');
+			// Check Maximums
+			if (currentPopulation[i] >= maxDemographics[i]) {
+				dlog("But we have met the maximum number of " + i);
+				continue;
+			} else {
+				dlog('yep, creating a ' + i);
+				return (i);
+			}
+		} else {
+
+			dlog('we have enough ' + i);
+			continue;
 		}
 		// else {
 		// if (room.memory.populationDebug) {
@@ -125,7 +153,7 @@ function nextPriority(room) {
 		// }
 	}
 
-	return null;
+	// return null;
 }
 
 // Show current room unit types and percent of goal
@@ -183,17 +211,30 @@ var breed = function(room) {
 	// // Short circuit a lot of processing if we've already done it but
 	// couldn't
 	// // finish
-	// if ((room.memory.spawnWaiting != null)
-	// && !(typeof room.memory.spawnWaiting === 'undefined')) {
-	// if (!(create(room.memory.spawnWaiting, room))) {
-	// room.memory.spawnWaiting = null;
-	// }
-	// }
+	var bowchickabowchicka = null;
+
+	if (typeof room.memory.spawnWaiting === 'undefined') {
+		room.memory.spawnWaiting = null;
+	}
+
+	if (room.memory.spawnWaiting != null) {
+		bowchickabowchicka = room.memory.spawnWaiting;
+	} else {
+		bowchickabowchicka = nextPriority(room);
+	}
 
 	// var popLimit = room.memory.maxPop;
-	var result = create(nextPriority(room), room);
+
+	// if (isValidRole(room, bowchickabowchicka)) {
+	var result = create(bowchickabowchicka, room);
 	if (result < 0) {
 		dlog("Error creating creep: " + util.getError(result));
+		// }
+		// } else {
+		// dlog('invalid design'); // tried to create invalid creep...probably
+		// // null?
+	} else {
+		room.memory.spawnWaiting = null;
 	}
 }
 
@@ -246,10 +287,11 @@ function create(type, room) {
 			case ERR_INVALID_ARGS:
 				dlog("Error birthing creep of type " + type + "!");
 				break;
+			default:
+				return baby;
 			}
 		}
 	}
-	return -1;
 }
 
 function log(msg) {
