@@ -178,7 +178,11 @@ function upgradeController(creep) {
 
 	if (creep.pos.isNearTo(rc) && (creep.carry.energy > 0)) {
 		creep.say(completedPretty(rc) + "%");
-		creep.upgradeController(rc);
+		if(rc.my) {
+		  creep.upgradeController(rc);
+		} else {
+		  creep.claimController(rc);
+		}
 	} else {
 		fillTank(creep);
 		creep.moveTo(rc);
