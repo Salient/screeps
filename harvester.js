@@ -85,7 +85,7 @@ module.exports.miner = function(creep) {
 	creep.moveTo(Game.getObjectById(mySource), {
 		reusePath : 5
 	});
-	creep.say(creep.role);
+	creep.say(creep.memory.role);
 	creep.harvest(Game.getObjectById(mySource));
 }
 

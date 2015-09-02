@@ -9,6 +9,7 @@ var util = require('common');
 // Find rampart
 module.exports.duty = function(creep) {
 	var targets = creep.room.find(FIND_HOSTILE_CREEPS);
+	var forGlory = 0;
 	if (targets.length) {
 		targets.sort(function(a, b) {
 			if (a.hits > b.hits) {
@@ -21,16 +22,20 @@ module.exports.duty = function(creep) {
 		}) // TODO
 		for ( var infidel in targets)
 			if (leeroooooy(creep, targets[infidel])) {
+				forGlory = 1;
 				creep.moveTo(targets[infidel]);
 				creep.attack(targets[infidel]);
 			}
-	} else {
-		// Default muster point
+	}
+
+	// Default muster point
+	if (!forGlory) {
 		if (!(typeof Game.flags.muster1 === 'undefined')) {
 			// dlog('No fights worth fighting, return to muster point');
 			// dlog('result: ' +
 			// util.getError(creep.moveTo(Game.flags.muster1)));
 			creep.moveTo(Game.flags.muster1);
+
 		}
 	}
 }
