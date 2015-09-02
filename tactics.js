@@ -10,7 +10,15 @@ var util = require('common');
 module.exports.duty = function(creep) {
 	var targets = creep.room.find(FIND_HOSTILE_CREEPS);
 	if (targets.length) {
-		targets.sort()
+		targets.sort(function(a, b) {
+			if (a.hits > b.hits) {
+				return 1;
+			}
+			if (a.hits < b.hits) {
+				return -1;
+			}
+			return 0;
+		}) // TODO
 		for ( var infidel in targets)
 			if (leeroooooy(creep, targets[infidel])) {
 				creep.moveTo(targets[infidel]);

@@ -118,7 +118,8 @@ function bootstrap(room) {
 		'gatherer' : [ WORK, WORK, CARRY, MOVE ],
 		"miner" : [ WORK, WORK, MOVE ],
 		"scout" : [ TOUGH, ATTACK, MOVE, MOVE ],
-		"workerBee" : [ CARRY, CARRY, CARRY, MOVE, MOVE, MOVE ]
+		"workerBee" : [ CARRY, CARRY, CARRY, MOVE, MOVE, MOVE ],
+		"technician" : [ MOVE, MOVE, WORK, CARRY, CARRY ]
 	};
 
 	// demographics control build order

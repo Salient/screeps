@@ -131,7 +131,7 @@ module.exports.sortingHat = function(creep) {
 module.exports.shuttle = function(creep) {
 
 	// Go scrounge for energy
-	if (creep.carry.energy < (creep.carryCapacity) / 3) {
+	if (creep.carry.energy < (creep.carryCapacity)) {
 		creep.room.find(FIND_DROPPED_ENERGY).forEach(function(site) {
 			creep.moveTo(site, {
 				reusePath : 5
@@ -176,11 +176,12 @@ module.exports.shuttle = function(creep) {
 }
 
 function scrounge(creep) {
-	creep.room.find(FIND_DROPPED_ENERGY);
+	var scrounge = creep.room.find(FIND_DROPPED_ENERGY);
 
 	if (scrounge.length) {
 		for ( var s in scrounge) {
 			if (creep.carry.energy != creep.carryCapacity) {
+				creep.moveTo(scrounge[s]);
 				if (creep.pos.isNearTo(scrounge[s])) {
 					creep.pickup(scrounge[s]);
 				}
@@ -197,15 +198,14 @@ module.exports.gatherer = function(creep) {
 
 	// TODO standardize sinks
 	var mySource = creep.room.find(FIND_SOURCES)[0];
-
-	if (creep.carry.energy == 0) {
+	if (creep.carry.energy < creep.carryCapacity) {
 		creep.moveTo(mySource, {
 			reusePath : 5
 		});
-		creep.harvest(mySource);
-	} else if ((creep.carry.energy < creep.carryCapacity)
-			&& creep.pos.isNearTo(mySource)) {
-		creep.harvest(mySource);
+
+		if (creep.pos.isNearTo(mySource)) {
+			creep.harvest(mySource);
+		}
 	} else {
 		var mySink = Game.getObjectById(creep.memory.sinkId);
 
