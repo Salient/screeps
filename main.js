@@ -36,7 +36,7 @@ Room.prototype.getLevel = function() {
 }
 
 Room.prototype.getError = function(msg) {
-	return (getError(msg));
+	return (util.getError(msg));
 }
 Creep.prototype.getError = function(msg) {
 	return (util.getError(msg));
@@ -75,19 +75,20 @@ for ( var i in Game.rooms) {
 	if (!(Game.time % 20)) {
 		roomstrat.strategery(curRoom);
 	}
+
 	// Update minion tasks every tick
 	taskMaster.taskMinions(curRoom);
 
 	// Update population tracking for each room for creeps that were killed or
 	// died of old age.
-	if (!(Game.time % 31)) {
+	if (!(Game.time % 79)) {
 		// console.log("Updating population tracking for room " + i);
 		curRoom.memory.strategy.currentPopulation = population.census(curRoom);
 		population.printDemographics(curRoom);
 	}
 	// Check unit production every 11 seconds. Demographics are configured by
 	// strategy
-	if (!(Game.time % 11)) {
+	if (!(Game.time % 5)) {
 		population.breed(curRoom);
 	}
 
@@ -98,12 +99,12 @@ function dlog(msg) {
 }
 // Housekeeping
 // Delete old memory entries
-if (!(Game.time % 30)) {
+if (!(Game.time % 300)) {
 	dlog("Housekeeping");
-	for ( var ghost in Memory.creeps) {
-		if (typeof Game.creeps.ghost === 'undefined') {
-			// delete (Memory.creeps[ghost]);
-			// dlog('possible ghost found: ' + ghost.name);
+
+	for ( var i in Memory.creeps) {
+		if (!Game.creeps[i]) {
+			delete Memory.creeps[i];
 		}
 	}
 }

@@ -82,8 +82,10 @@ module.exports.miner = function(creep) {
 
 	// We should have a valid source, should check to make sure
 
-	creep.moveTo(Game.getObjectById(mySource));
-	creep.say("Mining...");
+	creep.moveTo(Game.getObjectById(mySource), {
+		reusePath : 5
+	});
+	creep.say(creep.role);
 	creep.harvest(Game.getObjectById(mySource));
 }
 
@@ -99,23 +101,30 @@ function dlog(msg) {
 
 // Try and keep shuttles and miners balanced in the room
 module.exports.sortingHat = function(creep) {
+	var taskList = creep.memory.taskList;
+	var assignments = {
+		'shuttle' : 0,
+		'miner' : 0
+	}; // initialize these two for
+	// testing later
 	// find the miners in the room
-	var miners = creep.room.find(FIND_MY_CREEPS, {
-		filter : {
-			role : 'miner'
-		}
-	});
-	var shuttles = creep.room.find(FIND_MY_CREEPS, {
-		filter : {
-			task : 'shuttle'
-		}
-	});
+	var jerks = creep.room.find(FIND_MY_CREEPS).forEach(
+			function(creeper, index, array) {
+				var curTask = taskList[0]
+				if (typeof assignments[curTask] === 'undefined') {
+					assignments[curTask] = 0;
+				}
+				assignments[curTask]++;
+			});
 
-	if (shuttles.length < miners.length) {
-		creep.memory.taskList.push('shuttle');
+	if ((assignments.miners > 0) && (assignments.shuttle < assignments.miners)) {
+		taskList = taskList.push('shuttle');
+	} else if (assignments.shuttle > 2) {
+		taskList = taskList.push('builder');// change to builders or
 	} else {
-		creep.memory.taskList.push('shuttle');// change to builders or
+		taskList = taskList.push('gatherer');// change to builders or
 		// something later
+
 	}
 }
 
@@ -124,7 +133,9 @@ module.exports.shuttle = function(creep) {
 	// Go scrounge for energy
 	if (creep.carry.energy < (creep.carryCapacity) / 3) {
 		creep.room.find(FIND_DROPPED_ENERGY).forEach(function(site) {
-			creep.moveTo(site);
+			creep.moveTo(site, {
+				reusePath : 5
+			});
 			creep.pickup(site);
 			if (creep.carry.energy == creep.carryCapacity) {
 				return;
@@ -143,7 +154,9 @@ module.exports.shuttle = function(creep) {
 			return;
 		}
 
-		var dd = creep.moveTo(mySink);
+		var dd = creep.moveTo(mySink, {
+			reusePath : 5
+		});
 		if (dd == ERR_NO_PATH) {
 			mySink = null;
 		}
@@ -162,27 +175,33 @@ module.exports.shuttle = function(creep) {
 	}
 }
 
-module.exports.gatherer = function(creep) {
-
-	var scrounge = creep.room.find(FIND_DROPPED_ENERGY);
+function scrounge(creep) {
+	creep.room.find(FIND_DROPPED_ENERGY);
 
 	if (scrounge.length) {
 		for ( var s in scrounge) {
-
-			if (creep.carry.energy == creep.carryCapacity) {
-				continue;
+			if (creep.carry.energy != creep.carryCapacity) {
+				if (creep.pos.isNearTo(scrounge[s])) {
+					creep.pickup(scrounge[s]);
+				}
 			}
-			creep.moveTo(s);
-			creep.pickup(s);
 		}
-		;
 	}
+}
+module.exports.scrounge = scrounge;
+
+module.exports.gatherer = function(creep) {
+
+	// First hit up the miners
+	scrounge(creep);
 
 	// TODO standardize sinks
 	var mySource = creep.room.find(FIND_SOURCES)[0];
 
 	if (creep.carry.energy == 0) {
-		creep.moveTo(mySource);
+		creep.moveTo(mySource, {
+			reusePath : 5
+		});
 		creep.harvest(mySource);
 	} else if ((creep.carry.energy < creep.carryCapacity)
 			&& creep.pos.isNearTo(mySource)) {
@@ -193,7 +212,9 @@ module.exports.gatherer = function(creep) {
 		if ((mySink == null) || isFull(mySink)) {
 			creep.memory.sinkId = findSink(creep);
 		}
-		creep.moveTo(mySink);
+		creep.moveTo(mySink, {
+			reusePath : 5
+		});
 		creep.transferEnergy(mySink);
 	}
 }
@@ -215,7 +236,9 @@ function findSink(creep) {
 				|| (struct.structureType == 'spawn')) {
 			if (!isFull(struct)) {
 				// check there is a path
-				if (creep.moveTo(struct) != ERR_NO_PATH) {
+				if (creep.moveTo(struct, {
+					reusePath : 5
+				}) != ERR_NO_PATH) {
 					// calculate distance
 					distances[structid] = distance(creep.pos, struct.pos);
 					// dlog('ID ' + structid + ' distance is '

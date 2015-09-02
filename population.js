@@ -106,7 +106,7 @@ function nextPriority(room) {
 		}
 		dlog("checking minimums for " + i);
 		// See if we need more of them
-		if (currentPopulation[i] < minDemographics[i]) {
+		if (currentPopulation[i] <= minDemographics[i]) {
 			dlog('Must build a minimum of ' + minDemographics[i] + ' ' + i);
 			return (i);
 		}
@@ -233,8 +233,6 @@ var breed = function(room) {
 		// } else {
 		// dlog('invalid design'); // tried to create invalid creep...probably
 		// // null?
-	} else {
-		room.memory.spawnWaiting = null;
 	}
 }
 
@@ -268,6 +266,7 @@ function create(type, room) {
 				// Successful creation. Update census count. nextPriority
 				// function makes sure there is a valid one, no need to check
 				currentPopulation[type]++;
+				room.memory.spawnWaiting = null;
 				return OK;
 			} else {
 				// Check error log here.
@@ -277,10 +276,13 @@ function create(type, room) {
 			// Disposition
 			switch (baby) {
 			case ERR_NOT_ENOUGH_ENERGY:
-				// Remember for next time, try again
+				// dlog('WE REQUIRE MORE VESPENE GAS')
+				// dlog('cant build type ' + type)
+				// // Remember for next time, try again
 				room.memory.spawnWaiting = type;
 				break;
 			case ERR_BUSY:
+				dlog('your mother is a busy woman')
 				// Remember for next time, try again
 				room.memory.spawnWaiting = type;
 				break;

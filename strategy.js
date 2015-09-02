@@ -107,7 +107,7 @@ function lvl7room(room) {
 }
 
 function bootstrap(room) {
-	if (room.popCount() >= 6) {
+	if ((room.popCount()) >= 10) {
 		// Enough bootstrapping, proceed to Phase II of the Plan
 		return lvl1room(room);
 	}
@@ -126,27 +126,28 @@ function bootstrap(room) {
 	// miner, worker, scout, miner, worker, tech, miner,worker,scout,tech?
 	roomConfig.goalDemographics = {
 		"gatherer" : 0.2,
-		"scout" : 0.2,
-		"miner" : 0.4,
-		"workerBee" : 0.4,
-		"technician" : 0.2
+		"scout" : 0.4,
+		"miner" : 0.2,
+		"workerBee" : 0.2,
+		"technician" : 0.4
 	}
 	roomConfig.minDemographics = {
-		"gatherer" : 1
+		"gatherer" : 1,
+		"scout" : 3
 	// Build two of these first thing
 	}
 	roomConfig.maxDemographics = {
-		"gatherer" : 3,
-		"scout" : 2,
-		"workerBee" : 3,
-		"miner" : 3,
+		"gatherer" : 2,
+		"scout" : 8,
+		"workerBee" : 4,
+		"miner" : 4,
 	}
 }
 
 var lvl1room = function(room) {
 	var roomConfig = room.memory.strategy;
 	// Just checking if we can get off the ground properly
-	if (room.popCount() <= 3) {
+	if (room.popCount() < 10) {
 		return bootstrap(room);
 	}
 	dlog('lvl1 proper, pop counted ' + room.popCount());
@@ -162,10 +163,11 @@ var lvl1room = function(room) {
 	// This will build in sequence (assuming nobody dies)
 	// miner, worker, scout, miner, worker, tech, miner,worker,scout,tech?
 	roomConfig.goalDemographics = {
-		"miner" : 0.4,
-		"workerBee" : 0.4,
-		"scout" : 0.2,
-		"technician" : 0.2
+		"miner" : 0.2,
+		"workerBee" : 0.2,
+		"scout" : 0.05,
+		"technician" : 0.6,
+		"gatherer" : 0.05
 	};
 
 	roomConfig.minDemographics = {} // No mins, the goalDemo and max will
@@ -173,10 +175,10 @@ var lvl1room = function(room) {
 	roomConfig.maxDemographics = {
 		"gatherer" : 5,
 		"miner" : 3,
-		"workerBee" : 3,
-		"scout" : 3, // scouts should chill out until an enemy enters the
+		"workerBee" : 5,
+		"scout" : 10, // scouts should chill out until an enemy enters the
 		// room.
-		"technician" : 5
+		"technician" : 20
 	// Technicians should default to upgrading the
 	// controller
 	}
@@ -184,27 +186,29 @@ var lvl1room = function(room) {
 }
 
 var lvl2room = function(room) {
+	var roomConfig = room.memory.strategy;
+
 	// Setup population goals
-	population.setDesign({
+	roomConfig.latestModels = {
 		"miner" : [ WORK, WORK, MOVE ],
 		"workerBee" : [ CARRY, CARRY, CARRY, MOVE, MOVE, MOVE ],
 		"scout" : [ TOUGH, ATTACK, MOVE, MOVE ],
 		"technician" : [ MOVE, MOVE, WORK, CARRY, CARRY ],
 		"builder" : [ MOVE, MOVE, CARRY, CARRY, CARRY, WORK, WORK, WORK ]
-	});
+	};
 
 	// demographics control build order
 	// This will build in sequence (assuming nobody dies)
 	// miner, worker, scout, miner, worker, tech, miner,worker,scout,tech?
-	population.goalDemographics = {
+	roomConfig.goalDemographics = {
 		"miner" : 0.4,
 		"workerBee" : 0.4,
 		"scout" : 0.2,
 		"technician" : 0.2
 	}
-	population.minDemographics = {} // No mins, the goalDemo and max will
+	roomConfig.minDemographics = {} // No mins, the goalDemo and max will
 	// control build order this early in room
-	population.maxDemographics = {
+	roomConfig.maxDemographics = {
 		"miner" : 3,
 		"workerBee" : 3,
 		"scout" : 3,

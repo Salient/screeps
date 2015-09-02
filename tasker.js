@@ -13,6 +13,7 @@ var debug = true; // Debug code
 module.exports.taskMinions = function(room) {
 	var minions = room.find(FIND_MY_CREEPS);
 	for ( var dude in minions) {
+		// minions[dude].say(minions[dude].memory.role);
 		performTask(minions[dude]);
 		// upgrade(minions[dude]); // TEMP CODE
 	}
@@ -23,21 +24,28 @@ function dlog(msg) {
 }
 
 var performTask = function(creep) {
-	var taskList = creep.memory.taskList;
 
 	// Two types of tasks: default role task, and special assigned tasks
 	// role tasks are search and perform logic, assigned are specific targets
 	// to prevent multiple units trying to work on the same thing
 
-	if (typeof taskList === 'undefined') {
+	if (typeof creep.memory.taskList === 'undefined') {
 		dlog('Undefined task list found: ' + creep.name);
-		taskList = [];
+		creep.memory.taskList = [];
 	}
 
-	if (taskList[0] === 'undefined' || (taskList[0] == null)) {
+	var taskList = creep.memory.taskList;
+
+	if ((typeof taskList[0] === 'undefined') || (taskList[0] == null)) {
 		dlog('Empty task list found: ' + creep.name);
 		taskList[0] = getDefaultTask(creep);
 	}
+	if ((taskList.length > 1) && !(Game.time % 10)) // Periodically refresh
+	// temporary tasksf
+	{
+		taskList.pop();
+	}
+
 	// Global behavior definitions
 	switch (taskList[taskList.length - 1]) {
 	case 'miner':
@@ -58,6 +66,13 @@ var performTask = function(creep) {
 	case 'technician':
 		build.upgradeController(creep);
 		break;
+	case 'builder':
+		build(creep);
+		break;
+	case 'freeAgent':
+		harvest.sortingHat(creep);
+	default:
+		dlog('Unhandled creep task! (' + taskList[taskList.length - 1] + ')');
 	}
 }
 
@@ -82,9 +97,10 @@ var getDefaultTask = function(creep) { // What to do if the creep has
 	var role = creep.memory.role;
 	dlog('assigning default task');
 	switch (role) {
+	case 'freeAgent':
 	case 'workerBee':
-		return 'harvestSortingHat';
 	case 'gatherer':
+		return 'harvestSortingHat';
 	case 'miner':
 	case 'technician':
 	case 'construction':
@@ -96,6 +112,6 @@ var getDefaultTask = function(creep) { // What to do if the creep has
 		return 'military';
 	default:
 		console.log('unmatched unit found!');
-		return 'freeAgent';
+		return 'harvestSortingHat';
 	}
 }

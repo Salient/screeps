@@ -1,4 +1,5 @@
 var util = require('common');
+var harvest = require('harvester'); // useful for energy finding routines
 
 var buildExtension = function(creep) {
 
@@ -24,17 +25,16 @@ function dlog(msg) {
 }
 
 module.exports = function(creep) {
-
 	// Take a look around the room for something to do
 
 	// If we are here, seems there is no extension with energy
 	// workerBee(creep);
 	// return;
 
-	if ((creep.memory.myTargetId == null)
-			|| typeof Game.structures[creep.memory.myTargetId] === 'undefined') {
+	if ((typeof Game.structures[creep.memory.myTargetId] === 'undefined')
+			|| (creep.memory.myTargetId == null)) {
 
-		creep.memory.myTargetId = constructSite(creep);
+		creep.memory.myTargetId = constructionDuty(creep);
 		// console.log('New Target for ' + creep.name + ': '
 		// + creep.memory.myTargetId);
 	}
@@ -42,7 +42,7 @@ module.exports = function(creep) {
 	var target = Game.getObjectById(creep.memory.myTargetId);
 	if (target === null) {
 		// console.log('No target, temporary upgarder');
-		upgrader(creep);
+		upgradeController(creep);
 		return;
 	}
 
@@ -118,7 +118,7 @@ function constructionDuty(creep) {
 		// construction a bit to make
 		// pathing easier
 	}
-
+	return;
 	var structures = creep.room.find(FIND_STRUCTURES);
 	var options = [];
 
@@ -169,7 +169,10 @@ function constructionDuty(creep) {
 	return null;
 }
 
-module.exports.upgradeController = function(creep) {
+module.exports.constructionDuty = constructionDuty;
+module.exports.upgradeController = upgradeController;
+
+function upgradeController(creep) {
 
 	var rc = creep.room.controller;
 
@@ -186,7 +189,9 @@ function fillTank(creep) {
 	var structs = creep.room.find(FIND_MY_STRUCTURES);
 
 	creep.say('Filling up my tank');
-	while (creep.carry.energy < creep.carryCapacity) {
+
+	if (creep.carry.energy < creep.carryCapacity) {
+		harvest.scrounge(creep);
 		for ( var i in structs) {
 			var struct = structs[i];
 			if ((struct.structureType == STRUCTURE_EXTENSION)
