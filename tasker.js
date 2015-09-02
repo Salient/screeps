@@ -99,8 +99,8 @@ var getDefaultTask = function(creep) { // What to do if the creep has
 	switch (role) {
 	case 'freeAgent':
 	case 'workerBee':
-	case 'gatherer':
 		return 'harvestSortingHat';
+	case 'gatherer':
 	case 'miner':
 	case 'technician':
 	case 'construction':

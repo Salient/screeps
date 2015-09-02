@@ -107,7 +107,7 @@ function lvl7room(room) {
 }
 
 function bootstrap(room) {
-	if ((room.popCount()) >= 10) {
+	if ((room.popCount()) >= 8) {
 		// Enough bootstrapping, proceed to Phase II of the Plan
 		return lvl1room(room);
 	}
@@ -123,8 +123,6 @@ function bootstrap(room) {
 	};
 
 	// demographics control build order
-	// This will build in sequence (assuming nobody dies)
-	// miner, worker, scout, miner, worker, tech, miner,worker,scout,tech?
 	roomConfig.goalDemographics = {
 		"gatherer" : 0.2,
 		"scout" : 0.4,
@@ -148,7 +146,7 @@ function bootstrap(room) {
 var lvl1room = function(room) {
 	var roomConfig = room.memory.strategy;
 	// Just checking if we can get off the ground properly
-	if (room.popCount() < 10) {
+	if (room.popCount() < 6) {
 		return bootstrap(room);
 	}
 	dlog('lvl1 proper, pop counted ' + room.popCount());

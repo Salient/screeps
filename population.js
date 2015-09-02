@@ -95,8 +95,9 @@ function nextPriority(room) {
 	// Edge case if there are no creeps yet, build the first in line
 	// else we might divide by the unholy zero
 	if (!totalPop) {
-		for ( var first in goalDemographics)
-			return (first);
+		if ((typeof design === 'undefined') || (design == null)) {
+			return null;
+		}
 	}
 
 	// Check minimum numbers
@@ -191,10 +192,12 @@ var census = function(room) {
 		if (room.memory.showRole == 'yes') {
 			youThere.say(youThere.memory.role);
 		}
-
-		if (typeof youThere.memory.role === 'undefined') { // Check for aliens
-			youThere.memory.role = 'freeAgent';
-		}
+		// I think this code screws up during spawn. I don't think it's
+		// necessary anyway
+		// if (typeof youThere.memory.role === 'undefined') { // Check for
+		// aliens
+		// youThere.memory.role = 'freeAgent';
+		// }
 
 		if (typeof roles[youThere.memory.role] === 'undefined') {
 			roles[youThere.memory.role] = 1
