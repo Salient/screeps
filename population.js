@@ -151,7 +151,7 @@ function nextPriority(room) {
 			}
 		} else {
 
-			dlog('we have enough ' + i);
+			// dlog('we have enough ' + i);
 			continue;
 		}
 		// else {
@@ -295,7 +295,7 @@ function create(type, room) {
 				room.memory.spawnWaiting = type;
 				break;
 			case ERR_BUSY:
-				dlog('your mother is a busy woman')
+				// dlog('your mother is a busy woman')
 				// Remember for next time, try again
 				room.memory.spawnWaiting = type;
 				break;

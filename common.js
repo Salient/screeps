@@ -30,6 +30,11 @@ module.exports.getError = function(result) {
 	}
 }
 
+module.exports.getFirst = function(data) {
+	for ( var prop in data)
+		return prop;
+}
+
 function dlog(module, msg) {
 	// var from = name;
 	console.log('[DEBUG ' + module + "] " + msg);

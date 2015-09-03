@@ -225,7 +225,6 @@ module.exports.gatherer = function(creep) {
 		var mySink = Game.getObjectById(creep.memory.sinkId);
 
 		if ((mySink == null) || isFull(mySink)) {
-			dlog("I have no sink");
 			creep.memory.sinkId = findSink(creep);
 		}
 		creep.moveTo(mySink);
@@ -238,7 +237,7 @@ function distance(p1, p2) {
 
 function findSink(creep) {
 	var structs = creep.room.find(FIND_MY_STRUCTURES);
-	var distances = {};
+	var distances = [];
 
 	dlog('Finding sink for ' + creep.name);
 
@@ -248,35 +247,46 @@ function findSink(creep) {
 
 		if ((struct.structureType == STRUCTURE_EXTENSION)
 				|| (struct.structureType == 'spawn')) {
-			if (!isFull(struct)) {
-				// check there is a path
-				if (creep.moveTo(struct, {
-					reusePath : 5
-				}) != ERR_NO_PATH) {
-					// calculate distance
-					distances[structid] = distance(creep.pos, struct.pos);
-					// dlog('ID ' + structid + ' distance is '
-					// + distances[structid].toFixed(3));
-				}
+
+			// check there is a path
+			if (creep.moveTo(struct) != ERR_NO_PATH) {
+				// calculate distance
+				distances.push({
+					"structid" : structid,
+					"distance" : distance(creep.pos, struct.pos),
+					"full" : isFull(struct)
+				});
+				// dlog('ID ' + structid + ' distance is '
+				// + distances[structid].toFixed(3));
+
 			}
 		}
 	}
 
-	var closest = 'empty';
-	var sinkId;
-	;
-	for ( var candidate in distances) {
-		if (closest == 'empty') {
-			closest = distances[candidate];
-			sinkId = candidate;
+	// Sort by distances
+
+	distances.sort(function(a, b) {
+		if (a.distance > b.distance) {
+			return 1;
 		}
-		if (distances[candidate] < closest) {
-			closest = distances[candidate];
-			sinkId = candidate;
+		if (a.distance < b.distance) {
+			return -1;
+		}
+		return 0;
+	});
+
+	// Use first not-full option
+	for ( var candidate in distances) {
+		if (distances[candidate].isFull) {
+			continue;
+		} else {
+			return distances[candidate].structid;
 		}
 	}
-	// dlog("closest determined to be " + sinkId);
-	return sinkId;
+
+	// if we are here, there are no non-full sinks. just move to the closest one
+	// and wait
+	return distances[0].structid;
 
 	// TODO: Add storage logic
 	// if ([ STRUCTURE_EXTENSION, 'storage' ].indexOf(struct.structureType)
@@ -295,31 +305,34 @@ function findSink(creep) {
 
 function findSource(creep) {
 	var sources = creep.room.find(FIND_SOURCES);
-	var distances = {};
+	var distances = [];
 
-	dlog('Finding source for ' + creep.name);
+	// dlog('Finding source for ' + creep.name);
 
 	for ( var i in sources) {
 		var source = sources[i];
 		var sourceid = source.id;
-		distances[sourceid] = distance(creep.pos, struct.pos);
+		distances.push({
+			"sourceid" : sourceid,
+			"distance" : distance(creep.pos, source.pos)
+		// "full" : isFull(struct) // TODO, add energy evailable weighting
+		});
 	}
 
-	var closest = 'empty';
-	var sinkId;
-	;
-	for ( var candidate in distances) {
-		if (closest == 'empty') {
-			closest = distances[candidate];
-			sinkId = candidate;
+	// Sort by distances
+
+	distances.sort(function(a, b) {
+		if (a.distance > b.distance) {
+			return 1;
 		}
-		if (distances[candidate] < closest) {
-			closest = distances[candidate];
-			sinkId = candidate;
+		if (a.distance < b.distance) {
+			return -1;
 		}
-	}
-	// dlog("closest determined to be " + sinkId);
-	return sinkId;
+		return 0;
+	});
+
+	// Go to closest
+	return distances[0].sourceid;
 
 	// TODO: Add storage logic
 	// if ([ STRUCTURE_EXTENSION, 'storage' ].indexOf(struct.structureType)
