@@ -4,7 +4,7 @@ var DEBUG_HARVEST = true;
 
 module.exports.miner = function(creep) {
 	var mySource = creep.memory.mySource;
-	if (typeof mySource === 'undefined') {
+	if (!util.def(mySource)) {
 		mySource = null;
 	}
 
@@ -101,7 +101,15 @@ function dlog(msg) {
 
 // Try and keep shuttles and miners balanced in the room
 module.exports.sortingHat = function(creep) {
-	var taskList = creep.memory.taskList;
+
+	var taskList = Memory.creeps[creep.name].taskList; // need to access memory
+	// like this in case
+	// creep is still
+	// spawning
+	if (!util.def(taskList)) {
+		return null;
+	}
+
 	var assignments = {
 		'shuttle' : 0,
 		'miner' : 0
@@ -110,7 +118,7 @@ module.exports.sortingHat = function(creep) {
 	// find the miners in the room
 	var jerks = creep.room.find(FIND_MY_CREEPS).forEach(
 			function(creeper, index, array) {
-				var curTask = taskList[0]
+				var curTask = taskList[taskList.length - 1];
 				if (typeof assignments[curTask] === 'undefined') {
 					assignments[curTask] = 0;
 				}
@@ -193,12 +201,19 @@ module.exports.scrounge = scrounge;
 
 module.exports.gatherer = function(creep) {
 
-	// First hit up the miners
-	scrounge(creep);
+	// On the first day, he ate one apple
+	// but he was still hungry
+	if (creep.carry.energy < creep.carryCapacity) {
+		scrounge(creep); // hit up miners and other dropped energy
+	}
 
 	// TODO standardize sinks
-	var mySource = creep.room.find(FIND_SOURCES)[0];
+
+	// On the second day, he ate through two pears
+	// but he was still hungry.
 	if (creep.carry.energy < creep.carryCapacity) {
+
+		var mySource = creep.room.find(FIND_SOURCES)[0];
 		creep.moveTo(mySource, {
 			reusePath : 5
 		});
@@ -206,15 +221,14 @@ module.exports.gatherer = function(creep) {
 		if (creep.pos.isNearTo(mySource)) {
 			creep.harvest(mySource);
 		}
-	} else {
+	} else { // That night he had a stomach ache
 		var mySink = Game.getObjectById(creep.memory.sinkId);
 
 		if ((mySink == null) || isFull(mySink)) {
+			dlog("I have no sink");
 			creep.memory.sinkId = findSink(creep);
 		}
-		creep.moveTo(mySink, {
-			reusePath : 5
-		});
+		creep.moveTo(mySink);
 		creep.transferEnergy(mySink);
 	}
 }
@@ -226,7 +240,7 @@ function findSink(creep) {
 	var structs = creep.room.find(FIND_MY_STRUCTURES);
 	var distances = {};
 
-	// dlog('Finding sink for ' + creep.name);
+	dlog('Finding sink for ' + creep.name);
 
 	for ( var i in structs) {
 		var struct = structs[i];

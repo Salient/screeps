@@ -42,3 +42,10 @@ module.exports.dumpObject = function(obj) {
 		dlog('Key: ' + x + ', value ' + obj[x] + '.');
 	}
 }
+
+module.exports.def = function(obj) {
+	if ((typeof obj === 'undefined') || (obj == null)) {
+		return false;
+	}
+	return true;
+}

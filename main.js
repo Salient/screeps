@@ -52,7 +52,7 @@ Creep.prototype.checkPath = function(structure) {
 }
 
 // Quickstart for sims
-if (Game.time <= 20) {
+if (Game.time <= 5) {
 	// skip timeouts
 	roomstrat.strategery(Game.rooms.sim);
 }
@@ -83,12 +83,12 @@ for ( var i in Game.rooms) {
 	// died of old age.
 	if (!(Game.time % 79)) {
 		// console.log("Updating population tracking for room " + i);
-		curRoom.memory.strategy.currentPopulation = population.census(curRoom);
+		population.census(curRoom);
 		population.printDemographics(curRoom);
 	}
 	// Check unit production every 11 seconds. Demographics are configured by
 	// strategy
-	if (!(Game.time % 5)) {
+	if (!(Game.time % 1)) { // debug
 		population.breed(curRoom);
 	}
 
@@ -100,11 +100,30 @@ function dlog(msg) {
 // Housekeeping
 // Delete old memory entries
 if (!(Game.time % 300)) {
-	dlog("Housekeeping");
+	dlog("Housekeeping...");
+
+	// Get list of creeps currently spawning so we don't brain wipe them
+	var stormtroopers = [];
+	for ( var spawn in Game.spawns) {
+		if (util.def(spawn.spawning)) {
+			stormtroopers.push(spawn.spawning.name);
+		}
+	}
+	util.dumpObject(stormtroopers);
 
 	for ( var i in Memory.creeps) {
 		if (!Game.creeps[i]) {
-			delete Memory.creeps[i];
+			var mindTricks = false;
+			for ( var safe in stormtroopers) {
+				if (stormtroopers[safe] == i) {
+					dlog("these are not the droids you are looking for...");
+					mindTricks = true;
+				}
+			}
+			if (!mindTricks) {
+				dlog('die rebel scum');
+				delete Memory.creeps[i];
+			}
 		}
 	}
 }

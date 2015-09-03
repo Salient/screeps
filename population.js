@@ -55,8 +55,10 @@ var isValidRole = function(room, role) {
 
 	dlog('testing if ' + role + ' is valid for room ' + room);
 
+	if (!(util.def(room.memory.strategy.latestModels))) {
+		return false;
+	}
 	var design = room.memory.strategy.latestModels;
-
 	util.dumpObject(design);
 
 	for ( var type in design) {
@@ -73,7 +75,10 @@ function nextPriority(room) {
 
 	// Pull up memory
 	var strategy = room.memory.strategy;
-
+	if (typeof strategy === 'undefined') {
+		dlog('wtf');
+		return null;
+	}
 	// These basic five should be set/updated by strategy periodically
 	// Else, the previous value holds
 
@@ -83,12 +88,13 @@ function nextPriority(room) {
 	var minDemographics = strategy.minDemographics;
 
 	// Not set by strategy, set in main on timer
-	var currentPopulation = strategy.currentPopulation;
 
 	// If for some reason the room doesn't know what we have in the room
-	if (typeof currentPopulation === 'undefined') {
+	if (typeof strategy.currentPopulation === 'undefined') {
 		strategy.currentPopulation = census(room);
 	}
+
+	var currentPopulation = strategy.currentPopulation;
 
 	var totalPop = room.find(FIND_MY_CREEPS).length;
 
@@ -96,6 +102,7 @@ function nextPriority(room) {
 	// else we might divide by the unholy zero
 	if (!totalPop) {
 		if ((typeof design === 'undefined') || (design == null)) {
+			dlog('wtf2');
 			return null;
 		}
 	}
@@ -105,10 +112,10 @@ function nextPriority(room) {
 		if (typeof currentPopulation[i] === 'undefined') {
 			currentPopulation[i] = 0;
 		}
-		dlog("checking minimums for " + i);
+		// dlog("checking minimums for " + i);
 		// See if we need more of them
 		if (currentPopulation[i] <= minDemographics[i]) {
-			dlog('Must build a minimum of ' + minDemographics[i] + ' ' + i);
+			// dlog('Must build a minimum of ' + minDemographics[i] + ' ' + i);
 			return (i);
 		}
 	}
@@ -127,19 +134,19 @@ function nextPriority(room) {
 		}
 
 		// See if we need more of them
-		dlog('checking if we need more ' + i);
+		// dlog('checking if we need more ' + i);
 		if (typeof goalDemographics === 'undefined') {
 			dlog(i + ' type is no longer in goal demographic.');
 			continue;
 		}
 		if ((currentPopulation[i] / totalPop) < goalDemographics[i]) {
-			dlog('We have less ' + i + ' than the goal percentage');
+			// dlog('We have less ' + i + ' than the goal percentage');
 			// Check Maximums
 			if (currentPopulation[i] >= maxDemographics[i]) {
 				dlog("But we have met the maximum number of " + i);
 				continue;
 			} else {
-				dlog('yep, creating a ' + i);
+				// dlog('yep, creating a ' + i);
 				return (i);
 			}
 		} else {
@@ -181,16 +188,14 @@ var printDemographics = function(room) {
 }
 
 var census = function(room) {
-	var roles = {
-		"freeAgent" : 0
-	};
+	var roles = {};
 	var roomCreeps = room.find(FIND_MY_CREEPS);
 	for ( var i in roomCreeps) {
 		var youThere = roomCreeps[i];
-
+		var yourJob = Memory.creeps[youThere.name].role;
 		// Display the type of creep
 		if (room.memory.showRole == 'yes') {
-			youThere.say(youThere.memory.role);
+			youThere.say(yourJob);
 		}
 		// I think this code screws up during spawn. I don't think it's
 		// necessary anyway
@@ -199,12 +204,13 @@ var census = function(room) {
 		// youThere.memory.role = 'freeAgent';
 		// }
 
-		if (typeof roles[youThere.memory.role] === 'undefined') {
-			roles[youThere.memory.role] = 1
+		if (typeof roles[yourJob] === 'undefined') {
+			roles[yourJob] = 1;
 		} else {
-			roles[youThere.memory.role]++;
+			roles[yourJob]++;
 		}
 	}
+	room.memory.strategy.currentPopulation = roles;
 	return roles; // Should be a list of roles and the number of each in the
 	// room
 }
@@ -220,13 +226,17 @@ var breed = function(room) {
 		room.memory.spawnWaiting = null;
 	}
 
-	if (room.memory.spawnWaiting != null) {
-		bowchickabowchicka = room.memory.spawnWaiting;
-	} else {
-		bowchickabowchicka = nextPriority(room);
-	}
+	// if (room.memory.spawnWaiting != null) {
+	// // bowchickabowchicka = room.memory.spawnWaiting;
+	// ; // not sure if having it waiting does much
+	// } else {
+	bowchickabowchicka = nextPriority(room);
+	// }
 
-	// var popLimit = room.memory.maxPop;
+	if (bowchickabowchicka == null) {
+		return;
+		// var popLimit = room.memory.maxPop;
+	}
 
 	// if (isValidRole(room, bowchickabowchicka)) {
 	var result = create(bowchickabowchicka, room);
