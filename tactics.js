@@ -19,7 +19,7 @@ module.exports.duty = function(creep) {
 				return -1;
 			}
 			return 0;
-		}) // TODO
+		}); // TODO add some distance weighting? better pathing?
 		for ( var infidel in targets)
 			if (leeroooooy(creep, targets[infidel])) {
 				forGlory = 1;
@@ -30,11 +30,11 @@ module.exports.duty = function(creep) {
 
 	// Default muster point
 	if (!forGlory) {
-		if (!(typeof Game.flags.muster1 === 'undefined')) {
+		if (!(typeof Game.flags.Flag1 === 'undefined')) {
 			// dlog('No fights worth fighting, return to muster point');
 			// dlog('result: ' +
 			// util.getError(creep.moveTo(Game.flags.muster1)));
-			creep.moveTo(Game.flags.muster1);
+			creep.moveTo(Game.flags.Flag1);
 
 		}
 	}

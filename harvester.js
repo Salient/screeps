@@ -4,7 +4,7 @@ var DEBUG_HARVEST = true;
 
 module.exports.miner = function(creep) {
 	var mySource = creep.memory.mySource;
-	if (typeof mySource === 'undefined') {
+	if (!util.def(mySource)) {
 		mySource = null;
 	}
 
@@ -101,7 +101,15 @@ function dlog(msg) {
 
 // Try and keep shuttles and miners balanced in the room
 module.exports.sortingHat = function(creep) {
-	var taskList = creep.memory.taskList;
+
+	var taskList = Memory.creeps[creep.name].taskList; // need to access memory
+	// like this in case
+	// creep is still
+	// spawning
+	if (!util.def(taskList)) {
+		return null;
+	}
+
 	var assignments = {
 		'shuttle' : 0,
 		'miner' : 0
@@ -110,7 +118,7 @@ module.exports.sortingHat = function(creep) {
 	// find the miners in the room
 	var jerks = creep.room.find(FIND_MY_CREEPS).forEach(
 			function(creeper, index, array) {
-				var curTask = taskList[0]
+				var curTask = taskList[taskList.length - 1];
 				if (typeof assignments[curTask] === 'undefined') {
 					assignments[curTask] = 0;
 				}
@@ -193,12 +201,19 @@ module.exports.scrounge = scrounge;
 
 module.exports.gatherer = function(creep) {
 
-	// First hit up the miners
-	scrounge(creep);
+	// On the first day, he ate one apple
+	// but he was still hungry
+	if (creep.carry.energy < creep.carryCapacity) {
+		scrounge(creep); // hit up miners and other dropped energy
+	}
 
 	// TODO standardize sinks
-	var mySource = creep.room.find(FIND_SOURCES)[0];
+
+	// On the second day, he ate through two pears
+	// but he was still hungry.
 	if (creep.carry.energy < creep.carryCapacity) {
+
+		var mySource = creep.room.find(FIND_SOURCES)[0];
 		creep.moveTo(mySource, {
 			reusePath : 5
 		});
@@ -206,15 +221,13 @@ module.exports.gatherer = function(creep) {
 		if (creep.pos.isNearTo(mySource)) {
 			creep.harvest(mySource);
 		}
-	} else {
+	} else { // That night he had a stomach ache
 		var mySink = Game.getObjectById(creep.memory.sinkId);
 
 		if ((mySink == null) || isFull(mySink)) {
 			creep.memory.sinkId = findSink(creep);
 		}
-		creep.moveTo(mySink, {
-			reusePath : 5
-		});
+		creep.moveTo(mySink);
 		creep.transferEnergy(mySink);
 	}
 }
@@ -224,9 +237,9 @@ function distance(p1, p2) {
 
 function findSink(creep) {
 	var structs = creep.room.find(FIND_MY_STRUCTURES);
-	var distances = {};
+	var distances = [];
 
-	// dlog('Finding sink for ' + creep.name);
+	dlog('Finding sink for ' + creep.name);
 
 	for ( var i in structs) {
 		var struct = structs[i];
@@ -234,35 +247,46 @@ function findSink(creep) {
 
 		if ((struct.structureType == STRUCTURE_EXTENSION)
 				|| (struct.structureType == 'spawn')) {
-			if (!isFull(struct)) {
-				// check there is a path
-				if (creep.moveTo(struct, {
-					reusePath : 5
-				}) != ERR_NO_PATH) {
-					// calculate distance
-					distances[structid] = distance(creep.pos, struct.pos);
-					// dlog('ID ' + structid + ' distance is '
-					// + distances[structid].toFixed(3));
-				}
+
+			// check there is a path
+			if (creep.moveTo(struct) != ERR_NO_PATH) {
+				// calculate distance
+				distances.push({
+					"structid" : structid,
+					"distance" : distance(creep.pos, struct.pos),
+					"full" : isFull(struct)
+				});
+				// dlog('ID ' + structid + ' distance is '
+				// + distances[structid].toFixed(3));
+
 			}
 		}
 	}
 
-	var closest = 'empty';
-	var sinkId;
-	;
-	for ( var candidate in distances) {
-		if (closest == 'empty') {
-			closest = distances[candidate];
-			sinkId = candidate;
+	// Sort by distances
+
+	distances.sort(function(a, b) {
+		if (a.distance > b.distance) {
+			return 1;
 		}
-		if (distances[candidate] < closest) {
-			closest = distances[candidate];
-			sinkId = candidate;
+		if (a.distance < b.distance) {
+			return -1;
+		}
+		return 0;
+	});
+
+	// Use first not-full option
+	for ( var candidate in distances) {
+		if (distances[candidate].isFull) {
+			continue;
+		} else {
+			return distances[candidate].structid;
 		}
 	}
-	// dlog("closest determined to be " + sinkId);
-	return sinkId;
+
+	// if we are here, there are no non-full sinks. just move to the closest one
+	// and wait
+	return distances[0].structid;
 
 	// TODO: Add storage logic
 	// if ([ STRUCTURE_EXTENSION, 'storage' ].indexOf(struct.structureType)
@@ -281,31 +305,34 @@ function findSink(creep) {
 
 function findSource(creep) {
 	var sources = creep.room.find(FIND_SOURCES);
-	var distances = {};
+	var distances = [];
 
-	dlog('Finding source for ' + creep.name);
+	// dlog('Finding source for ' + creep.name);
 
 	for ( var i in sources) {
 		var source = sources[i];
 		var sourceid = source.id;
-		distances[sourceid] = distance(creep.pos, struct.pos);
+		distances.push({
+			"sourceid" : sourceid,
+			"distance" : distance(creep.pos, source.pos)
+		// "full" : isFull(struct) // TODO, add energy evailable weighting
+		});
 	}
 
-	var closest = 'empty';
-	var sinkId;
-	;
-	for ( var candidate in distances) {
-		if (closest == 'empty') {
-			closest = distances[candidate];
-			sinkId = candidate;
+	// Sort by distances
+
+	distances.sort(function(a, b) {
+		if (a.distance > b.distance) {
+			return 1;
 		}
-		if (distances[candidate] < closest) {
-			closest = distances[candidate];
-			sinkId = candidate;
+		if (a.distance < b.distance) {
+			return -1;
 		}
-	}
-	// dlog("closest determined to be " + sinkId);
-	return sinkId;
+		return 0;
+	});
+
+	// Go to closest
+	return distances[0].sourceid;
 
 	// TODO: Add storage logic
 	// if ([ STRUCTURE_EXTENSION, 'storage' ].indexOf(struct.structureType)

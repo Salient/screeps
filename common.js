@@ -30,6 +30,11 @@ module.exports.getError = function(result) {
 	}
 }
 
+module.exports.getFirst = function(data) {
+	for ( var prop in data)
+		return prop;
+}
+
 function dlog(module, msg) {
 	// var from = name;
 	console.log('[DEBUG ' + module + "] " + msg);
@@ -41,4 +46,11 @@ module.exports.dumpObject = function(obj) {
 	for ( var x in obj) {
 		dlog('Key: ' + x + ', value ' + obj[x] + '.');
 	}
+}
+
+module.exports.def = function(obj) {
+	if ((typeof obj === 'undefined') || (obj == null)) {
+		return false;
+	}
+	return true;
 }

@@ -117,7 +117,7 @@ function bootstrap(room) {
 	roomConfig.latestModels = {
 		'gatherer' : [ WORK, WORK, CARRY, MOVE ],
 		"miner" : [ WORK, WORK, MOVE ],
-		"scout" : [ TOUGH, ATTACK, MOVE, MOVE ],
+		"scout" : [ TOUGH, ATTACK, ATTACK, MOVE, MOVE ],
 		"workerBee" : [ CARRY, CARRY, CARRY, MOVE, MOVE, MOVE ],
 		"technician" : [ MOVE, MOVE, WORK, CARRY, CARRY ]
 	};
@@ -132,14 +132,14 @@ function bootstrap(room) {
 	}
 	roomConfig.minDemographics = {
 		"gatherer" : 1,
-		"scout" : 3
+		"scout" : 4
 	// Build two of these first thing
 	}
 	roomConfig.maxDemographics = {
 		"gatherer" : 2,
 		"scout" : 8,
-		"workerBee" : 4,
-		"miner" : 4,
+		"workerBee" : 3,
+		"miner" : 3,
 	}
 }
 
@@ -154,7 +154,7 @@ var lvl1room = function(room) {
 	roomConfig.latestModels = {
 		"miner" : [ WORK, WORK, MOVE ],
 		"workerBee" : [ CARRY, CARRY, CARRY, MOVE, MOVE, MOVE ],
-		"scout" : [ TOUGH, ATTACK, MOVE, MOVE ],
+		"scout" : [ TOUGH, TOUGH, TOUGH, TOUGH, ATTACK, ATTACK, MOVE, MOVE ],
 		"technician" : [ MOVE, MOVE, WORK, CARRY, CARRY ]
 	};
 
@@ -172,12 +172,12 @@ var lvl1room = function(room) {
 	roomConfig.minDemographics = {} // No mins, the goalDemo and max will
 	// control build order this early in room
 	roomConfig.maxDemographics = {
-		"gatherer" : 5,
+		"gatherer" : 2,
 		"miner" : 3,
-		"workerBee" : 5,
+		"workerBee" : 3,
 		"scout" : 10, // scouts should chill out until an enemy enters the
 		// room.
-		"technician" : 20
+		"technician" : 5
 	// Technicians should default to upgrading the
 	// controller
 	}

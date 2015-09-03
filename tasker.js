@@ -25,16 +25,20 @@ function dlog(msg) {
 
 var performTask = function(creep) {
 
+	if (!util.def(creep.hits)) {
+		dlog('omg a ghost!');
+		return; // creep either dead or not yet born
+	}
 	// Two types of tasks: default role task, and special assigned tasks
 	// role tasks are search and perform logic, assigned are specific targets
 	// to prevent multiple units trying to work on the same thing
 
-	if (typeof creep.memory.taskList === 'undefined') {
-		dlog('Undefined task list found: ' + creep.name);
-		creep.memory.taskList = [];
-	}
+	var taskList = Memory.creeps[creep.name].taskList;
 
-	var taskList = creep.memory.taskList;
+	if (!util.def(taskList)) {
+		dlog('Undefined task list found: ' + creep.name);
+		Memory.creeps[creep.name].taskList = [];
+	}
 
 	if ((typeof taskList[0] === 'undefined') || (taskList[0] == null)) {
 		dlog('Empty task list found: ' + creep.name);
@@ -43,6 +47,7 @@ var performTask = function(creep) {
 	if ((taskList.length > 1) && !(Game.time % 10)) // Periodically refresh
 	// temporary tasksf
 	{
+		dlog('refreshing the task list for ' + creep.name);
 		taskList.pop();
 	}
 
@@ -94,7 +99,14 @@ var performTask = function(creep) {
 
 var getDefaultTask = function(creep) { // What to do if the creep has
 	// nothing to do
-	var role = creep.memory.role;
+	var role = Memory.creeps[creep.name].role; // Access memory like this in
+	// case creep is still spawning.
+
+	if (typeof role === 'undefined') {
+		dlog('aaaahhh motherland!');
+		creep.suicide(); // debug code
+	}
+
 	dlog('assigning default task');
 	switch (role) {
 	case 'freeAgent':
