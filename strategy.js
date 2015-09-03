@@ -115,7 +115,7 @@ function bootstrap(room) {
 	var roomConfig = room.memory.strategy;
 
 	roomConfig.latestModels = {
-		'gatherer' : [ WORK, ATTACK, CARRY, MOVE ],
+		'gatherer' : [ WORK, WORK, CARRY, MOVE ],
 		"miner" : [ WORK, WORK, MOVE ],
 		"scout" : [ TOUGH, ATTACK, ATTACK, MOVE, MOVE ],
 		"workerBee" : [ CARRY, CARRY, CARRY, MOVE, MOVE, MOVE ],
