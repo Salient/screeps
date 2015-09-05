@@ -3,11 +3,58 @@
 
 var util = require('common');
 
+Room.prototype.engagementRules = function(room) {
+	// Establish rules of engagement
+	// Dictated by strategy in room
+	if (util.def(room.memory.strategy.engagementRules)) {
+		return room.memory.strategy.engagementRules;
+	} else {
+		return 'Guard';
+	} // default engagement stance
+}
+
+// Recognized marching orders for soldiers
+// Retaliate - Cleared to attack that creep/owner? if attacked by them first
+// Otherwise, go about your business
+// Guard - given a structure/flag, stay within 5 squares of structure. May
+// attack any enemy inside that zone
+// Patrol - cycle through a list of way points, intercept and engage within 5
+// squares
+
+// 'Rules of Engagement' is basically a room setting for the default marching
+// orders for soldiers
+
 // if target.hits >> current hits or attack power, and posse.totalHits <<
 // target.hits
 // doNotEngage();
 // Find rampart
 module.exports.duty = function(creep) {
+
+	if (util.def(creep.memory.classified)
+			&& util.def(creep.memory.classified.orders)) {
+		var orders = creep.memory.classified.orders;
+		switch (orders) {
+		case 'guard':
+			guard(creep);
+			break;
+		default:
+			dlog("unrecognized orders given to private " + creep.name);
+		}
+
+	} else {
+		var aRingOnIt = creep.room.memory.strategy.engagementRules;
+		if (!util.def(aRingOnIt)) {
+			dlog("Assigning default rules of engagement to room "
+					+ creep.room.name);
+			creep.room.memory.strategy.engagementRules = 'guard';
+		}
+		var aRingOnIt = creep.room.memory.strategy.engagementRules;
+
+		creep.memory.classified = {
+			'orders' : aRingOnIt
+		};
+	}
+
 	var targets = creep.room.find(FIND_HOSTILE_CREEPS);
 	var forGlory = 0;
 	if (targets.length) {
@@ -45,6 +92,15 @@ function leeroooooy(myCreep, targetCreep) { // check if it's in my league
 		return true;
 	}
 	return false;
+}
+function guard(creep) {
+	var objective = creep.memory.classified.objective; // objective should be a
+	// structure or creep
+	if (util.def(objective)) {
+		var base = objective.pos;
+	} else {
+		// assignObjective? get list of strucutres types to guard from strategy?
+	}
 }
 function dlog(msg) {
 	util.dlog('TACTICS', msg);

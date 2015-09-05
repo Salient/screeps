@@ -32,23 +32,31 @@ var util = require('common');
 // }
 // // ------------------
 
-var cost = {
-	"WORK" : 100,
-	"CARRY" : 50,
-	"TOUGH" : 10,
-	"ATTACK" : 80,
-	"MOVE" : 50,
-	"HEAL" : 250,
-	"RANGED_ATTACK" : 150
+Room.prototype.popCount = function() {
+	return this.find(FIND_MY_CREEPS).length
 }
 
-var getCost = function(design) {
-	// design should be an array of body parts
-	var cost = 0;
-	for ( var part in design)
-		cost += cost[design[part]];
-	// TODO some test logic here
-	return cost;
+var costLookup = {
+	"work" : 100,
+	"carry" : 50,
+	"tough" : 10,
+	"attack" : 80,
+	"move" : 50,
+	"heal" : 250,
+	"ranged_attack" : 150
+}
+
+var getCost = function(design, room) {
+	var makeup = room.memory.strategy.latestModels[design];
+	if (util.def(makeup)) {
+		var cost = 0;
+		for ( var part in makeup) {
+			cost += costLookup[makeup[part]];
+		}
+		return cost;
+	} else {
+		return null;
+	}
 }
 
 var isValidRole = function(room, role) {
@@ -72,7 +80,6 @@ var isValidRole = function(room, role) {
 }
 
 function nextPriority(room) {
-
 	// Pull up memory
 	var strategy = room.memory.strategy;
 	if (typeof strategy === 'undefined') {
@@ -112,10 +119,10 @@ function nextPriority(room) {
 		if (typeof currentPopulation[i] === 'undefined') {
 			currentPopulation[i] = 0;
 		}
-		// dlog("checking minimums for " + i);
+		dlog("checking minimums for " + i);
 		// See if we need more of them
 		if (currentPopulation[i] <= minDemographics[i]) {
-			// dlog('Must build a minimum of ' + minDemographics[i] + ' ' + i);
+			dlog('Must build a minimum of ' + minDemographics[i] + ' ' + i);
 			return (i);
 		}
 	}
@@ -234,6 +241,7 @@ var breed = function(room) {
 	// }
 
 	if (bowchickabowchicka == null) {
+		dlog('wut');
 		return;
 		// var popLimit = room.memory.maxPop;
 	}
@@ -260,14 +268,12 @@ function create(type, room) {
 	var currentPopulation = strategy.currentPopulation;
 
 	var roomSpawns = room.find(FIND_MY_SPAWNS);
-
 	for ( var i in roomSpawns) {
 		var spawn = roomSpawns[i];
 		var baby = spawn.canCreateCreep(design[type]);
-
 		if (baby == OK) { // Create creep with a somewhat descriptive name
 
-			var result = spawn.createCreep(design[type], room.name + "-" + type
+			var result = spawn.createCreep(design[type], room.name + "*" + type
 					+ '.' + (Math.floor((Math.random() * 10000))), {
 				"role" : type,
 				"birthRoom" : room.name,
@@ -289,7 +295,24 @@ function create(type, room) {
 			// Disposition
 			switch (baby) {
 			case ERR_NOT_ENOUGH_ENERGY:
-				// dlog('WE REQUIRE MORE VESPENE GAS')
+
+				// check it's *possible* to have enough energy
+				var cashMoney = getCost(type, room);
+				var cap = room.energyCapacityAvailable;
+				if (cap < cashMoney) {
+					dlog('Stragey error! Not enough energy capacity to build creep')
+					dlog('Removing the first body part and trying again...')
+					var tempType = design[type];
+					tempType = tempType.slice(1, tempType.length - 1)
+					var result = spawn.createCreep(tempType, room.name
+							+ "-weakened-" + type + '.'
+							+ (Math.floor((Math.random() * 10000))), {
+						"role" : type,
+						"birthRoom" : room.name,
+						"taskList" : []
+					});
+				}
+				dlog('WE REQUIRE MORE VESPENE GAS')
 				// dlog('cant build type ' + type)
 				// // Remember for next time, try again
 				room.memory.spawnWaiting = type;

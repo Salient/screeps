@@ -23,12 +23,39 @@ function dlog(msg) {
 	util.dlog('TASKER', msg);
 }
 
+Room.prototype.getSpawning = function() {
+	var babbysForming = {};
+	var spawns = this.find(FIND_MY_SPAWNS);
+	for ( var n in spawns) {
+		var spawn = spawns[n];
+		if (util.def(spawn.spawning)) {
+			babbysForming[spawn.spawning.name] = true;
+		}
+	}
+
+	return babbysForming;
+}
+
+Creep.prototype.isSpawning = function() {
+	var howBabbysFormed = this.room.getSpawning();
+	if (howBabbysFormed.length) {
+		for ( var x in howBabbysFormed) {
+			if (howBabbysFormed == creep) {
+				return true;
+			} else {
+				return false;
+			}
+		}
+	}
+
+}
+
 var performTask = function(creep) {
 
-	if (!util.def(creep.hits)) {
-		dlog('omg a ghost!');
-		return; // creep either dead or not yet born
+	if (creep.isSpawning()) {
+		return;
 	}
+
 	// Two types of tasks: default role task, and special assigned tasks
 	// role tasks are search and perform logic, assigned are specific targets
 	// to prevent multiple units trying to work on the same thing
@@ -111,8 +138,8 @@ var getDefaultTask = function(creep) { // What to do if the creep has
 	switch (role) {
 	case 'freeAgent':
 	case 'workerBee':
-		return 'harvestSortingHat';
 	case 'gatherer':
+		return 'harvestSortingHat';
 	case 'miner':
 	case 'technician':
 	case 'construction':

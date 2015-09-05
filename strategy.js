@@ -5,6 +5,10 @@
 var population = require('population');
 var util = require('common');
 
+Room.prototype.getLevel = function() {
+	return this.controller.level;
+}
+
 // Basic strategy for building and fortifying a room
 // Controller lvl 1
 // --------------------
@@ -68,16 +72,16 @@ function dlog(msg) {
 
 module.exports.strategery = function(room) {
 
-	if (typeof room.memory.strategy === 'undefined') {
+	if (!util.def(room.memory.strategy)) {
 		room.memory.strategy = {};
 	}
 
 	var roomConfig = room.memory.strategy;
 
-	if (typeof roomConfig.curlvl === 'undefined') {
+	if (!util.def(roomConfig.curlvl)) {
 		roomConfig.curlvl = 0;
 	}
-	if (typeof room.controller === 'undefined') {
+	if (!util.def(room.controller)) {
 		dlog("No controller found in room. Strategy uncertain.");
 		return;
 	}
@@ -115,9 +119,9 @@ function bootstrap(room) {
 	var roomConfig = room.memory.strategy;
 
 	roomConfig.latestModels = {
-		'gatherer' : [ WORK, WORK, CARRY, MOVE ],
+		'gatherer' : [ WORK, WORK, CARRY, MOVE, MOVE ],
 		"miner" : [ WORK, WORK, MOVE ],
-		"scout" : [ TOUGH, ATTACK, ATTACK, MOVE, MOVE ],
+		"scout" : [ ATTACK, ATTACK, MOVE, MOVE ],
 		"workerBee" : [ CARRY, CARRY, CARRY, MOVE, MOVE, MOVE ],
 		"technician" : [ MOVE, MOVE, WORK, CARRY, CARRY ]
 	};
@@ -158,13 +162,11 @@ var lvl1room = function(room) {
 		"technician" : [ MOVE, MOVE, WORK, CARRY, CARRY ]
 	};
 
-	// demographics control build order
-	// This will build in sequence (assuming nobody dies)
-	// miner, worker, scout, miner, worker, tech, miner,worker,scout,tech?
+	// demographics effect build order
 	roomConfig.goalDemographics = {
 		"miner" : 0.2,
 		"workerBee" : 0.2,
-		"scout" : 0.05,
+		"scout" : 0.5,
 		"technician" : 0.6,
 		"gatherer" : 0.05
 	};

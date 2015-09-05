@@ -1,6 +1,33 @@
 var util = require('common');
 var harvest = require('harvester'); // useful for energy finding routines
 
+Structure.prototype.needsWorkers = function() {
+	var attendees = this.memory.workers;
+	var maxAttendees = this.memory.maxWorkers;
+
+	if (typeof attendees === 'undefined') {
+		attendees = 0;
+	}
+
+	if (typeof maxAttendees === 'undefined') {
+		maxAttendees = 1; // If not defined, be conservative to prevent log
+		// jams
+	}
+	var count = 0;
+	attendees.sort();
+	for ( var creep in attendees) {
+		if (attendees[creep].hits > 0) {
+			count++;
+		} else {
+			destroy(attendees[creep]);
+		}
+	}
+}
+
+Structure.prototype.needsRepair = function() {
+	return this.hits < this.hitsMax * .8;
+};
+
 var buildExtension = function(creep) {
 
 	var numExts = 0;

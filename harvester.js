@@ -99,41 +99,60 @@ function dlog(msg) {
 	util.dlog('HARVEST', msg);
 }
 
-// Try and keep shuttles and miners balanced in the room
+// Optimize energy gathering by available roles in the room
 module.exports.sortingHat = function(creep) {
 
-	var taskList = Memory.creeps[creep.name].taskList; // need to access memory
-	// like this in case
-	// creep is still
-	// spawning
+	var taskList = creep.memory.taskList;
+
 	if (!util.def(taskList)) {
 		return null;
 	}
+	var availPop = creep.room.memory.strategy.currentPopulation;
 
+	// initialize these two for
+	// testing later
+	// find the miners in the room
 	var assignments = {
 		'shuttle' : 0,
 		'miner' : 0
-	}; // initialize these two for
-	// testing later
-	// find the miners in the room
-	var jerks = creep.room.find(FIND_MY_CREEPS).forEach(
-			function(creeper, index, array) {
-				var curTask = taskList[taskList.length - 1];
-				if (typeof assignments[curTask] === 'undefined') {
-					assignments[curTask] = 0;
-				}
-				assignments[curTask]++;
-			});
+	};
 
-	if ((assignments.miners > 0) && (assignments.shuttle < assignments.miners)) {
-		taskList = taskList.push('shuttle');
-	} else if (assignments.shuttle > 2) {
-		taskList = taskList.push('builder');// change to builders or
-	} else {
-		taskList = taskList.push('gatherer');// change to builders or
-		// something later
+	creep.room.find(FIND_MY_CREEPS).forEach(function(creeper, index, array) {
+		var jerksCurTask = creeper.memory.taskList;
 
+		var curTask = jerksCurTask[jerksCurTask.length - 1];
+		if (typeof assignments[curTask] === 'undefined') {
+			assignments[curTask] = 0;
+		}
+		assignments[curTask]++;
+	});
+
+	switch (creep.memory.role) {
+
+	case 'gatherer': // default tasking for gatherer
+		if (availPop.workerBee < availPop.miner) {
+			if (assignments.shuttle < assignments.miner) {
+				creep.memory.taskList.push('shuttle')
+			} else {
+				creep.memory.taskList.push('builder')
+			}
+		} else {
+			if (availPop.miner) {
+				creep.memory.taskList.push('builder')
+			} else {
+				creep.memory.taskList.push('gatherer')
+			}
+		}
+
+		break;
+	case 'workerBee': // default tasking for worker bee
+		creep.memory.taskList.push('shuttle')
+		break;
+	default:
+		dlog("not sure how to sort role " + creep.memory.role)
+		return null;
 	}
+
 }
 
 module.exports.shuttle = function(creep) {
@@ -261,6 +280,10 @@ function findSink(creep) {
 
 			}
 		}
+	}
+
+	if (!distances.length) {
+		return null;
 	}
 
 	// Sort by distances
