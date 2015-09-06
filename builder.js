@@ -204,12 +204,14 @@ function upgradeController(creep) {
 	var rc = creep.room.controller;
 
 	if (creep.pos.isNearTo(rc) && (creep.carry.energy > 0)) {
-		creep.say(completedPretty(rc) + "%");
+		creep.say(sayProgress(rc) + "%");
 		creep.upgradeController(rc);
+	} else if (creep.carry.energy == creep.carryCapacity) {
+		creep.moveTo(rc);
 	} else {
 		fillTank(creep);
-		creep.moveTo(rc);
 	}
+
 }
 
 function fillTank(creep) {
@@ -236,9 +238,11 @@ function fillTank(creep) {
 	}
 }
 
-function completedPretty(target) {
-	if (target.hits !== null) {
+function sayProgress(target) {
+	if (target.structureType == STRUCTURE_CONTROLLER) {
+
+		return parseInt((target.progress / target.progressTotal) * 100);
+	} else if (target.hits !== null) {
 		return parseInt((target.hits / target.hitsMax) * 100);
 	}
-	return parseInt((target.progress / target.progressTotal) * 100);
 }

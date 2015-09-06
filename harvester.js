@@ -114,7 +114,8 @@ module.exports.sortingHat = function(creep) {
 	// find the miners in the room
 	var assignments = {
 		'shuttle' : 0,
-		'miner' : 0
+		'miner' : 0,
+		'workerBee' : 0
 	};
 
 	creep.room.find(FIND_MY_CREEPS).forEach(function(creeper, index, array) {
@@ -126,22 +127,19 @@ module.exports.sortingHat = function(creep) {
 		}
 		assignments[curTask]++;
 	});
-
 	switch (creep.memory.role) {
 
 	case 'gatherer': // default tasking for gatherer
-		if (availPop.workerBee < availPop.miner) {
-			if (assignments.shuttle < assignments.miner) {
-				creep.memory.taskList.push('shuttle')
-			} else {
-				creep.memory.taskList.push('builder')
+		if (util.def(availPop.workerBee) && util.def(availPop.miner)) {
+			if (availPop.workerBee <= availPop.miner) {
+				if (assignments.shuttle < assignments.miner) {
+					creep.memory.taskList.push('shuttle')
+				} else {
+					creep.memory.taskList.push('builder')
+				}
 			}
 		} else {
-			if (availPop.miner) {
-				creep.memory.taskList.push('builder')
-			} else {
-				creep.memory.taskList.push('gatherer')
-			}
+			creep.memory.taskList.push('gatherer')
 		}
 
 		break;
@@ -161,12 +159,12 @@ module.exports.shuttle = function(creep) {
 	if (creep.carry.energy < (creep.carryCapacity)) {
 		creep.room.find(FIND_DROPPED_ENERGY).forEach(function(site) {
 			creep.moveTo(site, {
-				reusePath : 5
+				reusePath : 10
 			});
 			creep.pickup(site);
-			if (creep.carry.energy == creep.carryCapacity) {
-				return;
-			}
+			// if (creep.carry.energy == creep.carryCapacity) {
+			// return;
+			// }
 		});
 	} else {
 		var mySink = Game.getObjectById(creep.memory.sinkId);
@@ -182,7 +180,7 @@ module.exports.shuttle = function(creep) {
 		}
 
 		var dd = creep.moveTo(mySink, {
-			reusePath : 5
+			reusePath : 10
 		});
 		if (dd == ERR_NO_PATH) {
 			mySink = null;

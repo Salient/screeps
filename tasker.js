@@ -36,23 +36,23 @@ Room.prototype.getSpawning = function() {
 	return babbysForming;
 }
 
-Creep.prototype.isSpawning = function() {
-	var howBabbysFormed = this.room.getSpawning();
-	if (howBabbysFormed.length) {
-		for ( var x in howBabbysFormed) {
-			if (howBabbysFormed == creep) {
-				return true;
-			} else {
-				return false;
-			}
-		}
-	}
-
-}
+// Creep.prototype.isSpawning = function() {
+// var howBabbysFormed = this.room.getSpawning();
+// if (howBabbysFormed.length) {
+// for ( var x in howBabbysFormed) {
+// if (howBabbysFormed == creep) {
+// return true;
+// } else {
+// return false;
+// }
+// }
+// }
+//
+// }
 
 var performTask = function(creep) {
 
-	if (creep.isSpawning()) {
+	if (creep.spawning) {
 		return;
 	}
 
@@ -74,7 +74,7 @@ var performTask = function(creep) {
 	if ((taskList.length > 1) && !(Game.time % 10)) // Periodically refresh
 	// temporary tasksf
 	{
-		dlog('refreshing the task list for ' + creep.name);
+		// dlog('refreshing the task list for ' + creep.name);
 		taskList.pop();
 	}
 
@@ -144,7 +144,9 @@ var getDefaultTask = function(creep) { // What to do if the creep has
 	case 'technician':
 	case 'construction':
 		return role;
+	case 'private':
 	case 'scout':
+	case 'pfc':
 	case 'footSoldier':
 	case 'cavalry':
 	case 'enforcer':

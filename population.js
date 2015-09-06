@@ -119,10 +119,10 @@ function nextPriority(room) {
 		if (typeof currentPopulation[i] === 'undefined') {
 			currentPopulation[i] = 0;
 		}
-		dlog("checking minimums for " + i);
+		// dlog("checking minimums for " + i);
 		// See if we need more of them
 		if (currentPopulation[i] <= minDemographics[i]) {
-			dlog('Must build a minimum of ' + minDemographics[i] + ' ' + i);
+			// dlog('Must build a minimum of ' + minDemographics[i] + ' ' + i);
 			return (i);
 		}
 	}
@@ -150,7 +150,7 @@ function nextPriority(room) {
 			// dlog('We have less ' + i + ' than the goal percentage');
 			// Check Maximums
 			if (currentPopulation[i] >= maxDemographics[i]) {
-				dlog("But we have met the maximum number of " + i);
+				// dlog("But we have met the maximum number of " + i);
 				continue;
 			} else {
 				// dlog('yep, creating a ' + i);
@@ -312,7 +312,7 @@ function create(type, room) {
 						"taskList" : []
 					});
 				}
-				dlog('WE REQUIRE MORE VESPENE GAS')
+				// dlog('WE REQUIRE MORE VESPENE GAS')
 				// dlog('cant build type ' + type)
 				// // Remember for next time, try again
 				room.memory.spawnWaiting = type;
