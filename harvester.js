@@ -99,41 +99,58 @@ function dlog(msg) {
 	util.dlog('HARVEST', msg);
 }
 
-// Try and keep shuttles and miners balanced in the room
+// Optimize energy gathering by available roles in the room
 module.exports.sortingHat = function(creep) {
 
-	var taskList = Memory.creeps[creep.name].taskList; // need to access memory
-	// like this in case
-	// creep is still
-	// spawning
+	var taskList = creep.memory.taskList;
+
 	if (!util.def(taskList)) {
 		return null;
 	}
+	var availPop = creep.room.memory.strategy.currentPopulation;
 
-	var assignments = {
-		'shuttle' : 0,
-		'miner' : 0
-	}; // initialize these two for
+	// initialize these two for
 	// testing later
 	// find the miners in the room
-	var jerks = creep.room.find(FIND_MY_CREEPS).forEach(
-			function(creeper, index, array) {
-				var curTask = taskList[taskList.length - 1];
-				if (typeof assignments[curTask] === 'undefined') {
-					assignments[curTask] = 0;
+	var assignments = {
+		'shuttle' : 0,
+		'miner' : 0,
+		'workerBee' : 0
+	};
+
+	creep.room.find(FIND_MY_CREEPS).forEach(function(creeper, index, array) {
+		var jerksCurTask = creeper.memory.taskList;
+
+		var curTask = jerksCurTask[jerksCurTask.length - 1];
+		if (typeof assignments[curTask] === 'undefined') {
+			assignments[curTask] = 0;
+		}
+		assignments[curTask]++;
+	});
+	switch (creep.memory.role) {
+
+	case 'gatherer': // default tasking for gatherer
+		if (util.def(availPop.workerBee) && util.def(availPop.miner)) {
+			if (availPop.workerBee <= availPop.miner) {
+				if (assignments.shuttle < assignments.miner) {
+					creep.memory.taskList.push('shuttle')
+				} else {
+					creep.memory.taskList.push('builder')
 				}
-				assignments[curTask]++;
-			});
+			}
+		} else {
+			creep.memory.taskList.push('gatherer')
+		}
 
-	if ((assignments.miners > 0) && (assignments.shuttle < assignments.miners)) {
-		taskList = taskList.push('shuttle');
-	} else if (assignments.shuttle > 2) {
-		taskList = taskList.push('builder');// change to builders or
-	} else {
-		taskList = taskList.push('gatherer');// change to builders or
-		// something later
-
+		break;
+	case 'workerBee': // default tasking for worker bee
+		creep.memory.taskList.push('shuttle')
+		break;
+	default:
+		dlog("not sure how to sort role " + creep.memory.role)
+		return null;
 	}
+
 }
 
 module.exports.shuttle = function(creep) {
@@ -142,12 +159,12 @@ module.exports.shuttle = function(creep) {
 	if (creep.carry.energy < (creep.carryCapacity)) {
 		creep.room.find(FIND_DROPPED_ENERGY).forEach(function(site) {
 			creep.moveTo(site, {
-				reusePath : 5
+				reusePath : 10
 			});
 			creep.pickup(site);
-			if (creep.carry.energy == creep.carryCapacity) {
-				return;
-			}
+			// if (creep.carry.energy == creep.carryCapacity) {
+			// return;
+			// }
 		});
 	} else {
 		var mySink = Game.getObjectById(creep.memory.sinkId);
@@ -163,7 +180,7 @@ module.exports.shuttle = function(creep) {
 		}
 
 		var dd = creep.moveTo(mySink, {
-			reusePath : 5
+			reusePath : 10
 		});
 		if (dd == ERR_NO_PATH) {
 			mySink = null;
@@ -261,6 +278,10 @@ function findSink(creep) {
 
 			}
 		}
+	}
+
+	if (!distances.length) {
+		return null;
 	}
 
 	// Sort by distances

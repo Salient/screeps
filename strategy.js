@@ -5,6 +5,10 @@
 var population = require('population');
 var util = require('common');
 
+Room.prototype.getLevel = function() {
+	return this.controller.level;
+}
+
 // Basic strategy for building and fortifying a room
 // Controller lvl 1
 // --------------------
@@ -68,16 +72,16 @@ function dlog(msg) {
 
 module.exports.strategery = function(room) {
 
-	if (typeof room.memory.strategy === 'undefined') {
+	if (!util.def(room.memory.strategy)) {
 		room.memory.strategy = {};
 	}
 
 	var roomConfig = room.memory.strategy;
 
-	if (typeof roomConfig.curlvl === 'undefined') {
+	if (!util.def(roomConfig.curlvl)) {
 		roomConfig.curlvl = 0;
 	}
-	if (typeof room.controller === 'undefined') {
+	if (!util.def(room.controller)) {
 		dlog("No controller found in room. Strategy uncertain.");
 		return;
 	}
@@ -115,20 +119,20 @@ function bootstrap(room) {
 	var roomConfig = room.memory.strategy;
 
 	roomConfig.latestModels = {
-		'gatherer' : [ WORK, WORK, CARRY, MOVE ],
+		'gatherer' : [ WORK, CARRY, MOVE ],
 		"miner" : [ WORK, WORK, MOVE ],
-		"scout" : [ TOUGH, ATTACK, ATTACK, MOVE, MOVE ],
+		"scout" : [ ATTACK, ATTACK, MOVE ],
 		"workerBee" : [ CARRY, CARRY, CARRY, MOVE, MOVE, MOVE ],
 		"technician" : [ MOVE, MOVE, WORK, CARRY, CARRY ]
 	};
 
 	// demographics control build order
 	roomConfig.goalDemographics = {
-		"gatherer" : 0.2,
-		"scout" : 0.4,
-		"miner" : 0.2,
-		"workerBee" : 0.2,
-		"technician" : 0.4
+		"gatherer" : 0.05,
+		"scout" : 0.45,
+		"miner" : 0.1,
+		"workerBee" : 0.1,
+		"technician" : 0.3
 	}
 	roomConfig.minDemographics = {
 		"gatherer" : 1,
@@ -154,17 +158,15 @@ var lvl1room = function(room) {
 	roomConfig.latestModels = {
 		"miner" : [ WORK, WORK, MOVE ],
 		"workerBee" : [ CARRY, CARRY, CARRY, MOVE, MOVE, MOVE ],
-		"scout" : [ TOUGH, TOUGH, TOUGH, TOUGH, ATTACK, ATTACK, MOVE, MOVE ],
+		"private" : [ TOUGH, TOUGH, TOUGH, TOUGH, ATTACK, ATTACK, MOVE, MOVE ],
 		"technician" : [ MOVE, MOVE, WORK, CARRY, CARRY ]
 	};
 
-	// demographics control build order
-	// This will build in sequence (assuming nobody dies)
-	// miner, worker, scout, miner, worker, tech, miner,worker,scout,tech?
+	// demographics effect build order
 	roomConfig.goalDemographics = {
 		"miner" : 0.2,
 		"workerBee" : 0.2,
-		"scout" : 0.05,
+		"private" : 0.5,
 		"technician" : 0.6,
 		"gatherer" : 0.05
 	};
@@ -175,7 +177,7 @@ var lvl1room = function(room) {
 		"gatherer" : 2,
 		"miner" : 3,
 		"workerBee" : 3,
-		"scout" : 10, // scouts should chill out until an enemy enters the
+		"private" : 10, // scouts should chill out until an enemy enters the
 		// room.
 		"technician" : 5
 	// Technicians should default to upgrading the
@@ -186,31 +188,40 @@ var lvl1room = function(room) {
 
 var lvl2room = function(room) {
 	var roomConfig = room.memory.strategy;
-
 	// Setup population goals
 	roomConfig.latestModels = {
 		"miner" : [ WORK, WORK, MOVE ],
 		"workerBee" : [ CARRY, CARRY, CARRY, MOVE, MOVE, MOVE ],
-		"scout" : [ TOUGH, ATTACK, MOVE, MOVE ],
+		"private" : [ TOUGH, TOUGH, TOUGH, TOUGH, ATTACK, ATTACK, MOVE, MOVE ],
+		"pfc" : [ TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, RANGED_ATTACK,
+				RANGED_ATTACK, RANGED_ATTACH, MOVE, MOVE ],
+		"medic" : [ TOUGH, TOUGH, TOUGH, HEAL, HEAL, MOVE, MOVE ],
 		"technician" : [ MOVE, MOVE, WORK, CARRY, CARRY ],
 		"builder" : [ MOVE, MOVE, CARRY, CARRY, CARRY, WORK, WORK, WORK ]
+
 	};
 
-	// demographics control build order
-	// This will build in sequence (assuming nobody dies)
-	// miner, worker, scout, miner, worker, tech, miner,worker,scout,tech?
+	// demographics effect build order
 	roomConfig.goalDemographics = {
-		"miner" : 0.4,
-		"workerBee" : 0.4,
-		"scout" : 0.2,
-		"technician" : 0.2
-	}
-	roomConfig.minDemographics = {} // No mins, the goalDemo and max will
+		// "miner" : 0.1,
+		// "workerBee" : 0.2, // mins take care of these
+		"private" : 0.2,
+		"technician" : 0.2,
+		"builder" : 0.3,
+		"pfc" : 0.3,
+		"medic" : 0.1
+	};
+
+	roomConfig.minDemographics = {
+		"miner" : 3,
+		"workerBee" : 3
+	} // No mins, the goalDemo and max will
 	// control build order this early in room
+
 	roomConfig.maxDemographics = {
 		"miner" : 3,
 		"workerBee" : 3,
-		"scout" : 3,
+		"private" : 7,
 		"technician" : 5
 	}
 }

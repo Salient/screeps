@@ -4,46 +4,12 @@ var roomstrat = require('strategy');
 var util = require('common');
 
 // Prototype extensions
-Structure.prototype.needsRepair = function() {
-	return this.hits < this.hitsMax * .8;
-};
-
-Structure.prototype.needsWorkers = function() {
-	var attendees = this.memory.workers;
-	var maxAttendees = this.memory.maxWorkers;
-
-	if (typeof attendees === 'undefined') {
-		attendees = 0;
-	}
-
-	if (typeof maxAttendees === 'undefined') {
-		maxAttendees = 1; // If not defined, be conservative to prevent log
-		// jams
-	}
-	var count = 0;
-	attendees.sort();
-	for ( var creep in attendees) {
-		if (attendees[creep].hits > 0) {
-			count++;
-		} else {
-			destroy(attendees[creep]);
-		}
-	}
-}
-
-Room.prototype.getLevel = function() {
-	return this.controller.level;
-}
 
 Room.prototype.getError = function(msg) {
 	return (util.getError(msg));
 }
 Creep.prototype.getError = function(msg) {
 	return (util.getError(msg));
-}
-
-Room.prototype.popCount = function() {
-	return this.find(FIND_MY_CREEPS).length
 }
 
 // Returns a valid path to the structure, or null?
@@ -72,7 +38,7 @@ for ( var i in Game.rooms) {
 
 	// Needs to happen before population breeding, because it sets some
 	// parameters. Should update every 61 seconds or so.
-	if (!(Game.time % 20)) {
+	if (!(Game.time % 61)) {
 		roomstrat.strategery(curRoom);
 	}
 
@@ -97,30 +63,26 @@ for ( var i in Game.rooms) {
 function dlog(msg) {
 	util.dlog('MAIN', msg);
 }
+
 // Housekeeping
 // Delete old memory entries
-if (!(Game.time % 300)) {
+if (!(Game.time - 100 % 300)) { // Delay first housekeeping by 100 seconds to
+	// allow other modules to initialize
 	dlog("Housekeeping...");
 
 	// Get list of creeps currently spawning so we don't brain wipe them
-	var stormtroopers = [];
+	var stormtroopers = {};
 	for ( var spawn in Game.spawns) {
 		if (util.def(spawn.spawning)) {
-			stormtroopers.push(spawn.spawning.name);
+			stormtroopers[spawn.spawning.name] = true;
 		}
 	}
-	util.dumpObject(stormtroopers);
 
 	for ( var i in Memory.creeps) {
 		if (!Game.creeps[i]) {
-			var mindTricks = false;
-			for ( var safe in stormtroopers) {
-				if (stormtroopers[safe] == i) {
-					dlog("these are not the droids you are looking for...");
-					mindTricks = true;
-				}
-			}
-			if (!mindTricks) {
+			if (stormtroopers[spawn.spawning.name]) {
+				dlog("these are not the droids you are looking for...");
+			} else {
 				dlog('die rebel scum');
 				delete Memory.creeps[i];
 			}

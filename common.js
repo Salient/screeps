@@ -42,9 +42,9 @@ function dlog(module, msg) {
 module.exports.dlog = dlog;
 
 module.exports.dumpObject = function(obj) {
-	dlog('Dumping Object...');
+	dlog('JS OBJ', 'Dumping Object...');
 	for ( var x in obj) {
-		dlog('Key: ' + x + ', value ' + obj[x] + '.');
+		dlog('JS OBJ', 'Key: ' + x + ', value ' + obj[x] + '.');
 	}
 }
 

@@ -1,6 +1,33 @@
 var util = require('common');
 var harvest = require('harvester'); // useful for energy finding routines
 
+Structure.prototype.needsWorkers = function() {
+	var attendees = this.memory.workers;
+	var maxAttendees = this.memory.maxWorkers;
+
+	if (typeof attendees === 'undefined') {
+		attendees = 0;
+	}
+
+	if (typeof maxAttendees === 'undefined') {
+		maxAttendees = 1; // If not defined, be conservative to prevent log
+		// jams
+	}
+	var count = 0;
+	attendees.sort();
+	for ( var creep in attendees) {
+		if (attendees[creep].hits > 0) {
+			count++;
+		} else {
+			destroy(attendees[creep]);
+		}
+	}
+}
+
+Structure.prototype.needsRepair = function() {
+	return this.hits < this.hitsMax * .8;
+};
+
 var buildExtension = function(creep) {
 
 	var numExts = 0;
@@ -177,16 +204,14 @@ function upgradeController(creep) {
 	var rc = creep.room.controller;
 
 	if (creep.pos.isNearTo(rc) && (creep.carry.energy > 0)) {
-		creep.say(completedPretty(rc) + "%");
-		if(rc.my) {
-		  creep.upgradeController(rc);
-		} else {
-		  creep.claimController(rc);
-		}
+		creep.say(sayProgress(rc) + "%");
+		creep.upgradeController(rc);
+	} else if (creep.carry.energy == creep.carryCapacity) {
+		creep.moveTo(rc);
 	} else {
 		fillTank(creep);
-		creep.moveTo(rc);
 	}
+
 }
 
 function fillTank(creep) {
@@ -213,9 +238,11 @@ function fillTank(creep) {
 	}
 }
 
-function completedPretty(target) {
-	if (target.hits !== null) {
+function sayProgress(target) {
+	if (target.structureType == STRUCTURE_CONTROLLER) {
+
+		return parseInt((target.progress / target.progressTotal) * 100);
+	} else if (target.hits !== null) {
 		return parseInt((target.hits / target.hitsMax) * 100);
 	}
-	return parseInt((target.progress / target.progressTotal) * 100);
 }
