@@ -229,7 +229,7 @@ module.exports.gatherer = function(creep) {
 	// On the second day, he ate through two pears
 	// but he was still hungry.
 	if (creep.carry.energy < creep.carryCapacity) {
-
+		// TODO: make this valid for every source in the room
 		var mySource = creep.room.find(FIND_SOURCES)[0];
 		creep.moveTo(mySource, {
 			reusePath : 5

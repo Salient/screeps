@@ -1,6 +1,7 @@
 var population = require('population');
 var taskMaster = require('tasker');
 var roomstrat = require('strategy');
+var construct = require('cityPlanning');
 var util = require('common');
 
 // Prototype extensions
@@ -35,6 +36,9 @@ if (Game.time <= 5) {
 for ( var i in Game.rooms) {
 
 	var curRoom = Game.rooms[i];
+
+	// Test code
+	construct.lvl2(curRoom);
 
 	// Needs to happen before population breeding, because it sets some
 	// parameters. Should update every 61 seconds or so.
