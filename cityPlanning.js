@@ -24,6 +24,12 @@ module.exports.lvl2 = function(room) {
 	// walls
 	// around exits
 
+	if (room.memory.clearFlags) {
+		room.find(FIND_FLAGS).forEach(function(flag) {
+			flag.remove();
+		});
+		room.memory.clearFlags = 0;
+	}
 	if (!util.def(room.memory.map)) {
 		room.memory.map = room.lookAtArea(0, 0, 49, 49);
 	} else {
@@ -48,25 +54,31 @@ function validRoadTile(pos) {
 
 	}
 }
-function allRoadsLeadToRome(curpos, lastpos, curlen, target, room) {
-
-	// return object with following format
-
-	// { "result": success or fail,
-	// "path": [],
-	// pathLen: num
-	// }
-
+function allRoadsLeadToRome(curpos, curlen, target, room) {
 	var x = curpos.x;
 	var y = curpos.y;
 	var map = room.memory.map; // should be a 2 dim array of positions with
 	// list of objects at each pos
-	var curLoc = map[x][y];
-	dlog('Testing tile (' + x + ',' + y + ')');
+	var curLoc = map[y][x]; // careful now. map is row, column
+	//
+	// dlog('Testing tile (' + x + ',' + y + ')');
+	// dlog('depth: ' + curlen)
+	// util.dumpObject(curLoc);
 
+	// insert all adjacent check here?
+
+	if (util.def(curLoc.pathLength) && (curLoc.pathLength != curlen - 1)
+			&& (curlen > 3)) {
+		// dlog('adjacent')
+		// curpos.createFlag('adjacent ' + curlen + ' ' + curpos.x + ','
+		// + curpos.y, COLOR_YELLOW);
+		return {
+			"result" : 'adjacent'
+		}
+
+	}
 	// have we been here before
-	if (map[x][y].explored) {
-		dlog('wait, tested this one before, skipping');
+	if (curLoc.explored) {
 		return {
 			"result" : "fail"
 		}
@@ -74,33 +86,38 @@ function allRoadsLeadToRome(curpos, lastpos, curlen, target, room) {
 
 	// Have we arrived?
 	if ((curpos.x == target.x) && (curpos.y == target.y)) {
-		dlog('huzzah! path found');
+		// dlog('huzzah! path found');
 		var result = {
 			"result" : 'success',
-			"length" : 0,
+			"length" : 1,
 			"path" : []
 		}
 		result.path.push(curpos); // include final tile?
 		return result;
 	} // Success
 
-	// Not there yet, test current tile
-	for ( var i in curLoc) {
-		var hereIs = curLoc[i];
-		if (hereIs.type == 'structure') { // can't build through existing
-			// structures
-			dlog('structure present, rerouting');
-			map[x][y].explored = 1;
-			return {
-				"result" : "fail"
-			}
-		} else if (hereIs.type == 'terrain') {
-			if (hereIs.terrain == 'wall') {
-
-				dlog('hit a wall, rerouting');
-				map[x][y].explored = 1;
+	// Not there yet, test current tile if it's not the starting point
+	if (curlen) {
+		for ( var i in curLoc) {
+			var hereIs = curLoc[i];
+			if (hereIs.type == 'structure') { // can't build through existing
+				// structures
+				// dlog('structure present, rerouting');
+				// curpos.createFlag('Structure ' + curpos.x + ',' + curpos.y,
+				// COLOR_RED);
+				curLock.explored = 1;
 				return {
 					"result" : "fail"
+				}
+			} else if (hereIs.type == 'terrain') {
+				if (hereIs.terrain == 'wall') {
+					// curpos.createFlag('Wall ' + curpos.x + ',' + curpos.y,
+					// COLOR_RED);
+					// dlog('hit a wall, rerouting');
+					curLoc.explored = 1;
+					return {
+						"result" : "fail"
+					}
 				}
 			}
 		}
@@ -108,7 +125,10 @@ function allRoadsLeadToRome(curpos, lastpos, curlen, target, room) {
 
 	// Okay well, seems we are either plain terrain or swamp
 	// We can work with that, lets see where it goes
+	curLoc.explored = 1;
+	curLoc.pathLength = curlen; // mark how long it took to get here
 
+	// curpos.createFlag('Explored ' + curpos.x + ',' + curpos.y, COLOR_RED);
 	// try to move towards the target first
 	var dir = curpos.getDirectionTo(target);
 
@@ -134,6 +154,10 @@ function allRoadsLeadToRome(curpos, lastpos, curlen, target, room) {
 			if ((pos.y == 0) || (pos.x == 49)) {
 				return null;
 			}
+			// check corner cases (hehe) - path can cross itself at angles
+			if (map[y - 1][x].explored && map[y][x + 1].explored) {
+				return null
+			}
 			return new RoomPosition(pos.x + 1, pos.y - 1, room.name);
 		case 3:
 			if (pos.x == 49) {
@@ -143,6 +167,9 @@ function allRoadsLeadToRome(curpos, lastpos, curlen, target, room) {
 		case 4:
 			if ((pos.y == 49) || (pos.x == 49)) {
 				return null;
+			}
+			if (map[y][x + 1].explored && map[y + 1][x].explored) {
+				return null
 			}
 			return new RoomPosition(pos.x + 1, pos.y + 1, room.name);
 		case 5:
@@ -154,6 +181,9 @@ function allRoadsLeadToRome(curpos, lastpos, curlen, target, room) {
 			if ((pos.x == 0) || (pos.y == 49)) {
 				return null;
 			}
+			if (map[y][x - 1].explored && map[y + 1][x].explored) {
+				return null
+			}
 			return new RoomPosition(pos.x - 1, pos.y + 1, room.name);
 		case 7:
 			if ((pos.x == 0)) {
@@ -164,26 +194,25 @@ function allRoadsLeadToRome(curpos, lastpos, curlen, target, room) {
 			if ((pos.x == 0) || (pos.y == 0)) {
 				return null;
 			}
+			if (map[y][x - 1].explored && map[y - 1][x].explored) {
+				return null
+			}
 			return new RoomPosition(pos.x - 1, pos.y - 1, room.name);
 		}
-
 	}
 
 	// starting with dir, try dir, then try left of dir, then right of dir, then
-	// left left of dir, etc.
-	var verdict;
-	for (var x = 0; x < 4; x++) {
+	// left left of dir, etc. But don't test all of them! if you go backwards it
+	// will never end
+	var verdict = {
+		"result" : "fail"
+	};
+	for (var i = 0; i < 4; i++) {
 
 		// step toward target
-		var nextTile = step(dir + x, curpos);
-
-		if ((nextTile.x == lastpos.x) && (nextTile.y == lastpos.y)) {
-			nextTile = null;
-		}
-
+		var nextTile = step(dir - i, curpos);
 		if (util.def(nextTile)) { // not going off the edge of the world
-			verdict = allRoadsLeadToRome(nextTile, curpos, curlen + 1, target,
-					room);
+			verdict = allRoadsLeadToRome(nextTile, curlen + 1, target, room);
 			// Down
 			// the
 			// rabbit
@@ -192,30 +221,26 @@ function allRoadsLeadToRome(curpos, lastpos, curlen, target, room) {
 			// go
 		}
 		if (verdict.result == 'success') {
-			dlog('good path found, passing up the chain');
-
+			// dlog('good path found, passing up the chain');
 			verdict.path.push(curpos);
-
 			return {
 				"result" : 'success',
 				"length" : verdict.length + 1,
 				"path" : verdict.path
 			};
+		} else if (verdict.result == 'adjacent') {
+			delete (map[nextTile.y][nextTile.x].pathLength)
+			return {
+				"result" : "fail"
+			}
 		}
 
-		nextTile = step(dir - x, curpos);
-
-		if ((nextTile.x == lastpos.x) && (nextTile.y == lastpos.y)) {
-			nextTile = null;
-		}
+		nextTile = step(dir + i, curpos);
 
 		if (util.def(nextTile)) {
-			verdict = allRoadsLeadToRome(nextTile, curpos, curlen + 1, target,
-					room);
+			verdict = allRoadsLeadToRome(nextTile, curlen + 1, target, room);
 		}
 		if (verdict.result == 'success') {
-			dlog('good path found, passing up the chain');
-
 			verdict.path.push(curpos);
 
 			return {
@@ -223,13 +248,21 @@ function allRoadsLeadToRome(curpos, lastpos, curlen, target, room) {
 				"length" : verdict.length + 1,
 				"path" : verdict.path
 			};
+		} else if (verdict.result == 'adjacent') {
+			delete (map[nextTile.y][nextTile.x].pathLength)
+
+			return {
+				"result" : "fail"
+			}
 		}
 
 	}
 
 	// If we are here, none of the adjacent tiles go anywhere. mark tile as
 	// explored and report failure
-	map[x][y].explored = 1;
+	curLoc.explored = 1;
+	// curpos.createFlag('Explored ' + curpos.x + ',' + curpos.y, COLOR_RED);
+
 	return {
 		"result" : "fail"
 	}
@@ -253,21 +286,25 @@ function allRoadsLeadToRome(curpos, lastpos, curlen, target, room) {
 
 function flagRoads(room) { // useful for visualizing structure placement
 	// and pathing code
+	dlog('called')
+	var spawns = room.find(FIND_MY_SPAWNS);
+	var sources = room.find(FIND_SOURCES);
 
-	var from = new RoomPosition(30, 24, room.name);
-	var to = new RoomPosition(22, 15, room.name);
-	var what = reservePath(from, to, room);
-	dlog('wwwwwwoooonnnkk');
-	util.dumpObject(what);
+	spawns.forEach(function(spawn) {
+		// sources.forEach(function(source) {
+		for ( var id in sources) {
+			// dlog('testing sourcd ' + id)
+			var source = sources[id]
+			var path = reservePath(spawn.pos, source.pos, room)
+			// dlog('path legnth ' + path.length)
+			for ( var tile in path) {
+				var roompos = path[tile];
+				roompos.createFlag(tile + '-' + id, COLOR_GREEN);
+			}
+		}
+	})
+	// })
 
-	// // yo dawg, i herd u leik recursion
-	//
-	// var sources = room.find(FIND_SOURCES);
-	// for ( var ind in sources) {
-	// var src = sources[ind];
-	// var o = src.pos;
-	// // flag valid mining spots
-	// }
 }
 
 // from and to are roomposition type
@@ -288,12 +325,12 @@ function reservePath(from, to, room) {
 	// clear search space
 	for (var x = 0; x < 50; x++) {
 		for (var y = 0; y < 50; y++) {
-			map[x][y].explored = 0;
+			delete (map[x][y].explored)
+			delete (map[x][y].pathLength);
 		}
 	}
-	var path = allRoadsLeadToRome(from, from, 0, to, room);
-	util.dumpObject(path);
-
+	var path = allRoadsLeadToRome(from, 0, to, room);
+	return path.path;
 }
 
 function placeExtensions(room) {
