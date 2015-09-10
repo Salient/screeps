@@ -15,7 +15,7 @@ var util = require('common');
 // find two independent paths to each and mark those tiles as roads
 // place extensions all along roadsides
 
-// FYI, max call stack size is 4500
+// FYI, max call stack size is 4500. ish. it seems to depend.
 
 module.exports.lvl2 = function(room) {
 	// New structures available are extensions, walls, and ramparts.
@@ -30,6 +30,7 @@ module.exports.lvl2 = function(room) {
 		});
 		room.memory.clearFlags = 0;
 	}
+
 	if (!util.def(room.memory.map)) {
 		room.memory.map = room.lookAtArea(0, 0, 49, 49);
 	} else {
@@ -37,6 +38,16 @@ module.exports.lvl2 = function(room) {
 		// objects currently. Will need to
 		// periodically refresh for evaluating
 		// walls/creep locations
+	}
+
+	// Pre-compute a list of paths in the room to save on cpu every tick
+	if (!util.def(room.memory.paths)) {
+		room.memory.paths = {}
+	}
+
+	if (!util.def(room.memory.paths.sources)) {
+		room.memory.paths.sources = {}
+
 	}
 
 	//	
@@ -62,6 +73,8 @@ function allRoadsLeadToRome(curpos, curlen, target, room) {
 	var curLoc = map[y][x]; // careful now. map is row, column
 	//
 	// dlog('Testing tile (' + x + ',' + y + ')');
+	// curpos.createFlag(+curlen + ' ' + curpos.x + ',' + curpos.y,
+	// COLOR_BROWN);
 	// dlog('depth: ' + curlen)
 	// util.dumpObject(curLoc);
 
@@ -70,8 +83,8 @@ function allRoadsLeadToRome(curpos, curlen, target, room) {
 	if (util.def(curLoc.pathLength) && (curLoc.pathLength != curlen - 1)
 			&& (curlen > 3)) {
 		// dlog('adjacent')
-		// curpos.createFlag('adjacent ' + curlen + ' ' + curpos.x + ','
-		// + curpos.y, COLOR_YELLOW);
+		// curpos.createFlag(+curlen + ' ' + curpos.x + ',' + curpos.y,
+		// COLOR_YELLOW);
 		return {
 			"result" : 'adjacent'
 		}
@@ -104,7 +117,7 @@ function allRoadsLeadToRome(curpos, curlen, target, room) {
 				// structures
 				// dlog('structure present, rerouting');
 				// curpos.createFlag('Structure ' + curpos.x + ',' + curpos.y,
-				// COLOR_RED);
+				// COLOR_ORANGE);
 				curLock.explored = 1;
 				return {
 					"result" : "fail"
@@ -261,7 +274,7 @@ function allRoadsLeadToRome(curpos, curlen, target, room) {
 	// If we are here, none of the adjacent tiles go anywhere. mark tile as
 	// explored and report failure
 	curLoc.explored = 1;
-	// curpos.createFlag('Explored ' + curpos.x + ',' + curpos.y, COLOR_RED);
+	// curpos.createFlag('Explored ' + curpos.x + ',' + curpos.y, COLOR_WHITE);
 
 	return {
 		"result" : "fail"
@@ -290,20 +303,35 @@ function flagRoads(room) { // useful for visualizing structure placement
 	var spawns = room.find(FIND_MY_SPAWNS);
 	var sources = room.find(FIND_SOURCES);
 
-	spawns.forEach(function(spawn) {
-		// sources.forEach(function(source) {
-		for ( var id in sources) {
-			// dlog('testing sourcd ' + id)
-			var source = sources[id]
-			var path = reservePath(spawn.pos, source.pos, room)
-			// dlog('path legnth ' + path.length)
-			for ( var tile in path) {
-				var roompos = path[tile];
-				roompos.createFlag(tile + '-' + id, COLOR_GREEN);
+	if (spawns.length) {
+		spawns.forEach(function(spawn) {
+			// sources.forEach(function(source) {
+			for ( var id in sources) {
+				// dlog('testing sourcd ' + id)
+				var source = sources[3]
+				// Calculate path both from and to target, select which one is
+				// shorter
+				var path = reservePath(spawn.pos, source.pos, room)
+				var htap = reservePath(source.pos, spawn.pos, room)
+
+				if (util.def(path) && util.def(htap)) {
+					var shortest = (path.length <= htap.length) ? path : htap;
+
+					// dlog('path legnth ' + path.length)
+					for ( var tile in shortest) {
+						var roompos = shortest[tile];
+						roompos.createFlag(roompos.x + '-' + roompos.y + ' '
+								+ id, COLOR_GREEN);
+					}
+				} else if (!util.def(path)) {
+					dlog('path undefined')
+				} else {
+					dlog('htap undefined')
+				}
 			}
-		}
-	})
-	// })
+		})
+		// })
+	}
 
 }
 
