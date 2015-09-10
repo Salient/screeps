@@ -81,7 +81,7 @@ function allRoadsLeadToRome(curpos, curlen, target, room) {
 	// insert all adjacent check here?
 
 	if (util.def(curLoc.pathLength) && (curLoc.pathLength != curlen - 1)
-			&& (curlen > 3)) {
+			&& (curlen > 20)) {
 		// dlog('adjacent')
 		// curpos.createFlag(+curlen + ' ' + curpos.x + ',' + curpos.y,
 		// COLOR_YELLOW);
@@ -308,26 +308,38 @@ function flagRoads(room) { // useful for visualizing structure placement
 			// sources.forEach(function(source) {
 			for ( var id in sources) {
 				// dlog('testing sourcd ' + id)
-				var source = sources[3]
+				var source = sources[id]
 				// Calculate path both from and to target, select which one is
 				// shorter
 				var path = reservePath(spawn.pos, source.pos, room)
 				var htap = reservePath(source.pos, spawn.pos, room)
 
-				if (util.def(path) && util.def(htap)) {
-					var shortest = (path.length <= htap.length) ? path : htap;
-
-					// dlog('path legnth ' + path.length)
-					for ( var tile in shortest) {
-						var roompos = shortest[tile];
-						roompos.createFlag(roompos.x + '-' + roompos.y + ' '
-								+ id, COLOR_GREEN);
-					}
-				} else if (!util.def(path)) {
-					dlog('path undefined')
-				} else {
-					dlog('htap undefined')
+				for ( var tile in path) {
+					var roompos = path[tile];
+					roompos.createFlag(roompos.x + '-' + roompos.y + ' ' + id,
+							COLOR_GREEN);
 				}
+				for ( var tile in htap) {
+					var roompos = htap[tile];
+					roompos.createFlag(roompos.x + '-' + roompos.y + ' ' + id,
+							COLOR_ORANGE);
+				}
+
+				//
+				// if (util.def(path) && util.def(htap)) {
+				// var shortest = (path.length <= htap.length) ? path : htap;
+
+				// // dlog('path legnth ' + path.length)
+				// for ( var tile in shortest) {
+				// var roompos = shortest[tile];
+				// roompos.createFlag(roompos.x + '-' + roompos.y + ' '
+				// + id, COLOR_GREEN);
+				// }
+				// } else if (!util.def(path)) {
+				// dlog('path undefined')
+				// } else {
+				// dlog('htap undefined')
+				// }
 			}
 		})
 		// })
