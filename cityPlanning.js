@@ -319,13 +319,13 @@ function flagRoads(room) { // useful for visualizing structure placement
 				for ( var tile in builtin) {
 					var roompos = new RoomPosition(builtin[tile].x,
 							builtin[tile].y, 'sim');
-					roompos.createFlag(tile + 'f ' + id, COLOR_BLUE);
+					roompos.createFlag(tile + 'f* ' + id, COLOR_BLUE);
 				}
 
 				for ( var tile in builtout) {
 					var roompos = new RoomPosition(builtout[tile].x,
 							builtout[tile].y, 'sim');
-					roompos.createFlag(tile + 'f ' + id, COLOR_PURPLE);
+					roompos.createFlag(tile + 'h* ' + id, COLOR_PURPLE);
 				}
 
 				for ( var tile in path) {
