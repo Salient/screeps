@@ -313,16 +313,28 @@ function flagRoads(room) { // useful for visualizing structure placement
 				// shorter
 				var path = reservePath(spawn.pos, source.pos, room)
 				var htap = reservePath(source.pos, spawn.pos, room)
+				var builtin = spawn.pos.findPathTo(source);
+				var builtout = source.pos.findPathTo(spawn);
+
+				for ( var tile in builtin) {
+					var roompos = new RoomPosition(builtin[tile].x,
+							builtin[tile].y, 'sim');
+					roompos.createFlag(tile + 'f ' + id, COLOR_BLUE);
+				}
+
+				for ( var tile in builtout) {
+					var roompos = new RoomPosition(builtout[tile].x,
+							builtout[tile].y, 'sim');
+					roompos.createFlag(tile + 'f ' + id, COLOR_PURPLE);
+				}
 
 				for ( var tile in path) {
 					var roompos = path[tile];
-					roompos.createFlag(roompos.x + '-' + roompos.y + ' ' + id,
-							COLOR_GREEN);
+					roompos.createFlag(tile + 'f ' + id, COLOR_GREEN);
 				}
 				for ( var tile in htap) {
 					var roompos = htap[tile];
-					roompos.createFlag(roompos.x + '-' + roompos.y + ' ' + id,
-							COLOR_ORANGE);
+					roompos.createFlag(tile + 'h ' + id, COLOR_ORANGE);
 				}
 
 				//

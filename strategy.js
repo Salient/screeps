@@ -194,7 +194,7 @@ var lvl2room = function(room) {
 		"workerBee" : [ CARRY, CARRY, CARRY, MOVE, MOVE, MOVE ],
 		"private" : [ TOUGH, TOUGH, TOUGH, TOUGH, ATTACK, ATTACK, MOVE, MOVE ],
 		"pfc" : [ TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, RANGED_ATTACK,
-				RANGED_ATTACK, RANGED_ATTACH, MOVE, MOVE ],
+				RANGED_ATTACK, RANGED_ATTACK, MOVE, MOVE ],
 		"medic" : [ TOUGH, TOUGH, TOUGH, HEAL, HEAL, MOVE, MOVE ],
 		"technician" : [ MOVE, MOVE, WORK, CARRY, CARRY ],
 		"builder" : [ MOVE, MOVE, CARRY, CARRY, CARRY, WORK, WORK, WORK ]
