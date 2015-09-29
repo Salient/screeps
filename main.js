@@ -5,6 +5,12 @@ var construct = require('cityPlanning');
 var util = require('common');
 
 // Prototype extensions
+Game.f = function() {
+	Game.rooms.sim.memory.clearFlags = 1
+}
+Game.p = function() {
+	Game.rooms.sim.memory.halt = 0
+}
 
 Room.prototype.getError = function(msg) {
 	return (util.getError(msg));
@@ -38,7 +44,8 @@ for ( var i in Game.rooms) {
 	var curRoom = Game.rooms[i];
 
 	// Test code
-	construct.lvl2(curRoom);
+	construct.surveyRoom(curRoom)
+	construct.designRoom(curRoom);
 
 	// Needs to happen before population breeding, because it sets some
 	// parameters. Should update every 61 seconds or so.

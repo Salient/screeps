@@ -3,6 +3,7 @@
  */
 
 var population = require('population');
+var planning = require('cityPlanning')
 var util = require('common');
 
 Room.prototype.getLevel = function() {
@@ -72,6 +73,9 @@ function dlog(msg) {
 
 module.exports.strategery = function(room) {
 
+	// //////////////
+	// Debug
+
 	if (!util.def(room.memory.strategy)) {
 		room.memory.strategy = {};
 	}
@@ -81,12 +85,24 @@ module.exports.strategery = function(room) {
 	if (!util.def(roomConfig.curlvl)) {
 		roomConfig.curlvl = 0;
 	}
+
+	// //////////////
+	// Sanity checks
+
 	if (!util.def(room.controller)) {
 		dlog("No controller found in room. Strategy uncertain.");
 		return;
 	}
+
+	// /////////////
+	// State check
+
 	if (roomConfig.curlvl != room.controller.level) {
 		roomConfig.curlvl = room.controller.level;
+
+		// Contact the city council
+		planning.surveyRoom(room)
+		planning.designRoom(room)
 
 		dlog('Room level has changed. Revising all strategery with level '
 				+ roomConfig.curlvl + ' badassery.');
@@ -101,7 +117,7 @@ module.exports.strategery = function(room) {
 
 function lvl3room(room) {
 }
-function lvl4room(room) {
+function lvl4room(room) { // build storage
 }
 function lvl5room(room) {
 }
@@ -187,6 +203,12 @@ var lvl1room = function(room) {
 }
 
 var lvl2room = function(room) {
+
+	// Need to start planning and building extensions
+	if (!util.def(room.memory.paths)) {
+		planning.designRoom(room)
+	}
+
 	var roomConfig = room.memory.strategy;
 	// Setup population goals
 	roomConfig.latestModels = {
