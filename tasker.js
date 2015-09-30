@@ -19,6 +19,27 @@ module.exports.taskMinions = function(room) {
 	}
 }
 
+module.exports.retask = function(room, type, role) {
+	var roomCreeps = room.find(FIND_MY_CREEPS);
+	for ( var i in roomCreeps) {
+		var youThere = roomCreeps[i];
+		var yourJob = youThere.memory.role;
+		if (util.def(yourJob) && (yourJob == type)) {
+			dlog('preempting creep ' + youThere.name + ' task list to ' + role);
+
+			youThere.memory.taskList.push(role)
+		}
+	}
+}
+//
+// function addTask(creep, task) {
+// dlog('preempting creep ' + creep.name + ' task list to ' + task);
+//
+// if (task == 'construction') {
+// creep.memory.taskList.push('')
+// }
+// }
+
 function dlog(msg) {
 	util.dlog('TASKER', msg);
 }

@@ -24,87 +24,82 @@ Structure.prototype.needsWorkers = function() {
 	}
 }
 
-Structure.prototype.needsRepair = function() {
+Structure.prototype.needsRepair = function(name) {
 	return this.hits < this.hitsMax * .8;
 };
-
-var buildExtension = function(creep) {
-
-	var numExts = 0;
-	var structs = creep.room.find(FIND_MY_STRUCTURES);
-	structs.forEach(function(s) {
-		if (structs[s].structureType == 'STRUCTURE_EXTESION') {
-			numExts++;
-		}
-	});
-
-	var maxExts = creep.room.memory.maxExts;
-	if (typeof maxExts !== 'undefined') {
-		if (numExts < maxExts) {
-
-			// build ext.
-		}
-	}
-}
-
-function dlog(msg) {
-	util.dlog('CONSTRUCTION', msg);
-}
 
 module.exports = function(creep) {
 	// Take a look around the room for something to do
 
-	// If we are here, seems there is no extension with energy
-	// workerBee(creep);
-	// return;
+	if (!util.def(creep.memory.targetList)) {
 
-	if ((typeof Game.structures[creep.memory.myTargetId] === 'undefined')
-			|| (creep.memory.myTargetId == null)) {
-
-		creep.memory.myTargetId = constructionDuty(creep);
-		// console.log('New Target for ' + creep.name + ': '
-		// + creep.memory.myTargetId);
+		creep.memory.targetList = [];
 	}
 
-	var target = Game.getObjectById(creep.memory.myTargetId);
-	if (target === null) {
-		// console.log('No target, temporary upgarder');
-		upgradeController(creep);
-		return;
+	var hitList = creep.memory.targetList;
+	if (hitList.length == 0) {
+		// priority list
+
+		repairDuty(creep)
+		constructionDuty(creep);
+		upgradeController(creep)
 	}
 
-	if (!creep.pos.isNearTo(target)) {
-		creep.moveTo(target);
-	}
+	var target = Game.getObjectById(hitList[hitList.length - 1]);
 
 	// Is a construction site
-	if (target.progress >= 0) {
+	if (util.def(target.progress)) {
 		if (target.progress < target.progressTotal) {
-			if (creep.pos.isNearTo(target)) {
-				creep.say(completedPretty(target) + '%');
+			if (creep.pos.isNearTo(target) && (creep.carry.energy > 0)) {
+				creep.say(sayProgress(target) + '%');
 				creep.build(target);
+			} else if (creep.carry.energy == creep.carryCapacity) {
+				creep.moveTo(target);
+			} else {
+				fillTank(creep);
 			}
 		} else {
 			// console.log('clearing target ' + creep.name + ' target: '
 			// + target.structureType + ' ' + target.progress + '/'
 			// + target.progressTotal);
-			creep.memory.myTargetId = null;
+			dlog(creep.name + ' clearing target ' + target.id)
+			creep.memory.targetList.pop();
 		}
-		return;
+		return
+
 	}
 
 	if (needsRepair(target)) {
 		if (creep.pos.isNearTo(target)) {
-			creep.say(completedPretty(target) + '%');
+			creep.say(sayProgress(target) + '%');
 			creep.repair(target);
 		}
 	} else {
 		// console.log('clearing target ' + creep.name + ' target: '
 		// + target.structureType + ' ' + target.hits + '/'
 		// + target.hitsMax);
-		creep.memory.myTargetId = null;
+		dlog(creep.name + ' clearing target ' + target.id)
+		creep.memory.targetList.pop();
 	}
 
+}
+
+var buildExtension = function(creep) {
+
+	var numExts = 0;
+	var structs = creep.room.find(FIND_CONSTRUCTION_SITES);
+
+	for ( var site in structs)
+		var plot = structs[site]
+
+	if (plot.structureType == STRUCTURE_EXTENSION) {
+
+	}
+
+}
+
+function dlog(msg) {
+	util.dlog('CONSTRUCTION', msg);
 }
 
 function needsRepair(target) {
@@ -113,24 +108,35 @@ function needsRepair(target) {
 }
 
 function repairDuty(creep) {
+	debugger
+	var structures = Game.rooms.sim.find(FIND_MY_STRUCTURES)
 
-	var structures = creep.room.find(FIND_STRUCTURES);
-	var options = [];
+	if (structures.length) {
+		// sort in order of most damage
+		structures.sort(function(a, b) {
+			var ahurt = a.hits / a.hitsMax
+			var bhurt = b.hits / b.hitsMax
 
-	// TODO: can I sort structures in order of damage?
-	for ( var i in structures) {
-		var s = structures[i];
+			if (a < b) {
+				return -1
 
-		var intendedPath = creep.checkPath(s);
-		// Check if path exists!! Otherwise, builders can block each other
+			}
+			if (a > b) {
+				return 1
 
-		if (s.hits === null) {
-			continue;
-		}
+			}
+			if (a == b) {
+				return 0
 
-		if (s.needsRepair()) {
-			creep.moveTo(s);
-			creep.repair(s);
+			}
+		})
+
+		for ( var i in structures) {
+			var s = structures[i];
+
+			if (s.hits < s.hitsMax * .8) {
+				creep.targetList.push(s.id)
+			}
 		}
 	}
 }
@@ -140,60 +146,63 @@ function constructionDuty(creep) {
 	var constructionSites = creep.room.find(FIND_CONSTRUCTION_SITES), site = null, target = null;
 
 	if (constructionSites.length) {
-		site = constructionSites[Math.floor((Math.random() * 10)
-				% constructionSites.length)]; // Try to spread out
-		// construction a bit to make
-		// pathing easier
-	}
-	return;
-	var structures = creep.room.find(FIND_STRUCTURES);
-	var options = [];
-
-	for ( var i in structures) {
-		var s = structures[i];
-
-		// Check if path exists!! Otherwise, builders can block each other
-		var path = creep.moveTo(s);
-		if (path) {
-			continue; // Can't do it for some reason.
+		for ( var site in constructionSites) {
+			var s = constructionSites[site]
+			creep.memory.targetList.push(s.id)
 		}
-		if (creep) {
-			if (s.hits === null) {
-				continue;
-			} else if (needsRepair(s)) {
-				if (s.structureType === STRUCTURE_RAMPART) {
-					if (target !== null
-							&& (target.structureType == STRUCTURE_RAMPART)
-							&& (target.hits < s.hits)) {
-						continue;
-					}
-					target = s;
-				}
-				if ((s.structureType == STRUCTURE_ROAD)
-						&& (target === null || (target.structureType != STRUCTURE_RAMPART))) {
-					target = s;
-				}
-				if (target === null
-						|| ((s.structureType == STRUCTURE_WALL) && (target === null || ([
-								STRUCTURE_RAMPART, STRUCTURE_ROAD ]
-								.indexOf(target.structureType) == -1)))) {
-					target = s;
-				}
-			}
-		}
+	} else {
+		upgradeController(creep)
 	}
 
-	if (target === null && site !== null) {
-		return site.id;
-	} else if (target !== null && (target.hits < (target.hitsMax / 4))) {
-		return target.id;
-	} else if (site !== null) {
-		return site.id;
-	} else if (target !== null) {
-		return target.id;
-	}
-	// console.log('failed to find target');
-	return null;
+	// //
+	// // var structures = creep.room.find(FIND_STRUCTURES);
+	// // var options = [];
+	//
+	// for ( var i in constructionSites) {
+	// var s = constructionSites[i];
+	//
+	// // Check if path exists!! Otherwise, builders can block each other
+	// var path = creep.moveTo(s);
+	// if (path) {
+	// continue; // Can't do it for some reason.
+	// }
+	// if (creep) {
+	// if (s.hits === null) {
+	// continue;
+	// } else if (needsRepair(s)) {
+	// if (s.structureType === STRUCTURE_RAMPART) {
+	// if (target !== null
+	// && (target.structureType == STRUCTURE_RAMPART)
+	// && (target.hits < s.hits)) {
+	// continue;
+	// }
+	// target = s;
+	// }
+	// if ((s.structureType == STRUCTURE_ROAD)
+	// && (target === null || (target.structureType != STRUCTURE_RAMPART))) {
+	// target = s;
+	// }
+	// if (target === null
+	// || ((s.structureType == STRUCTURE_WALL) && (target === null || ([
+	// STRUCTURE_RAMPART, STRUCTURE_ROAD ]
+	// .indexOf(target.structureType) == -1)))) {
+	// target = s;
+	// }
+	// }
+	// }
+	// }
+	//
+	// if (target === null && site !== null) {
+	// return site.id;
+	// } else if (target !== null && (target.hits < (target.hitsMax / 4))) {
+	// return target.id;
+	// } else if (site !== null) {
+	// return site.id;
+	// } else if (target !== null) {
+	// return target.id;
+	// }
+	// // console.log('failed to find target');
+	// return null;
 }
 
 module.exports.constructionDuty = constructionDuty;

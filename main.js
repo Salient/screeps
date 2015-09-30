@@ -43,10 +43,6 @@ for ( var i in Game.rooms) {
 
 	var curRoom = Game.rooms[i];
 
-	// Test code
-	construct.surveyRoom(curRoom)
-	construct.designRoom(curRoom);
-
 	// Needs to happen before population breeding, because it sets some
 	// parameters. Should update every 61 seconds or so.
 	if (!(Game.time % 61)) {
