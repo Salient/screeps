@@ -99,14 +99,63 @@ function dlog(msg) {
 	util.dlog('HARVEST', msg);
 }
 
+module.exports.refreshArbiter = function(room) {
+	// Count number of creep assigned to each source and arbitrate
+
+	var sources = room.memory.sources;
+
+	if (!util.def(sources)) {
+		return // Wait for a room survey to be done
+	}
+
+	for ( var src in sources) {
+		var thisSrc = sources[src]
+
+		// Target assignments is X miners based on available access to source,
+		// and X number of shuttles based on source distance to spawn.
+		// TODO: manage sources implement above
+
+		var numMiners = 0;
+		var numShuttles = 0;
+		var numTempWorker = 0;
+
+		if (!util.def(thisSrc.attendees)) {
+			thisSrc.attendees = [];
+		} else {
+			for ( var slave in thisSrc.attendees) {
+				var attenId = thisSrc.attendees[slave]
+				var attendee = Game.getObjectById(attenId)
+				if (util.def(attendee) && (attendee.myTargetId == thisSrc.id)) {
+					switch (attendee.role) {
+					case 'miner':
+						numMiners++;
+						break;
+					case 'shuttle':
+						numShuttles++;
+						break;
+					case 'gatherer':
+						numTempWorker++;
+						break;
+					default: // eh?
+						dlog('I have a weird feeling in my special area');
+						// Remove from source list, and wipe creep target
+						attendee.myTargetId = null
+						thisSrc.attendees.splice(slave, 1)
+					}
+				} else {
+					thisSrc.attendees.splice(slave, 1)
+				}
+			}
+		}
+	}
+
+}
+
 // Optimize energy gathering by available roles in the room
 module.exports.sortingHat = function(creep) {
 
 	var taskList = creep.memory.taskList;
 
-	if (!util.def(taskList)) {
-		return null;
-	}
 	var availPop = creep.room.memory.strategy.currentPopulation;
 
 	// initialize these two for
