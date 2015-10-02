@@ -169,6 +169,15 @@ var lvl1room = function(room) {
 	if (room.popCount() < 6) {
 		return bootstrap(room);
 	}
+
+	if (util.def(roomConfig.currentPopulation.workerBee)
+			&& (roomConfig.currentPopulation.workerBee >= 2)) {
+		tasker.retask(room, 'gatherer', 'technician')
+	} else {
+		tasker.retask(room, 'gatherer', 'gatherer') // has no effect if
+		// already set
+
+	}
 	dlog('lvl1 proper, pop counted ' + room.popCount());
 	// Setup population goals
 	roomConfig.latestModels = {

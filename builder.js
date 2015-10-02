@@ -52,7 +52,16 @@ module.exports = function(creep) {
 		if (target.progress < target.progressTotal) {
 			if (creep.pos.isNearTo(target) && (creep.carry.energy > 0)) {
 				creep.say(sayProgress(target) + '%');
-				creep.build(target);
+				var res = creep.build(target);
+				if (res < 0) {
+					dlog('Error building ' + target.structureType + ': '
+							+ util.getError(res))
+					if ((res == -7) || (res == -14)) {
+						// clear target
+						dlog(creep.name + ' clearing target ' + target.id)
+						creep.memory.targetList.pop();
+					}
+				}
 			} else if (creep.carry.energy == creep.carryCapacity) {
 				creep.moveTo(target);
 			} else {
@@ -67,19 +76,26 @@ module.exports = function(creep) {
 		}
 		return
 
+		
+
+				
+
 	}
 
-	if (needsRepair(target)) {
-		if (creep.pos.isNearTo(target)) {
-			creep.say(sayProgress(target) + '%');
-			creep.repair(target);
+	if (util.def(target.hits)) {
+
+		if (needsRepair(target)) {
+			if (creep.pos.isNearTo(target)) {
+				creep.say(sayProgress(target) + '%');
+				creep.repair(target);
+			}
+		} else {
+			// console.log('clearing target ' + creep.name + ' target: '
+			// + target.structureType + ' ' + target.hits + '/'
+			// + target.hitsMax);
+			dlog(creep.name + ' clearing target ' + target.id)
+			creep.memory.targetList.pop();
 		}
-	} else {
-		// console.log('clearing target ' + creep.name + ' target: '
-		// + target.structureType + ' ' + target.hits + '/'
-		// + target.hitsMax);
-		dlog(creep.name + ' clearing target ' + target.id)
-		creep.memory.targetList.pop();
 	}
 
 }
@@ -248,10 +264,10 @@ function fillTank(creep) {
 }
 
 function sayProgress(target) {
-	if (target.structureType == STRUCTURE_CONTROLLER) {
 
+	if (util.def(target.progress)) {
 		return parseInt((target.progress / target.progressTotal) * 100);
-	} else if (target.hits !== null) {
+	} else if (util.def(target.hits)) {
 		return parseInt((target.hits / target.hitsMax) * 100);
 	}
 }

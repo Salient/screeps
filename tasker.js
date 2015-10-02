@@ -21,10 +21,14 @@ module.exports.taskMinions = function(room) {
 
 module.exports.retask = function(room, type, role) {
 	var roomCreeps = room.find(FIND_MY_CREEPS);
+	// dlog('was told to retask all ' + type + ' to do ' + role)
 	for ( var i in roomCreeps) {
 		var youThere = roomCreeps[i];
 		var yourJob = youThere.memory.role;
-		if (util.def(yourJob) && (yourJob == type)) {
+		var taskList = youThere.memory.taskList;
+		if (util.def(yourJob) && (yourJob == type)
+				&& (taskList[taskList.length - 1] != role)) {
+			// Check the latest task isn't already set to type
 			dlog('preempting creep ' + youThere.name + ' task list to ' + role);
 
 			youThere.memory.taskList.push(role)
@@ -92,12 +96,12 @@ var performTask = function(creep) {
 		dlog('Empty task list found: ' + creep.name);
 		taskList[0] = getDefaultTask(creep);
 	}
-	if ((taskList.length > 1) && !(Game.time % 10)) // Periodically refresh
-	// temporary tasksf
-	{
-		// dlog('refreshing the task list for ' + creep.name);
-		taskList.pop();
-	}
+	// if ((taskList.length > 1) && !(Game.time % 10)) // Periodically refresh
+	// // temporary tasksf
+	// {
+	// // dlog('refreshing the task list for ' + creep.name);
+	// taskList.pop();
+	// }
 
 	// Global behavior definitions
 	switch (taskList[taskList.length - 1]) {

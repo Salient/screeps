@@ -111,22 +111,22 @@ module.exports.designRoom = function(room) {
 	// /////////////
 	// Debug Code
 
-	if (room.memory.clearFlags) {
-		room.find(FIND_FLAGS).forEach(function(flag) {
-			flag.remove();
-		});
-		room.memory.clearFlags = 0;
-	}
-	if (!util.def(room.memory.halt)) {
-		room.memory.halt = 1
-	}
-	if (!room.memory.halt) {
-		room.memory.halt = 1
-		dlog('go')
-
-	} else {
-		return null
-	}
+	// if (room.memory.clearFlags) {
+	// room.find(FIND_FLAGS).forEach(function(flag) {
+	// flag.remove();
+	// });
+	// room.memory.clearFlags = 0;
+	// }
+	// if (!util.def(room.memory.halt)) {
+	// room.memory.halt = 1
+	// }
+	// if (!room.memory.halt) {
+	// room.memory.halt = 1
+	// dlog('go')
+	//
+	// } else {
+	// return null
+	// }
 
 	// aaaand here we go. create construction sites for everything we can build
 	// at the current controller level
