@@ -3,6 +3,7 @@ var taskMaster = require('tasker');
 var roomstrat = require('strategy');
 var construct = require('cityPlanning');
 var util = require('common');
+var harvest = require('harvester');
 
 // Prototype extensions
 Game.f = function() {
@@ -24,11 +25,6 @@ Creep.prototype.checkPath = function(structure) {
 	return path = this.room.findPath(this.pos, structure);
 }
 
-// Quickstart for sims
-if (Game.time <= 5) {
-	// skip timeouts
-	roomstrat.strategery(Game.rooms.sim);
-}
 // Welcome to the HiveMind (v0.1)
 // Basic aim is to build up a room, fortify, and then spawn into adjacent rooms.
 // If vacant, rinse and repeat.
@@ -43,9 +39,11 @@ for ( var i in Game.rooms) {
 
 	var curRoom = Game.rooms[i];
 
-	// Test code
-	construct.surveyRoom(curRoom)
-	construct.designRoom(curRoom);
+	// Bootstrap check
+	if (!util.def(curRoom.memory.strategy)) {
+		roomstrat.strategery(curRoom);
+		population.census(curRoom)
+	}
 
 	// Needs to happen before population breeding, because it sets some
 	// parameters. Should update every 61 seconds or so.
@@ -55,6 +53,11 @@ for ( var i in Game.rooms) {
 
 	// Update minion tasks every tick
 	taskMaster.taskMinions(curRoom);
+
+	if (!(Game.time % 47)) {
+		// Prune any creeps assigned to energy production who have died.
+		harvest.refreshArbiter(curRoom);
+	}
 
 	// Update population tracking for each room for creeps that were killed or
 	// died of old age.

@@ -33,15 +33,22 @@ module.exports.lvl2 = function(room) {
 // }
 // }
 function surveyRoom(room) {
+	// dlog('Conducting room survey...');
 	var map = room.lookAtArea(0, 0, 49, 49);
 	room.memory.map = map
 	room.memory.numExts = 0
 	var mem = room.memory // assign it the object instead of the counter
 	// value so it is referenced
 
-	// Wipe the slate
-	mem.sources = []
-	mem.paths = []
+	var firstGo = false;
+	if (!util.def(mem.sources)) {
+		mem.sources = [];
+		firstGo = true;
+	}
+	if (!util.def(mem.paths)) {
+		mem.paths = {};
+		firstGo = true;
+	}
 
 	for (var tempX = 0; tempX < 50; tempX++) {
 		for (var tempY = 0; tempY < 50; tempY++) {
@@ -66,14 +73,18 @@ function surveyRoom(room) {
 						mem.numExts = mem.numExts + 1
 					}
 				}
-				// if it's a source, add it to the list of sources
-				if (hereIs.type == 'source') {
-					mem.sources.push(hereIs.source)
+				if (firstGo) {
+					// if it's a source, add it to the list of sources
+					if (hereIs.type == 'source') {
+						mem.sources.push(hereIs.source)
+					}
 				}
 			}
 		}
 	}
-	flagRoads(room)
+	if (firstGo) {
+		flagRoads(room)
+	}
 }
 
 module.exports.surveyRoom = surveyRoom
@@ -102,7 +113,7 @@ module.exports.designRoom = function(room) {
 		// walls/creep locations
 	}
 	if (!util.def(room.memory.paths)) {
-		room.memory.paths = []
+		room.memory.paths = {}
 
 	}
 	if (!util.def(room.memory.paths.sources)) {
@@ -491,8 +502,8 @@ function flagRoads(room) { // useful for visualizing structure placement
 				// shorter
 				var path = reservePath(spawn.pos, source.pos, room)
 				var htap = reservePath(source.pos, spawn.pos, room)
-				// var builtin = spawn.pos.findPathTo(source);
-				// var builtout = source.pos.findPathTo(spawn);
+				// var path = spawn.pos.findPathTo(source);
+				// var htap = source.pos.findPathTo(spawn);
 
 				// for ( var tile in builtin) {
 				// var roompos = new RoomPosition(builtin[tile].x,
@@ -545,13 +556,19 @@ function flagRoads(room) { // useful for visualizing structure placement
 						roompos.createConstructionSite(STRUCTURE_ROAD)
 					}
 				}
-				sourcePaths.push(shortest)
+				sourcePaths.push({
+					'id' : source.id,
+					'steps' : shortest
+				})
 			}
 
 			var contr = room.controller;
 			if (util.def(contr)) {
 				path = reservePath(spawn.pos, contr.pos, room)
 				htap = reservePath(contr.pos, spawn.pos, room)
+				// var path = spawn.pos.findPathTo(contr);
+				// var htap = contr.pos.findPathTo(spawn);
+
 				if (util.def(path) && util.def(htap)) {
 					var shortest = (path.length < htap.length) ? path : htap
 							.reverse();
@@ -577,8 +594,12 @@ function flagRoads(room) { // useful for visualizing structure placement
 
 	// Sort sources by distance from spawn
 	sourcePaths.sort(function(a, b) {
-		return (a.length - b.length)
+		return (a.steps.length - b.steps.length)
 	})
+	if (!util.def(room.memory.paths)) {
+		room.memory.paths = {};
+	}
+
 	room.memory.paths.sources = sourcePaths
 }
 

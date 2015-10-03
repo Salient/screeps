@@ -82,10 +82,7 @@ var isValidRole = function(room, role) {
 function nextPriority(room) {
 	// Pull up memory
 	var strategy = room.memory.strategy;
-	if (typeof strategy === 'undefined') {
-		dlog('wtf');
-		return null;
-	}
+
 	// These basic five should be set/updated by strategy periodically
 	// Else, the previous value holds
 
@@ -185,8 +182,7 @@ var printDemographics = function(room) {
 	for ( var c in currentPopulation) {
 		var number = currentPopulation[c];
 		if (c !== 'freeAgent') {
-			console.log("There are " + number + " of type " + c
-					+ " creeps, making up "
+			console.log("There are " + number + " " + c + " creeps, making up "
 					+ (number / totalPop * 100).toFixed(2)
 					+ "% of the population. The goal is " + goalDemographics[c]
 					* 100 + "%");
