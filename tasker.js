@@ -92,6 +92,12 @@ var performTask = function(creep) {
 	case 'gatherer':
 		harvest.gatherer(creep);
 		break;
+	case 'janitor':
+		build(creep);
+		harvest.scrounge(creep, 'sweep') // if there is energy lying around,
+											// we should
+		// stop building and go grab it
+		break;
 	case 'military':
 		military.duty(creep);
 		break;

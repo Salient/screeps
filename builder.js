@@ -206,7 +206,7 @@ function upgradeController(creep) {
 	if (creep.pos.isNearTo(rc) && (creep.carry.energy > 0)) {
 		creep.say(sayProgress(rc) + "%");
 		creep.upgradeController(rc);
-	} else if (creep.carry.energy == creep.carryCapacity) {
+	} else if (creep.carry.energy = creep.carryCapacity) {
 		creep.moveTo(rc);
 	} else {
 		fillTank(creep);
