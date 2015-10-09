@@ -5,6 +5,7 @@
 var population = require('population');
 var planning = require('cityPlanning')
 var util = require('common');
+var tasker = require('tasker')
 
 Room.prototype.getLevel = function() {
 	return this.controller.level;
@@ -106,7 +107,6 @@ module.exports.strategery = function(room) {
 
 		dlog('Room level has changed. Revising all strategery with level '
 				+ roomConfig.curlvl + ' badassery.');
-
 	}
 
 	var selectStrat = [ bootstrap, lvl1room, lvl2room, lvl3room, lvl4room,
@@ -169,6 +169,15 @@ var lvl1room = function(room) {
 	if (room.popCount() < 6) {
 		return bootstrap(room);
 	}
+
+	if (util.def(roomConfig.currentPopulation.workerBee)
+			&& (roomConfig.currentPopulation.workerBee >= 2)) {
+		tasker.retask(room, 'gatherer', 'technician')
+	} else {
+		tasker.retask(room, 'gatherer', 'gatherer') // has no effect if
+		// already set
+
+	}
 	dlog('lvl1 proper, pop counted ' + room.popCount());
 	// Setup population goals
 	roomConfig.latestModels = {
@@ -208,6 +217,9 @@ var lvl2room = function(room) {
 	if (!util.def(room.memory.paths)) {
 		planning.designRoom(room)
 	}
+
+	tasker.retask(room, 'gatherer', 'builder')
+	tasker.retask(room, 'technician', 'builder')
 
 	var roomConfig = room.memory.strategy;
 	// Setup population goals

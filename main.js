@@ -51,6 +51,10 @@ for ( var i in Game.rooms) {
 		roomstrat.strategery(curRoom);
 	}
 
+	if (!(Game.time % 67)) {
+		construct.designRoom(curRoom);
+	}
+
 	// Update minion tasks every tick
 	taskMaster.taskMinions(curRoom);
 
