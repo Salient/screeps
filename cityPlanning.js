@@ -19,10 +19,6 @@ var debug = false
 
 // FYI, max call stack size is 4500. ish. it seems to depend
 
-module.exports.lvl2 = function(room) {
-
-}
-
 // function validRoadTile(pos) {
 // var map = room.memory.map;
 // var tile = [ pos.y ][pos.x];
