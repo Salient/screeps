@@ -58,6 +58,7 @@ module.exports = function(creep) {
 	// workerBee(creep);
 	// return;
 
+	debugger
 	if ((typeof Game.structures[creep.memory.myTargetId] === 'undefined')
 			|| (creep.memory.myTargetId == null)) {
 
@@ -67,9 +68,9 @@ module.exports = function(creep) {
 	}
 
 	var target = Game.getObjectById(creep.memory.myTargetId);
-	if (target === null) {
+	if (!util.def(target)) {
 		// console.log('No target, temporary upgarder');
-		upgradeController(creep);
+		upgradeRC(creep);
 		return;
 	}
 
@@ -197,10 +198,10 @@ function constructionDuty(creep) {
 }
 
 module.exports.constructionDuty = constructionDuty;
-module.exports.upgradeController = upgradeController;
+module.exports.upgradeRC = upgradeRC;
 
-function upgradeController(creep) {
-
+function upgradeRC(creep) {
+	debugger;
 	var rc = creep.room.controller;
 
 	if (creep.pos.isNearTo(rc) && (creep.carry.energy > 0)) {
@@ -220,7 +221,7 @@ function fillTank(creep) {
 	creep.say('Filling up my tank');
 
 	if (creep.carry.energy < creep.carryCapacity) {
-		harvest.scrounge(creep);
+		harvest.scrounge(creep, 'sweep');
 		for ( var i in structs) {
 			var struct = structs[i];
 			if ((struct.structureType == STRUCTURE_EXTENSION)

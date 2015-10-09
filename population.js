@@ -61,18 +61,26 @@ var getCost = function(design, room) {
 
 var isValidRole = function(room, role) {
 
-	dlog('testing if ' + role + ' is valid for room ' + room);
+	// dlog('testing if ' + role + ' is valid for room ' + room);
+
+	if (!util.def(room.memory)) {
+		dlog('dafuq?')
+	}
+
+	if (!util.def(room.memory.strategy)) {// hrm....
+		roomstrat.strategery(room);
+
+	}
 
 	if (!(util.def(room.memory.strategy.latestModels))) {
 		return false;
 	}
 	var design = room.memory.strategy.latestModels;
-	util.dumpObject(design);
 
 	for ( var type in design) {
-		dlog(' is ' + type + ' what im looking for?');
+		// dlog(' is ' + type + ' what im looking for?');
 		if (type == role) {
-			dlog('herpaderp derp');
+			// dlog('herpaderp derp');
 			return true;
 		}
 	}
@@ -94,7 +102,7 @@ function nextPriority(room) {
 	// Not set by strategy, set in main on timer
 
 	// If for some reason the room doesn't know what we have in the room
-	if (typeof strategy.currentPopulation === 'undefined') {
+	if (!util.def(strategy.currentPopulation)) {
 		strategy.currentPopulation = census(room);
 	}
 
@@ -105,7 +113,7 @@ function nextPriority(room) {
 	// Edge case if there are no creeps yet, build the first in line
 	// else we might divide by the unholy zero
 	if (!totalPop) {
-		if ((typeof design === 'undefined') || (design == null)) {
+		if (!util.def(design)) {
 			dlog('wtf2');
 			return null;
 		}
@@ -113,13 +121,13 @@ function nextPriority(room) {
 
 	// Check minimum numbers
 	for ( var i in minDemographics) {
-		if (typeof currentPopulation[i] === 'undefined') {
+		if (!util.def(currentPopulation[i])) {
 			currentPopulation[i] = 0;
 		}
-		// dlog("checking minimums for " + i);
+		dlog("checking minimums for " + i);
 		// See if we need more of them
-		if (currentPopulation[i] <= minDemographics[i]) {
-			// dlog('Must build a minimum of ' + minDemographics[i] + ' ' + i);
+		if (currentPopulation[i] < minDemographics[i]) {
+			dlog('Must build a minimum of ' + minDemographics[i] + ' ' + i);
 			return (i);
 		}
 	}
@@ -132,15 +140,16 @@ function nextPriority(room) {
 
 	// Let's see what we want the room to look like vs. what is here
 	for ( var i in goalDemographics) {
+
 		// If a unit we want isn't present yet, initialize the count for it
-		if (typeof currentPopulation[i] === 'undefined') {
+		if (!util.def(currentPopulation[i])) {
 			currentPopulation[i] = 0;
 		}
 
 		// See if we need more of them
 		// dlog('checking if we need more ' + i);
-		if (typeof goalDemographics === 'undefined') {
-			dlog(i + ' type is no longer in goal demographic.');
+		if (!isValidRole(room, i)) {
+			dlog(i + ' type is no longer in creep definitions.');
 			continue;
 		}
 		if ((currentPopulation[i] / totalPop) < goalDemographics[i]) {
@@ -225,7 +234,7 @@ var breed = function(room) {
 	// // finish
 	var bowchickabowchicka = null;
 
-	if (typeof room.memory.spawnWaiting === 'undefined') {
+	if (!util.def(room.memory.spawnWaiting)) {
 		room.memory.spawnWaiting = null;
 	}
 
@@ -237,19 +246,25 @@ var breed = function(room) {
 	// }
 
 	if (bowchickabowchicka == null) {
-		dlog('wut');
+		dlog('wut? no pootang?');
 		return;
 		// var popLimit = room.memory.maxPop;
 	}
 
 	// if (isValidRole(room, bowchickabowchicka)) {
-	var result = create(bowchickabowchicka, room);
-	if (result < 0) {
-		dlog("Error creating creep: " + util.getError(result));
-		// }
-		// } else {
-		// dlog('invalid design'); // tried to create invalid creep...probably
-		// // null?
+	if (isValidRole(room, bowchickabowchicka)) {
+		var result = create(bowchickabowchicka, room);
+		if (result < 0) {
+			dlog("Error creating creep: " + util.getError(result));
+			// }
+			// } else {
+			// dlog('invalid design'); // tried to create invalid
+			// creep...probably
+			// // null?
+		}
+	} else {
+		dlog('Entry ' + bowchickabowchicka
+				+ ' is in min demographics, but not in latest models')
 	}
 }
 

@@ -207,15 +207,16 @@ module.exports.sortingHat = function(creep) {
 
 	case 'gatherer': // default tasking for gatherer
 		if (util.def(availPop.workerBee) && util.def(availPop.miner)) {
-			if (availPop.workerBee <= availPop.miner) {
-				if (assignments.shuttle < assignments.miner) {
+			if ((availPop.workerBee < availPop.miner)
+					&& (availPop.workerBee > 0)) {
+				if (assignments.shuttle <= assignments.miner) {
 					creep.memory.taskList.push('shuttle')
 				} else {
-					creep.memory.taskList.push('janitor')
+					creep.memory.taskList.push('gatherer')
 				}
+			} else {
+				creep.memory.taskList.push('janitor')
 			}
-		} else {
-			creep.memory.taskList.push('gatherer')
 		}
 
 		break;
@@ -241,8 +242,10 @@ module.exports.shuttle = function(creep) {
 	if (creep.pos.isNearTo(mySink) && (creep.carry.energy > 0)) {
 		var result = creep.transferEnergy(mySink);
 	} else if (creep.carry.energy == creep.carryCapacity) {
+
 		creep.moveTo(mySink); // TODO: replace moveTo with something
 		// more efficient
+
 	} else {
 		// Go scrounge for energy
 		scrounge(creep, 'collect')
@@ -250,64 +253,123 @@ module.exports.shuttle = function(creep) {
 }
 
 function scrounge(creep, mode) {
-	var scrounge = creep.room.find(FIND_DROPPED_ENERGY); // TODO possible
+	var scrounges = creep.room.find(FIND_DROPPED_ENERGY); // TODO possible
 	// efficiency gain
 	// here
 	// I guess the idea is to push a move task onto the taskList to move to a
 	// certain source, and then just find the nearest energy?
 
-	if (scrounge.length) {
+	// dlog('scourning!')
+
+	if (scrounges.length) {
 		// sort by distance
-		scrounge.sort(function(a, b) {
+		scrounges.sort(function(a, b) {
 
 			var toA = distance(creep.pos, a.pos)
 			var toB = distance(creep.pos, b.pos)
+			var enA = a.energy;
+			var enB = b.energy;
 
-			if (toA < toB) {
+			// Fancy choosing algorithm to see if it's worth going out of the
+			// way
+			// (not really fancy)
+
+			var weightA = toA / enA;
+			var weightB = toB / enB;
+
+			if (weightA < weightB) {
 				return -1
-			} else if (toA > toB) {
+			} else if (weightA > weightB) {
 				return 1
 			} else {
-
-				// same distance away, choose the one with more energy
-				if (a.energy > b.energy) {
-					return -1
-				} else if (a.energy < b.energy) {
-					return 1
-				}
-
 				return 0
 			}
 		})
 
-		var srcs = room.memory.sources;
+		// util.dumpObject(scrounges)
 
-		for ( var s in scrounge) {
+		var srcs = creep.room.memory.sources;
+		// dlog('start of choosing')
+		for ( var s in scrounges) {
+			// util.dumpObject(scrounges[s])
 
 			for ( var src in srcs) {
 				var disSrc = srcs[src];
-				var disDistance = distance(disSrc.pos, scrounge[s].pos)
-
+				var disDistance = distance(disSrc.pos, scrounges[s].pos)
+				// dlog('tsting nrg ' + scrounge[s] + ' against src ' +
+				// disSrc.id
+				// + ', distance: ' + disDistance);
 				// Skip energy that doesn't fit the profile
 				if (((disDistance == 1) && (mode == 'sweep'))
 						|| ((disDistance > 1) && (mode == 'collect'))) {
+
 					continue;
 				}
 			}
+			// dlog('right mode...')
 
-			if (creep.pos.isNearTo(scrounge[s])) {
-				var res = creep.pickup(scrounge[s]);
+			if (creep.pos.isNearTo(scrounges[s])) {
+				var res = creep.pickup(scrounges[s]);
+				// dlog('picking up')
 				if ((res != 0) && (res != ERR_TIRED)) {
-					dlog('Error scroundng for NRG, creep ' + creep.name);
+					// dlog('Error scroundng for NRG, creep ' + creep.name + ',
+					// '
+					// + util.getError(res));
 				} else {
+					// dlog('success pkup')
 					break;
 				}
 			}
 			if (creep.carry.energy != creep.carryCapacity) {
-				var res = creep.moveTo(scrounge[s]); // don't stomp
+				// dlog(creep.name + ' - imma hunting')
+
+				var mines = [];
+				var check;
+				var route;
+				while (true) {
+
+					// dlog('trying to get to ' + scrounges[s])
+					// dlog('while avoinding' + mines)
+					route = creep.room.findPath(creep.pos, scrounges[s].pos, {
+						'avoid' : mines,
+						'ignore' : [ scrounges[s].pos ],
+						'ignoreCreeps' : true
+					})
+
+					if (route.length == 0) {
+						break;
+					}
+
+					var step = route[0];
+					check = new RoomPosition(step.x, step.y, creep.room);
+					var redFlag = false
+
+					for ( var src in srcs) {
+						var disSrc = srcs[src];
+						var disDistance = distance(disSrc.pos, check)
+						// dlog('next step dist. is ' + disDistance)
+						if (disDistance == 1) {
+							mines.push(check)
+							redFlag = true
+						}
+					}
+
+					if (redFlag) {
+						continue;
+					} else {
+						break;
+					}
+				}
+
+				if (!check) {
+					dlog('no route??')
+				}
+				var res = creep.move(route[0].direction); // don't stomp
+
 				if ((res != 0) && (res != ERR_TIRED)) {
 					dlog('Error moving to NRG: ' + creep.name + ' - '
 							+ util.getError(res))
+					// util.dumpObject(check);
 				} else {
 					break;
 				}

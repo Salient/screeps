@@ -51,7 +51,7 @@ Room.prototype.getSpawning = function() {
 // }
 
 var performTask = function(creep) {
-
+	debugger
 	if (creep.spawning) {
 		return;
 	}
@@ -60,16 +60,16 @@ var performTask = function(creep) {
 	// role tasks are search and perform logic, assigned are specific targets
 	// to prevent multiple units trying to work on the same thing
 
-	var taskList = Memory.creeps[creep.name].taskList;
+	var taskList = creep.memory.taskList;
 
 	if (!util.def(taskList)) {
 		dlog('Undefined task list found: ' + creep.name);
-		Memory.creeps[creep.name].taskList = [];
+		creep.memory.taskList = [];
 	}
 
-	if ((typeof taskList[0] === 'undefined') || (taskList[0] == null)) {
+	if (!taskList.length) {
 		dlog('Empty task list found: ' + creep.name);
-		taskList[0] = getDefaultTask(creep);
+		taskList.push(getDefaultTask(creep));
 	}
 	if ((taskList.length > 1) && !(Game.time % 10)) // Periodically refresh
 	// temporary tasksf
@@ -95,14 +95,14 @@ var performTask = function(creep) {
 	case 'janitor':
 		build(creep);
 		harvest.scrounge(creep, 'sweep') // if there is energy lying around,
-											// we should
+		// we should
 		// stop building and go grab it
 		break;
 	case 'military':
 		military.duty(creep);
 		break;
 	case 'technician':
-		build.upgradeController(creep);
+		build.upgradeRC(creep);
 		break;
 	case 'builder':
 		build(creep);

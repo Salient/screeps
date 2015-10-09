@@ -54,10 +54,10 @@ for ( var i in Game.rooms) {
 	// Update minion tasks every tick
 	taskMaster.taskMinions(curRoom);
 
-	if (!(Game.time % 47)) {
-		// Prune any creeps assigned to energy production who have died.
-		harvest.refreshArbiter(curRoom);
-	}
+	// if (!(Game.time % 47)) {
+	// // Prune any creeps assigned to energy production who have died.
+	// harvest.refreshArbiter(curRoom);
+	// }
 
 	// Update population tracking for each room for creeps that were killed or
 	// died of old age.
