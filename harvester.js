@@ -99,14 +99,77 @@ function dlog(msg) {
 	util.dlog('HARVEST', msg);
 }
 
+// function harvestArbiter(creep) {
+//
+// var sources = creep.room.memory.sources;
+// var paths = creep.room.memory.paths;
+//
+// if (!util.def(sources) || !util.def(paths) || (paths.length == 0)) {
+// dlog('Someone is looking for a source, but i don\'t know crap about this
+// room')
+// return; // Wait for room survey and design
+// }
+//
+// for ( var src in sources) {
+// var thisSrc = sources[src]
+//
+// if (!util.def(thisSrc.attendees)) {
+// thisSrc.attendees = [];
+// } else {
+//			
+// }
+// }
+//
+// }
+
+function refreshArbiter(room) {
+
+	// // Check each creep that has been assigned to a source and check they are
+	// // still alive and kicking
+	// // Actual assignment and balancing is done in the assignSource function
+	//
+	// var sources = room.memory.sources;
+	//
+	// if (!util.def(sources)) {
+	// return // Wait for a room survey to be done
+	// }
+	//
+	// for ( var src in sources) {
+	// var thisSrc = sources[src]
+	//
+	// if (!util.def(thisSrc.attendees)) {
+	// thisSrc.attendees = []; // Should be a list of creep id's
+	// } else {
+	//
+	// for ( var slave in thisSrc.attendees) {
+	//
+	// var attenId = thisSrc.attendees[slave]; //
+	//
+	// var attendee = Game.getObjectById(attenId)
+	//
+	// if (util.def(attendee) && (attendee.myTargetId == thisSrc.id)) {
+	// // Check creep is still alive and working on this source
+	// // okay
+	// continue
+	// } else {
+	// dlog('Removing ' + thisSrc.id + ' from creeps assigned to '
+	// + thisSrc.id)
+	// thisSrc.attendees.splice(slave, 1)
+	// // stale id, remove it from the list of id's assigned to
+	// // this source
+	// }
+	// }
+	// }
+	// }
+}
+
+module.exports.refreshArbiter = refreshArbiter;
+
 // Optimize energy gathering by available roles in the room
 module.exports.sortingHat = function(creep) {
 
 	var taskList = creep.memory.taskList;
 
-	if (!util.def(taskList)) {
-		return null;
-	}
 	var availPop = creep.room.memory.strategy.currentPopulation;
 
 	// initialize these two for
@@ -229,7 +292,7 @@ module.exports.gatherer = function(creep) {
 	// On the second day, he ate through two pears
 	// but he was still hungry.
 	if (creep.carry.energy < creep.carryCapacity) {
-
+		// TODO: make this valid for every source in the room
 		var mySource = creep.room.find(FIND_SOURCES)[0];
 		creep.moveTo(mySource, {
 			reusePath : 5
