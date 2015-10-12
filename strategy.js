@@ -151,12 +151,12 @@ function bootstrap(room) {
 		"technician" : 0.3
 	}
 	roomConfig.minDemographics = {
-		"gatherer" : 1,
-		"scout" : 4
+		"gatherer" : 3,
+		"scout" : 2
 	// Build two of these first thing
 	}
 	roomConfig.maxDemographics = {
-		"gatherer" : 2,
+		"gatherer" : 3,
 		"scout" : 8,
 		"workerBee" : 3,
 		"miner" : 3,
@@ -237,8 +237,8 @@ var lvl2room = function(room) {
 
 	// demographics effect build order
 	roomConfig.goalDemographics = {
-		// "miner" : 0.1,
-		// "workerBee" : 0.2, // mins take care of these
+		"miner" : 0.3,
+		"workerBee" : 0.25,
 		"private" : 0.2,
 		"technician" : 0.2,
 		"builder" : 0.3,

@@ -124,10 +124,10 @@ function nextPriority(room) {
 		if (!util.def(currentPopulation[i])) {
 			currentPopulation[i] = 0;
 		}
-		dlog("checking minimums for " + i);
+		// dlog("checking minimums for " + i);
 		// See if we need more of them
 		if (currentPopulation[i] < minDemographics[i]) {
-			dlog('Must build a minimum of ' + minDemographics[i] + ' ' + i);
+			// dlog('Must build a minimum of ' + minDemographics[i] + ' ' + i);
 			return (i);
 		}
 	}
@@ -181,6 +181,7 @@ function nextPriority(room) {
 var printDemographics = function(room) {
 	var goalDemographics = room.memory.strategy.goalDemographics;
 	var currentPopulation = room.memory.strategy.currentPopulation;
+	var minDemographics = room.memory.strategy.minDemographics;
 
 	if (typeof currentPopulation === 'undefined') {
 		room.memory.strategy.currentPopulation = census(room);
@@ -194,7 +195,7 @@ var printDemographics = function(room) {
 			console.log("There are " + number + " " + c + " creeps, making up "
 					+ (number / totalPop * 100).toFixed(2)
 					+ "% of the population. The goal is " + goalDemographics[c]
-					* 100 + "%");
+					* 100 + "% (with minimum of " + minDemographics[c] + ').');
 		}
 	}
 }
@@ -292,7 +293,7 @@ function create(type, room) {
 			});
 
 			if (typeof result === "string") {
-
+				dlog('Spawning ' + type + ' creep...')
 				// Successful creation. Update census count. nextPriority
 				// function makes sure there is a valid one, no need to check
 				currentPopulation[type]++;
@@ -322,6 +323,7 @@ function create(type, room) {
 						"birthRoom" : room.name,
 						"taskList" : []
 					});
+
 				}
 				// dlog('WE REQUIRE MORE VESPENE GAS')
 				// dlog('cant build type ' + type)

@@ -19,7 +19,7 @@ module.exports.taskMinions = function(room) {
 	}
 }
 
-module.exports.retask = function(room, type, role) {
+function retask(room, type, role) {
 	var roomCreeps = room.find(FIND_MY_CREEPS);
 	// dlog('was told to retask all ' + type + ' to do ' + role)
 	for ( var i in roomCreeps) {
@@ -35,6 +35,9 @@ module.exports.retask = function(room, type, role) {
 		}
 	}
 }
+
+module.exports.retask = retask
+
 //
 // function addTask(creep, task) {
 // dlog('preempting creep ' + creep.name + ' task list to ' + task);
@@ -76,7 +79,6 @@ Room.prototype.getSpawning = function() {
 // }
 
 var performTask = function(creep) {
-	debugger
 	if (creep.spawning) {
 		return;
 	}
@@ -106,7 +108,7 @@ var performTask = function(creep) {
 	// Global behavior definitions
 	switch (taskList[taskList.length - 1]) {
 	case 'miner':
-		harvest.miner(creep);
+		harvest.mine(creep);
 		break;
 	case 'shuttle':
 		harvest.shuttle(creep);
@@ -115,13 +117,16 @@ var performTask = function(creep) {
 		harvest.sortingHat(creep);
 		break;
 	case 'gatherer':
-		harvest.gatherer(creep);
+		debugger
+		harvest.mine(creep) || harvest.shuttle(creep) || build(creep)
+				|| harvest.scrounge(creep, 'sweep')
 		break;
 	case 'janitor':
 		build(creep);
 		harvest.scrounge(creep, 'sweep') // if there is energy lying around,
 		// we should
 		// stop building and go grab it
+
 		break;
 	case 'military':
 		military.duty(creep);

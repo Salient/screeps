@@ -12,6 +12,9 @@ Game.f = function() {
 Game.p = function() {
 	Game.rooms.sim.memory.halt = 0
 }
+Game.e = function() {
+	construct.designRoom(Game.rooms.sim);
+}
 
 Room.prototype.getError = function(msg) {
 	return (util.getError(msg));
@@ -22,7 +25,7 @@ Creep.prototype.getError = function(msg) {
 
 // Returns a valid path to the structure, or null?
 Creep.prototype.checkPath = function(structure) {
-	return path = this.room.findPath(this.pos, structure);
+	return this.room.findPath(this.pos, structure);
 }
 
 // Welcome to the HiveMind (v0.1)

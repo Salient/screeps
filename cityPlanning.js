@@ -538,6 +538,11 @@ function flagRoads(room) { // useful for visualizing structure placement
 					dlog('Path not found!')
 				}
 
+				// Trim the first and last tiles, they are the source and the
+				// spawn
+				shortest.shift()
+				shortest.pop()
+
 				// dlog('path legnth ' + path.length)
 				for ( var tile in shortest) {
 					var roompos = shortest[tile];
@@ -568,6 +573,10 @@ function flagRoads(room) { // useful for visualizing structure placement
 				if (util.def(path) && util.def(htap)) {
 					var shortest = (path.length < htap.length) ? path : htap
 							.reverse();
+
+					shortest.shift()
+					shortest.pop()
+
 					room.memory.paths.controller = shortest
 					// dlog('path legnth ' + path.length)
 					for ( var tile in shortest) {
@@ -636,38 +645,46 @@ function findFreeAdjacent(pos, room) { // Passes RoomPosition object
 
 		if (((sidestep.x > 49) || (sidestep.x < 0))
 				|| ((sidestep.y > 49) || (sidestep.y < 0))) {
-			return null
+			continue;
 		}
 
 		var map = room.memory.map
 		var memloc = map[sidestep.y][sidestep.x]
 
+		var clean
 		for ( var data in memloc) {
+			clean = false
 			var datum = memloc[data]
 			if (util.def(datum.type)) {
 
 				if (datum.type == 'metadata') {
 					if (datum.isReserved === true) {
-						continue
+						break; // this adjacent tile is spoken for, try another
 					}
 				}
 				if (datum.type == 'source') {
-					continue
+					break;
 				}
 				if (datum.type == 'terrain') {
-					if (datum.terrain != 'plain') {
-						continue
+					if (datum.terrain == 'wall') {
+						break;
 					}
 				}
 				if ((datum.type == 'constructionSite')
 						|| (datum.type == 'structure')) {
-					continue
+					break;
 				}
 
-				return new RoomPosition(sidestep.x, sidestep.y, room.name)
 			}
+			clean = true
+		}
+		// if we are here, we have not found anything wrong with this tile
+		if (clean) {
+			return new RoomPosition(sidestep.x, sidestep.y, room.name)
+
 		}
 	}
+	// if we are, there are no adjacent tiles that are otherwise free
 	return null
 }
 
@@ -676,29 +693,31 @@ function placeExtensions(room) {
 	var cap = limits[room.getLevel() - 1].extensions // remember arrays start
 	// at
 	// index zero
-	dlog('I can build ' + cap + ' extensions at the current level')
 
-	// fill up the sides of the shortest path first, then next shortest, etc.
+	// fill up the sides of the shortest path first, then next shortest, etc.j
+	// source paths should already be sorted in order of least distance
+	// to spawn first
+
 	for ( var src in room.memory.paths.sources) {
-		if (room.memory.numExts >= cap) { // debug. really should be equal to
-			break
-		}
-		dlog('There are currently ' + room.memory.numExts
-				+ ' extensions present. Placing...')
 
-		// Start at the source and work towards the spawn
-		var srcPath = room.memory.paths.sources[src]
-		for (var tempT = 2; tempT < srcPath.length; tempT++) {
-			// don't want to start on the source itself
-			debugger
-			var okayTile = findFreeAdjacent(srcPath[tempT], room)
+		// Start at the spawn, work towards the source. Better early game strat.
+
+		var srcPath = room.memory.paths.sources[src].steps
+		srcPath.reverse()
+		var srcId = room.memory.paths.sources[src].id;
+
+		for ( var tile in srcPath) {
+
+			if (room.memory.numExts >= cap) {
+				break
+			}
+
+			var okayTile = findFreeAdjacent(srcPath[tile], room)
 			// look around the road for a place to put the extension
+
 			if (util.def(okayTile)) {
-				dlog('szzoodwwwnwn ' + okayTile.x + ',' + okayTile.y)
-				debugger
 				var res = okayTile.createConstructionSite('extension')
 				if (!res) {
-					dlog('great success')
 					room.memory.numExts++
 					var maploc = room.memory.map[okayTile.y][okayTile.x]
 					if (util.def(maploc.metadata)) {
@@ -707,10 +726,9 @@ function placeExtensions(room) {
 						maploc.metadata = {
 							'isReserved' : true
 						}
-						break;
 					}
 				} else {
-					dlog('Error ' + res)
+					dlog('Error placing extension: ' + util.getError(res))
 				}
 			}
 		}
