@@ -5,6 +5,7 @@ var construct = require('cityPlanning');
 var util = require('common');
 var harvest = require('harvester');
 
+
 // Prototype extensions
 Game.f = function() {
 	Game.rooms.sim.memory.clearFlags = 1
@@ -41,7 +42,11 @@ Creep.prototype.checkPath = function(structure) {
 for ( var i in Game.rooms) {
 
 	var curRoom = Game.rooms[i];
-
+for(var i in Memory.creeps) {
+    if(!Game.creeps[i]) {
+        delete Memory.creeps[i];
+    }
+}
 	// Bootstrap check
 	if (!util.def(curRoom.memory.strategy)) {
 		roomstrat.strategery(curRoom);
@@ -109,4 +114,5 @@ if (!(Game.time - 100 % 300)) { // Delay first housekeeping by 100 seconds to
 			}
 		}
 	}
+
 }

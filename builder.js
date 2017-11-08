@@ -308,7 +308,7 @@ function fillTank(creep) {
 				if (struct.energy > 0) {
 					creep.moveTo(struct);
 					if (creep.pos.isNearTo(struct)) {
-						struct.transferEnergy(creep);
+						creep.withdraw(struct); 
 					}
 				}
 			}

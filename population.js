@@ -312,7 +312,8 @@ function create(type, room) {
 				var cashMoney = getCost(type, room);
 				var cap = room.energyCapacityAvailable;
 				if (cap < cashMoney) {
-					dlog('Stragey error! Not enough energy capacity to build creep')
+			
+				  dlog('Stragey error! Not enough energy capacity to build creep')
 					dlog('Removing the first body part and trying again...')
 					var tempType = design[type];
 					tempType = tempType.slice(1, tempType.length - 1)
