@@ -690,7 +690,7 @@ function findFreeAdjacent(pos, room) { // Passes RoomPosition object
 
 function placeExtensions(room) {
 
-	var cap = limits[room.getLevel() - 1].extensions // remember arrays start
+	var cap = limits[room.controller.level - 1].extensions // remember arrays start
 	// at
 	// index zero
 

@@ -105,9 +105,10 @@ function guard(creep) {
   var objective = creep.memory.classified.objective; // objective should be a
   // structure or creep
   if (util.def(objective)) {
-    var base = objective.pos;
-    var error = creep.moveTo(objective,{reusePath: 5, visualizePathStyle:{}});
-    if (error != OK) {
+    var vector = new RoomPosition(objective.x, objective.y, objective.roomName);
+    var error = creep.moveTo(vector,{reusePath: 5, visualizePathStyle: {stroke: '#ffaa00'}});
+    if (error != OK && error != ERR_TIRED) {
+      dlog("Error moving to guard post (" + objective.x + "," + objective.y + "), " + error);
     creep.memory.classified.objective = null; 
     } 
   } else {
