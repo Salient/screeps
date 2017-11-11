@@ -172,6 +172,7 @@ function constructionDuty(creep) {
 
 	if (!util.def(constructionSites) || (constructionSites.length == 0)) {
 		// nothing to build?
+	  dlog('nothing to build');
 		return false
 	}
 
@@ -200,12 +201,12 @@ function constructionDuty(creep) {
 			})
 
 	dlog('Priority list')
-	for (var x = 0; x < 10; x++) {
-		dlog(constructionSites[x].id)
+	for (var x = 0; x < constructionSites.length; x++) {
+		dlog(constructionSites[x].structureType);
 	}
 	constructionSites.reverse()
 	dlog('flip round and revese it')
-	for (var x = 0; x < 10; x++) {
+	for (var x = 0; x < constructionSites.length; x++) {
 		dlog(constructionSites[x].id)
 	}
 
@@ -278,7 +279,6 @@ module.exports.constructionDuty = constructionDuty;
 module.exports.upgradeRC = upgradeRC;
 
 function upgradeRC(creep) {
-
 	var rc = creep.room.controller;
 
 	if (creep.pos.isNearTo(rc) && (creep.carry.energy > 0)) {
@@ -308,12 +308,14 @@ function fillTank(creep) {
 				if (struct.energy > 0) {
 					creep.moveTo(struct);
 					if (creep.pos.isNearTo(struct)) {
-						creep.withdraw(struct); 
+						creep.withdraw(struct, "energy"); 
 					}
 				}
 			}
 		}
 	}
+    creep.say("hmm....no energy...");
+    //creep.memory.taskList.pop();
 }
 
 function sayProgress(target) {

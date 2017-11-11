@@ -149,7 +149,7 @@ function nextPriority(room) {
 		// See if we need more of them
 		// dlog('checking if we need more ' + i);
 		if (!isValidRole(room, i)) {
-			dlog(i + ' type is no longer in creep definitions.');
+//			dlog(i + ' type is no longer in creep definitions.');
 			continue;
 		}
 		if ((currentPopulation[i] / totalPop) < goalDemographics[i]) {

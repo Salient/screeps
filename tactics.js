@@ -29,7 +29,6 @@ Room.prototype.engagementRules = function(room) {
 // doNotEngage();
 // Find rampart
 module.exports.duty = function(creep) {
-
   if (util.def(creep.memory.classified)
     && util.def(creep.memory.classified.orders)) {
     var orders = creep.memory.classified.orders;
@@ -82,7 +81,7 @@ module.exports.duty = function(creep) {
       // dlog('result: ' +
       // util.getError(creep.moveTo(Game.flags.muster1)));
       creep.moveTo(Game.flags.Flag1);
-      dlog('flag set');
+      /// dlog('flag set');
     }
   } else 
   { // man a random exit in the room
@@ -103,13 +102,27 @@ function leeroooooy(myCreep, targetCreep) { // check if it's in my league
 }
 function guard(creep) {
   var objective = creep.memory.classified.objective; // objective should be a
+//  return
+  //  if (util.def(objective)) {
+  //    dlog('kk'); } else {
+  //     dlog('nono'); }
+  //dlog("checking " + creep.name + " is at " + creep.pos.x + ',' + creep.pos.y);
+  // dlog("should be at " + creep.name + " is at " + objective.x + ',' + objective.y);
+  //  if (creep.pos == objective) {
+  // at guard post
+  //    return;
+  //  }
+
   // structure or creep
   if (util.def(objective)) {
+    if (util.def(creep.memory.path)) {
+      if (util.def(creep.memory.path)) { creep.moveTo(creep.memory.path) } }      
+
     var vector = new RoomPosition(objective.x, objective.y, objective.roomName);
     var error = creep.moveTo(vector,{reusePath: 5, visualizePathStyle: {stroke: '#ffaa00'}});
     if (error != OK && error != ERR_TIRED) {
-      dlog("Error moving to guard post (" + objective.x + "," + objective.y + "), " + error);
-    creep.memory.classified.objective = null; 
+      dlog("Error moving to guard post (" + objective.x + "," + objective.y + "), " + util.getError(error));
+      creep.memory.classified.objective = null; 
     } 
   } else {
     // assignObjective? get list of strucutres types to guard from strategy?
@@ -128,7 +141,7 @@ function guardDuty(creep) {
     var post = exits[Math.floor(Math.random()*exits.length)];
     if (post.x == 0) {post.x++} else {post.x--}
     if (post.y == 0) {post.y++} else {post.y--}
-    
+
     creep.memory.classified.objective = post;
   }
   //creep.objective = 

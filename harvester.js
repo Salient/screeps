@@ -107,7 +107,7 @@ module.exports.sortingHat = function(creep) {
     assignments[curTask]++;
   });
 
-  // dlog('sorting ' + creep.name + ', role: ' + creep.memory.role)
+   dlog('sorting ' + creep.name + ', role: ' + creep.memory.role)
   switch (creep.memory.role) {
 
     case 'gatherer': // default tasking for gatherer
@@ -138,7 +138,6 @@ module.exports.sortingHat = function(creep) {
 }
 
 function mine(creep) {
-
   if (!util.def(creep.memory.srcId)
     || !util.def(Game.getObjectById(creep.memory.srcId))) {
 
@@ -155,10 +154,12 @@ function mine(creep) {
   if (creep.pos.isNearTo(mySrc)
     && ((creep.carry.energy < creep.carryCapacity) || (creep.carryCapacity == 0))) {
     var result = creep.harvest(mySrc);
+    var result = true;
     if (!result) {
       return true
     }
 
+return
     if ((result == ERR_NOT_ENOUGH_ENERGY)) {
       // over mined this source
       dlog(creep.name + ' source is too crowded, finding something else')
@@ -174,12 +175,15 @@ function mine(creep) {
       return true
     }
   } else if (creep.carry.energy == 0) {
-    var res = creep.moveTo(mySrc)
-    if (!res) {
+
+    var getThere =  creep.pos.findPathTo(mySrc);
+    var res = creep.moveTo(mySrc, {reusePath: 5, visualizePathStyle: {stroke: '#ffaa00'}});
+    if (!res || ERR_TIRED ) {
       return true;
     } else {
       creep.memory.srcId = findSource(creep);
-      return true
+      dlog("error finding path to source");
+      return false;
     }
   }
 
@@ -233,7 +237,7 @@ module.exports.shuttle = function(creep) {
     return true
   } else if (creep.carry.energy == creep.carryCapacity) {
 
-    var res = creep.moveTo(mySink)
+    var res = creep.moveTo(mySink, {reusePath: 5, visualizePathStyle: {stroke: '#ffaa00'}});
     if (!res || (res == ERR_TIRED)) {
       return true
     } else {
@@ -346,8 +350,8 @@ function scrounge(creep, mode) {
 	  // dlog('trying to get to ' + scrounges[s])
 	  // dlog('while avoinding' + mines)
 	  route = creep.room.findPath(creep.pos, scrounges[s].pos, {
-	   // 'avoid' : mines,
-	   // 'ignore' : [ scrounges[s].pos ],
+	    // 'avoid' : mines,
+	    // 'ignore' : [ scrounges[s].pos ],
 	    'ignoreCreeps' : true
 	  })
 
@@ -524,7 +528,8 @@ function findSource(creep) {
   for ( var i in sources) {
     var source = sources[i];
     var srcId = source.id;
-    if (creep.moveTo(source) != ERR_NO_PATH) {
+    var res = creep.pos.findPathTo(source);
+    if (res != ERR_NO_PATH) {
       distances.push({
 	"srcId" : srcId,
 	"distance" : distance(creep.pos, source.pos),
@@ -538,10 +543,10 @@ function findSource(creep) {
   if (distances.length == 0) {
     dlog("Error finding source");
     return false
-    // Sort by distances
   }
 
 
+  // Sort by distances
   distances.sort(function(a, b) {
     var weightA = a.distance * b.energy / b.energyCapacity
     var weightB = b.distance * a.energy / a.energyCapacity
