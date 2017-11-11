@@ -64,14 +64,14 @@ module.exports = function(creep) {
 
 	var targetId = creep.memory.myTargetId
 	if (!util.def(targetId) || !util.def(Game.getObjectById(targetId))) {
-
-		creep.memory.myTargetId = constructionDuty(creep) || repairDuty(creep)
-		if (!util.def(creep.memory.myTargetId)) {
-			dlog(creep.name + ' says nothing to build or repair')
+var orders = constructionDuty(creep) || repairDuty(creep);
+	  if (!util.def(orders) || orders == false ) {
+			dlog(creep.name + ' says nothing to build or repair, reverting to default tasks')
+			creep.memory.taskList.pop();
 			return false;
-		}
-		// console.log('New Target for ' + creep.name + ': '
-		// + creep.memory.myTargetId);
+		} else 
+
+		creep.memory.myTargetId = orders;
 	}
 
 	var target = Game.getObjectById(creep.memory.myTargetId);
@@ -131,8 +131,8 @@ function needsRepair(target) {
 }
 
 function repairDuty(creep) {
-
-	var structures = creep.room.find(FIND_STRUCTURES);
+return false;
+	var structures = creep.room.find(FIND_MY_STRUCTURES);
 	var options = [];
 
 	// TODO: can I sort structures in order of damage?

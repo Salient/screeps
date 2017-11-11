@@ -153,12 +153,11 @@ function mine(creep) {
   if (creep.pos.isNearTo(mySrc)
     && ((creep.carry.energy < creep.carryCapacity) || (creep.carryCapacity == 0))) {
     var result = creep.harvest(mySrc);
-    var result = true;
+    //var result = true;
     if (!result) {
       return true
     }
 
-return
     if ((result == ERR_NOT_ENOUGH_ENERGY)) {
       // over mined this source
       dlog(creep.name + ' source is too crowded, finding something else')
@@ -174,10 +173,9 @@ return
       return true
     }
   } else if (creep.carry.energy == 0) {
-
-    var getThere =  creep.pos.findPathTo(mySrc);
+dlog('miner moving to position');
     var res = creep.moveTo(mySrc, {reusePath: 5, visualizePathStyle: {stroke: '#ffaa00'}});
-    if (!res || ERR_TIRED ) {
+    if (!res ||  res == ERR_TIRED ) {
       return true;
     } else {
       creep.memory.srcId = findSource(creep);

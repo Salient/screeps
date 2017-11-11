@@ -85,7 +85,7 @@ if (!(Game.time % 61)) {
   //
   // Demographics are configured by strategy
   
-  if (!(Game.time % 11)) { // debug
+  if (!(Game.time % 5)) { // debug
     population.breed(curRoom);
     dlog('attempting to breed');
   }
