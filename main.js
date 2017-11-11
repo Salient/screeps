@@ -81,8 +81,10 @@ if (!(Game.time % 61)) {
     population.census(curRoom);
     population.printDemographics(curRoom);
   }
-  // Check unit production every 11 seconds. Demographics are configured by
-  // strategy
+  // Check for free spawns and unit production 
+  //
+  // Demographics are configured by strategy
+  
   if (!(Game.time % 11)) { // debug
     population.breed(curRoom);
     dlog('attempting to breed');

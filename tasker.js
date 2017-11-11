@@ -117,7 +117,7 @@ var performTask = function(creep) {
 		harvest.sortingHat(creep);
 		break;
 	case 'gatherer':
-		harvest.mine(creep) || harvest.shuttle(creep) || build(creep)
+		harvest.shuttle(creep) || harvest.mine(creep) || build(creep)
 				|| harvest.scrounge(creep, 'sweep')
 		break;
 	case 'janitor':

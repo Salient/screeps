@@ -131,8 +131,7 @@ module.exports.sortingHat = function(creep) {
       creep.memory.taskList.push('shuttle')
       break;
     default:
-      dlog("not sure how to sort role " + creep.memory.role)
-      return null;
+	    creep.memory.taskList.push('gatherer')
   }
 
 }
@@ -415,6 +414,7 @@ module.exports.gatherer = function(creep) {
   // On the first day, he ate one apple
   // but he was still hungry
   if (creep.carry.energy < creep.carryCapacity) {
+    dlog('scrounding');
     scrounge(creep); // hit up miners and other dropped energy
   }
 
