@@ -124,6 +124,7 @@ module.exports.designRoom = function(room) {
 	// New structures available are extensions, walls, and ramparts
 	// Later, storage, links, etc.
 	placeExtensions(room)
+		flagRoads(room) // lay down basic tiles we want to make available for
 }
 
 var limits = [ {
