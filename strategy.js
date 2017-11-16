@@ -178,7 +178,7 @@ var lvl1room = function(room) {
 		// already set
 
 	}
-	dlog('lvl1 proper, pop counted ' + room.popCount());
+	// dlog('lvl1 proper, pop counted ' + room.popCount());
 	// Setup population goals
 	roomConfig.latestModels = {
 		"miner" : [ WORK, WORK, MOVE ],

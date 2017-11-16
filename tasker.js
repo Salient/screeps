@@ -11,29 +11,32 @@ var military = require('tactics');
 var debug = true; // Debug code
 
 module.exports.taskMinions = function(room) {
-	var minions = room.find(FIND_MY_CREEPS);
-	for ( var dude in minions) {
-		// minions[dude].say(minions[dude].memory.role);
-		performTask(minions[dude]);
-		// upgrade(minions[dude]); // TEMP CODE
-	}
+    var minions = room.find(FIND_MY_CREEPS);
+    for ( var dude in minions) {
+		var creep = minions[dude];
+        // warm up the heat map
+		/// room.memory.heatmap[creep.pos.x][creep.pos.y] += 5;
+
+        // minions[dude].say(minions[dude].memory.role);
+		//performTask(minions[dude]);
+    }
 }
 
 function retask(room, type, role) {
-	var roomCreeps = room.find(FIND_MY_CREEPS);
-	// dlog('was told to retask all ' + type + ' to do ' + role)
-	for ( var i in roomCreeps) {
-		var youThere = roomCreeps[i];
-		var yourJob = youThere.memory.role;
-		var taskList = youThere.memory.taskList;
-		if (util.def(yourJob) && (yourJob == type)
-				&& (taskList[taskList.length - 1] != role)) {
-			// Check the latest task isn't already set to type
-			dlog('preempting creep ' + youThere.name + ' task list to ' + role);
+    var roomCreeps = room.find(FIND_MY_CREEPS);
+    // dlog('was told to retask all ' + type + ' to do ' + role)
+    for ( var i in roomCreeps) {
+        var youThere = roomCreeps[i];
+        var yourJob = youThere.memory.role;
+        var taskList = youThere.memory.taskList;
+        if (util.def(yourJob) && (yourJob == type)
+            && (taskList[taskList.length - 1] != role)) {
+            // Check the latest task isn't already set to type
+            dlog('preempting creep ' + youThere.name + ' task list to ' + role);
 
-			youThere.memory.taskList.push(role)
-		}
-	}
+            youThere.memory.taskList.push(role)
+        }
+    }
 }
 
 module.exports.retask = retask
@@ -48,20 +51,20 @@ module.exports.retask = retask
 // }
 
 function dlog(msg) {
-	util.dlog('TASKER', msg);
+    util.dlog('TASKER', msg);
 }
 
 Room.prototype.getSpawning = function() {
-	var babbysForming = {};
-	var spawns = this.find(FIND_MY_SPAWNS);
-	for ( var n in spawns) {
-		var spawn = spawns[n];
-		if (util.def(spawn.spawning)) {
-			babbysForming[spawn.spawning.name] = true;
-		}
-	}
+    var babbysForming = {};
+    var spawns = this.find(FIND_MY_SPAWNS);
+    for ( var n in spawns) {
+        var spawn = spawns[n];
+        if (util.def(spawn.spawning)) {
+            babbysForming[spawn.spawning.name] = true;
+        }
+    }
 
-	return babbysForming;
+    return babbysForming;
 }
 
 // Creep.prototype.isSpawning = function() {
@@ -78,70 +81,73 @@ Room.prototype.getSpawning = function() {
 //
 // }
 
+
 var performTask = function(creep) {
-	if (creep.spawning) {
-		return;
-	}
+    if (creep.spawning) {
+        return;
+    }
 
-	// Two types of tasks: default role task, and special assigned tasks
-	// role tasks are search and perform logic, assigned are specific targets
-	// to prevent multiple units trying to work on the same thing
+    // Two types of tasks: default role task, and special assigned tasks
+    // role tasks are search and perform logic, assigned are specific targets
+    // to prevent multiple units trying to work on the same thing
 
-	var taskList = creep.memory.taskList;
+    var taskList = creep.memory.taskList;
 
-	if (!util.def(taskList)) {
-		dlog('Undefined task list found: ' + creep.name);
-		creep.memory.taskList = [];
-	}
+    if (!util.def(taskList)) {
+        dlog('Undefined task list found: ' + creep.name);
+        creep.memory.taskList = [];
+    }
 
-	if (!taskList.length) {
-		dlog('Empty task list found: ' + creep.name);
-		taskList.push(getDefaultTask(creep));
-	}
-	// if ((taskList.length > 1) && !(Game.time % 10)) // Periodically refresh
-	// // temporary tasksf
-	// {
-	// // dlog('refreshing the task list for ' + creep.name);
-	// taskList.pop();
-	// }
+    if (!taskList.length) {
+        dlog('Empty task list found: ' + creep.name);
+        taskList.push(getDefaultTask(creep));
+    }
+    // if ((taskList.length > 1) && !(Game.time % 10)) // Periodically refresh
+    // // temporary tasksf
+    // {
+    // // dlog('refreshing the task list for ' + creep.name);
+    // taskList.pop();
+    // }
 
-	// Global behavior definitions
-	switch (taskList[taskList.length - 1]) {
-	case 'miner':
-		harvest.mine(creep);
-		break;
-	case 'shuttle':
-		harvest.shuttle(creep);
-		break;
-	case 'harvestSortingHat': // Shuttle creep have the parts to be useful
-		harvest.sortingHat(creep);
-		break;
-	case 'gatherer':
-		harvest.shuttle(creep) || harvest.mine(creep) || build(creep)
-				|| harvest.scrounge(creep, 'sweep')
-		break;
-	case 'janitor':
-		build(creep);
-		harvest.scrounge(creep, 'sweep') // if there is energy lying around,
-		// we should
-		// stop building and go grab it
+    // Global behavior definitions
+    switch (taskList[taskList.length - 1]) {
+        case 'miner':
+            harvest.mine(creep);
+            break;
+        case 'shuttle':
+            harvest.shuttle(creep);
+            break;
+        case 'harvestSortingHat': // Shuttle creep have the parts to be useful
+            harvest.sortingHat(creep);
+            break;
+        case 'gatherer':
+            harvest.shuttle(creep) || harvest.mine(creep) || build(creep)
+                || harvest.scrounge(creep, 'sweep')
+            break;
+        case 'janitor':
+            build(creep);
+            harvest.scrounge(creep, 'sweep') // if there is energy lying around,
+            // we should
+            // stop building and go grab it
 
-		break;
-	case 'military':
-		military.duty(creep);
-		break;
-	case 'technician':
-		build.upgradeRC(creep);
-		break;
-	case 'builder':
-		build(creep);
-		break;
-	case 'freeAgent':
-		harvest.sortingHat(creep);
-	default:
-		dlog('Unhandled creep task! (' + taskList[taskList.length - 1] + ')');
-	}
+            break;
+        case 'military':
+            military.duty(creep);
+            break;
+        case 'technician':
+            build.upgradeRC(creep);
+            break;
+        case 'builder':
+            build(creep);
+            break;
+        case 'freeAgent':
+            harvest.sortingHat(creep);
+        default:
+            dlog('Unhandled creep task! (' + taskList[taskList.length - 1] + ')');
+    }
 }
+
+module.exports.performTask = performTask;
 
 // // Get
 // module.exports.houseKeeping = function() {
@@ -160,34 +166,34 @@ var performTask = function(creep) {
 // }
 
 var getDefaultTask = function(creep) { // What to do if the creep has
-	// nothing to do
-	var role = Memory.creeps[creep.name].role; // Access memory like this in
-	// case creep is still spawning.
+    // nothing to do
+    var role = Memory.creeps[creep.name].role; // Access memory like this in
+    // case creep is still spawning.
 
-	if (typeof role === 'undefined') {
-		dlog('aaaahhh motherland!');
-		creep.suicide(); // debug code
-	}
+    if (typeof role === 'undefined') {
+        dlog('aaaahhh motherland!');
+        creep.suicide(); // debug code
+    }
 
-	dlog('assigning default task');
-	switch (role) {
-	case 'freeAgent':
-	case 'workerBee':
-	case 'gatherer':
-		return 'harvestSortingHat';
-	case 'miner':
-	case 'technician':
-	case 'construction':
-		return role;
-	case 'private':
-	case 'scout':
-	case 'pfc':
-	case 'footSoldier':
-	case 'cavalry':
-	case 'enforcer':
-		return 'military';
-	default:
-		console.log('unmatched unit found!');
-		return 'harvestSortingHat';
-	}
+    dlog('assigning default task');
+    switch (role) {
+        case 'freeAgent':
+        case 'workerBee':
+        case 'gatherer':
+            return 'harvestSortingHat';
+        case 'miner':
+        case 'technician':
+        case 'construction':
+            return role;
+        case 'private':
+        case 'scout':
+        case 'pfc':
+        case 'footSoldier':
+        case 'cavalry':
+        case 'enforcer':
+            return 'military';
+        default:
+            console.log('unmatched unit found!');
+            return 'harvestSortingHat';
+    }
 }

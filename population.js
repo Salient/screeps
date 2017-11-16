@@ -93,7 +93,8 @@ function nextPriority(room) {
 
 	// These basic five should be set/updated by strategy periodically
 	// Else, the previous value holds
-
+	//
+	// DEEEEBUUUUUUG
 	var design = strategy.latestModels;
 	var goalDemographics = strategy.goalDemographics;
 	var maxDemographics = strategy.maxDemographics;

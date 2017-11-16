@@ -68,6 +68,7 @@ module.exports = function(creep) {
         if (!util.def(orders) || orders == false ) {
             dlog(creep.name + ' says nothing to build or repair, reverting to default tasks')
             creep.memory.taskList.pop();
+            creep.memory.taskList.pop();
             return false;
         } else 
 
@@ -91,7 +92,7 @@ module.exports = function(creep) {
             return true;
 
         } else if (creep.carry.energy == creep.carryCapacity) {
-            creep.moveTo(target);
+            var res = creep.moveTo(target, {reusePath: 5, visualizePathStyle: {stroke: '1ffaa00'}});
             return true;
 
         } else {
@@ -108,7 +109,7 @@ module.exports = function(creep) {
             return true;
 
         } else if (creep.carry.energy == creep.carryCapacity) {
-            creep.moveTo(target);
+            var res = creep.moveTo(target, {reusePath: 5, visualizePathStyle: {stroke: '1ffaa00'}});
             return true;
 
         } else {
@@ -147,7 +148,7 @@ function repairDuty(creep) {
         }
 
         if (s.needsRepair()) {
-            creep.moveTo(s);
+            var res = creep.moveTo(s, {reusePath: 5, visualizePathStyle: {stroke: '1ffaa00'}});
             creep.repair(s);
         }
     }
@@ -200,21 +201,21 @@ function constructionDuty(creep) {
             }
         })
 
-    dlog('Priority list')
-    for (var x = 0; x < constructionSites.length; x++) {
-        dlog(constructionSites[x].structureType);
-    }
+//    dlog('Priority list')
+//    for (var x = 0; x < constructionSites.length; x++) {
+//        dlog(constructionSites[x].structureType);
+//    }
     constructionSites.reverse()
-    dlog('flip round and revese it')
-    for (var x = 0; x < constructionSites.length; x++) {
-        dlog(constructionSites[x].id)
-    }
+//    dlog('flip round and revese it')
+ //   for (var x = 0; x < constructionSites.length; x++) {
+//        dlog(constructionSites[x].id)
+//    }
 
     // Check if path exists!! Otherwise, builders can block each other
     for ( var index in constructionSites) {
         var target = constructionSites[index]
 
-        var path = creep.moveTo(target);
+        var path = creep.moveTo(target, {reusePath: 5, visualizePathStyle: {stroke: '1ffaa00'}});
 
         if (path != 0) {
             continue; // Can't do it for some reason.
@@ -285,7 +286,7 @@ function upgradeRC(creep) {
         creep.say(sayProgress(rc) + "%");
         creep.upgradeController(rc);
     } else if (creep.carry.energy == creep.carryCapacity) {
-        creep.moveTo(rc);
+        var path = creep.moveTo(rc, {reusePath: 5, visualizePathStyle: {stroke: '1ffaa00'}});
     } else {
         fillTank(creep);
     }
@@ -306,7 +307,7 @@ function fillTank(creep) {
                 || (struct.structureType == STRUCTURE_STORAGE)) {
 
                 if (struct.energy > 0) {
-                    creep.moveTo(struct);
+                    var res = creep.moveTo(struct, {reusePath: 5, visualizePathStyle: {stroke: '1ffaa00'}});
                     if (creep.pos.isNearTo(struct)) {
                         creep.withdraw(struct, "energy"); 
                     }
@@ -314,8 +315,9 @@ function fillTank(creep) {
             }
         }
     }
-    creep.say("hmm....no energy...");
-    creep.memory.taskList.push('harvestSortingHat');
+//    creep.say("hmm....no energy...");
+    // creep.memory.taskList.push('harvestSortingHat');
+
     //creep.memory.taskList.pop();
 }
 

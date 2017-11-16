@@ -6,6 +6,50 @@ function dlog(msg) {
     util.dlog('HARVEST', msg);
 }
 
+
+////////////////////////////////////////////////////////////////////////
+////// Begin Next Gen Code
+////////////////////////////////////////////////////////////////////////
+
+
+// For new rooms, determines how many creep can mine each source at the same time
+// Returns array with list of miner posts sorted ascending by distance to source
+module.exports.setupSources = function setupSources(room) {
+    
+    var sources = room.find(FIND_SOURCES);
+    var shafts = {};
+    var count = 0;
+   
+    for (var i in sources) {
+        let srcX = sources[i].pos.x;
+        let srcY = sources[i].pos.y;
+
+        var vicinity = room.lookAtArea( (srcY>1) ? srcY-1 : 1, 
+            (srcX>1) ? srcX-1 : 1,
+            (srcY<48) ? srcY+1 : 48,
+            (srcX<48) ? srcX+1 : 48);
+        for (let y in vicinity) {
+            for (let x in vicinity[y]) {
+                // Each tile may have a different number of things to say about it. Need to go 
+                // through them all and find the terrain property
+                for (let p in vicinity[y][x]) {
+                    var sq = vicinity[y][x][p];
+                    if (sq.terrain != 'wall' && sq.type == 'terrain') {
+                        shafts['mineshaft' + count++] = new RoomPosition(x,y,room.name);
+                    }
+                }
+            }
+        }
+    }
+    return shafts;
+}
+
+////////////////////////////////////////////////////////////////////////
+////// End Next Gen Code
+////////////////////////////////////////////////////////////////////////
+
+
+
 function harvestArbiter(creep) {
 
     var sources = creep.room.memory.sources;
@@ -107,7 +151,7 @@ module.exports.sortingHat = function(creep) {
         assignments[curTask]++;
     });
 
-    dlog('sorting ' + creep.name + ', role: ' + creep.memory.role)
+    //dlog('sorting ' + creep.name + ', role: ' + creep.memory.role)
     switch (creep.memory.role) {
 
         case 'gatherer': // default tasking for gatherer
@@ -173,14 +217,13 @@ function mine(creep) {
             return true
         }
     } else if (creep.carry.energy == 0) {
-        dlog('miner moving to position');
         var res = creep.moveTo(mySrc, {reusePath: 5, visualizePathStyle: {stroke: '#ffaa00'}});
         if (!res ||  res == ERR_TIRED ) {
             return true;
         } else {
-            creep.memory.srcId = findSource(creep);
-            dlog("error finding path, " + creep.name + " to source, " + util.getError(res) + ' to source ' + mySrc.id);
-            return false;
+            if (!util.def(mySrc)) {
+                dlog('no open sources available to assign');
+                return false;}
         }
     }
 
@@ -341,7 +384,7 @@ function scrounge(creep, mode) {
             // break;
             // }
         } else {
-            creep.moveTo(scrounges[0]);
+            var path = creep.moveTo(scrounges[0], {reusePath: 5, visualizePathStyle: {stroke: 'fffaaf0'}});
         }
 
 
@@ -447,7 +490,7 @@ module.exports.gatherer = function(creep) {
         if ((mySink == null) || isFull(mySink)) {
             creep.memory.sinkId = findSink(creep);
         }
-        creep.moveTo(mySink);
+        var res = creep.moveTo(mySink, {reusePath: 5, visualizePathStyle: {stroke: '#ffaaff'}});
         creep.transferEnergy(mySink);
     }
 }
@@ -459,7 +502,7 @@ function distance(p1, p2) {
 function findSink(creep) {
     var structs = creep.room.find(FIND_MY_STRUCTURES);
 
-    dlog('Finding sink for ' + creep.name);
+    //    dlog('Finding sink for ' + creep.name);
 
     var containersWithSpace = creep.room.find(FIND_STRUCTURES, {
         filter: (i) => i.structureType == STRUCTURE_CONTAINER &&
@@ -483,7 +526,7 @@ function findSink(creep) {
     // Check pathing before we return 
     for (var y in containersWithSpace) {
         var target = containersWithSpace[y];
-        var res = creep.moveTo(target);
+        var res = creep.moveTo(target, {reusePath: 5, visualizePathStyle: {stroke: '#ffaaff'}});
         if (!res || res == ERR_TIRED) {return target;}
 
     }
@@ -494,7 +537,7 @@ function findSink(creep) {
     for ( var i in structs) {
         var struct = structs[i];
         var structid = struct.id;
-        dlog('is ' + struct.structureType + ' full? ' + isFull(struct))
+        //dlog('is ' + struct.structureType + ' full? ' + isFull(struct))
 
         if ((struct.structureType == STRUCTURE_STORAGE) || (struct.structureType == STRUCTURE_EXTENSION)
             || (struct.structureType == 'spawn')) {
@@ -502,7 +545,7 @@ function findSink(creep) {
             // check there is a path
             if ((creep.moveTo(struct) != ERR_NO_PATH) && (!isFull(struct))) {
                 // calculate distance
-                dlog('adding candidate')
+                //dlog('adding candidate')
                 distances.push({
                     "structid" : structid,
                     "distance" : creep.pos.getRangeTo(struct),
@@ -514,10 +557,10 @@ function findSink(creep) {
         }
     }
 
-    dlog('found ' + distances.length)
+    //dlog('found ' + distances.length)
 
     if (!distances.length) {
-        dlog('seems all the nrg storage is full! I should build nore....');
+        //    dlog('seems all the nrg storage is full! I should build nore....');
         return
     }
 
@@ -597,12 +640,12 @@ function findSource(creep) {
 
     // Go to closest
     for (var x in distances) {
-        var res = creep.moveTo(distances[x].srcPos);
+        var res = creep.moveTo(distances[x].srcPos, {reusePath: 5, visualizePathStyle: {stroke: '#ffaaff'}});
         if (!res || res == ERR_TIRED) {
             return distances[0].srcId;
         }
     }
-    dlog('something is very wrong');
+    dlog('Mining is cockblocked or something is off');
 
 }
 

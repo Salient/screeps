@@ -1,0 +1,38 @@
+)	builder.js	/^                    if (creep.pos.isNearTo(struct)/
+,	builder.js	/^                    var res = creep.moveTo(struct,/
+AlreadyWrappedError	screeps-profiler.js	/^function AlreadyWrappedError() {$/
+allRoadsLeadToRome	cityPlanning.js	/^function allRoadsLeadToRome(curpos, curlen, target/
+bootstrap	strategy.js	/^function bootstrap(room) {$/
+constructionDuty	builder.js	/^function constructionDuty(creep) {$/
+create	population.js	/^function create(type, room) {$/
+dlog	builder.js	/^function dlog(msg) {$/
+fillTank	builder.js	/^function fillTank(creep) {$/
+for	cityPlanning.js	/^	\/\/ for ( var hop in cupidShuffle) {$/
+function	builder.js	/^Structure.prototype.needsWorkers = function() {$/
+getFilter	screeps-profiler.js	/^function getFilter() {$/
+guardDuty	tactics.js	/^function guardDuty(creep) {$/
+harvestArbiter	harvester.js	/^function harvestArbiter(creep) {$/
+if	cityPlanning.js	/^	if (firstGo) {$/
+leeroooooy	tactics.js	/^function leeroooooy(myCreep, targetCreep) { \/\/ c/
+lvl3room	strategy.js	/^function lvl3room(room) {$/
+lvl4room	strategy.js	/^function lvl4room(room) { \/\/ build storage$/
+lvl5room	strategy.js	/^function lvl5room(room) {$/
+lvl6room	strategy.js	/^function lvl6room(room) {$/
+lvl7room	strategy.js	/^function lvl7room(room) {$/
+mine	harvester.js	/^function mine(creep) {$/
+needsRepair	builder.js	/^function needsRepair(target) {$/
+nextPriority	population.js	/^function nextPriority(room) {$/
+overloadCPUCalc	screeps-profiler.js	/^function overloadCPUCalc() {$/
+refreshArbiters	harvester.js	/^function refreshArbiters(room) {$/
+repairDuty	builder.js	/^function repairDuty(creep) {$/
+require	strategy.js	/^var planning = require('cityPlanning')$/
+resetMemory	screeps-profiler.js	/^function resetMemory() {$/
+retask	tasker.js	/^function retask(room, type, role) {$/
+sayProgress	builder.js	/^function sayProgress(target) {$/
+setupMemory	screeps-profiler.js	/^function setupMemory(profileType, duration, filter/
+setupProfiler	screeps-profiler.js	/^function setupProfiler() {$/
+source	strategy.js	/^\/\/ Create roads to source(s) and extensions$/
+step	cityPlanning.js	/^	function step(dir, pos) {$/
+surveyRoom	cityPlanning.js	/^function surveyRoom(room) {$/
+upgradeRC	builder.js	/^function upgradeRC(creep) {$/
+validRoadTile	cityPlanning.js	/^\/\/ function validRoadTile(pos) {$/
