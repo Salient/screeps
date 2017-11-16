@@ -66,7 +66,7 @@ module.exports = function(creep) {
     if (!util.def(targetId) || !util.def(Game.getObjectById(targetId))) {
         var orders = constructionDuty(creep) || repairDuty(creep);
         if (!util.def(orders) || orders == false ) {
-            dlog(creep.name + ' says nothing to build or repair, reverting to default tasks')
+            dlog(creep.name + ' says nothing to build or repair, reverting to prior task')
             creep.memory.taskList.pop();
             creep.memory.taskList.pop();
             return false;

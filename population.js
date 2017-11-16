@@ -1,4 +1,5 @@
 var util = require('common');
+var strat = require('strategy');
 
 // // ----------------
 // // Main population knobs to tweak. Rest is mostly automatic
@@ -91,6 +92,11 @@ function nextPriority(room) {
 	// Pull up memory
 	var strategy = room.memory.strategy;
 
+	if(!util.def(strategy)) {
+    strat.strategery(room);
+		return false;
+	}
+	
 	// These basic five should be set/updated by strategy periodically
 	// Else, the previous value holds
 	//

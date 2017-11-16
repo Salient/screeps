@@ -12,37 +12,6 @@ function dlog(msg) {
 ////////////////////////////////////////////////////////////////////////
 
 
-// For new rooms, determines how many creep can mine each source at the same time
-// Returns array with list of miner posts sorted ascending by distance to source
-module.exports.setupSources = function setupSources(room) {
-    
-    var sources = room.find(FIND_SOURCES);
-    var shafts = {};
-    var count = 0;
-   
-    for (var i in sources) {
-        let srcX = sources[i].pos.x;
-        let srcY = sources[i].pos.y;
-
-        var vicinity = room.lookAtArea( (srcY>1) ? srcY-1 : 1, 
-            (srcX>1) ? srcX-1 : 1,
-            (srcY<48) ? srcY+1 : 48,
-            (srcX<48) ? srcX+1 : 48);
-        for (let y in vicinity) {
-            for (let x in vicinity[y]) {
-                // Each tile may have a different number of things to say about it. Need to go 
-                // through them all and find the terrain property
-                for (let p in vicinity[y][x]) {
-                    var sq = vicinity[y][x][p];
-                    if (sq.terrain != 'wall' && sq.type == 'terrain') {
-                        shafts['mineshaft' + count++] = new RoomPosition(x,y,room.name);
-                    }
-                }
-            }
-        }
-    }
-    return shafts;
-}
 
 ////////////////////////////////////////////////////////////////////////
 ////// End Next Gen Code
@@ -298,160 +267,38 @@ module.exports.shuttle = function(creep) {
 }
 
 function scrounge(creep, mode) {
-    if (creep.carry.energy == creep.carryCapacity) {return
-    }
-    var scrounges = creep.room.find(FIND_DROPPED_RESOURCES); // TODO possible
-    // efficiency gain
-    // here
-    // I guess the idea is to push a move task onto the taskList to move to a
-    // certain source, and then just find the nearest energy?
-
-    if (scrounges.length) {
-        // sort by distance
-        //        scrounges.sort(function(a, b) {
-
-        //            var toA = distance(creep.pos, a.pos)
-        //            var toB = distance(creep.pos, b.pos)
-        //            var enA = a.energy;
-        //            var enB = b.energy;
-        //
-        //            // Fancy choosing algorithm to see if it's worth going out of the
-        //            // way
-        //            // (not really fancy)
-        //
-        //            var weightA = toA / enA;
-        //            var weightB = toB / enB;
-        //
-        //            if (weightA < weightB) {
-        //                return -1
-        //            } else if (weightA > weightB) {
-        //                return 1
-        //            } else {
-        //                return 0
-        //            }
-        //        })
-        //
-        //        var srcs = creep.room.memory.sources;
-        //        for ( var s in scrounges) {
-        //            var nrg = scrounges[s]
-        //
-        //            // Determine if it's random dropped energy or mined
-        //
-        //            var minDist
-        //
-        //            for ( var src in srcs) {
-        //                var disSrc = srcs[src];
-        //
-        //                var disDistance = distance(disSrc.pos, nrg.pos)
-        //                if (!util.def(disDistance)) {
-        //                    dlog('error')
-        //                    util.dumpObject(disDistance)
-        //                }
-        //
-        //                if (!util.def(minDist)) {
-        //                    minDist = disDistance
-        //                }
-        //                if (disDistance < minDist) {
-        //                    minDist = disDistance
-        //                }
-        //            }
-        //            //
-        //            // if (((disDistance == 1) && (mode == 'collect'))
-        //            // || ((disDistance > 1) && (mode == 'sweep'))) {
-        //            // rightMode = true
-        //            // break;
-        //            // }
-        //
-        //            if (((minDist == 1) && (mode == 'sweep'))
-        //                || ((minDist > 1) && (mode == 'collect'))) {
-        //                // dlog('wrong mode')
-        //                return false;
-        //            }
-        //
-        // dlog('right mode...')
-
-        if (creep.pos.isNearTo(scrounges[0])) {
-            var res = creep.pickup(scrounges[0]);
+    // TODO every 5 ticks or so we should check there is still something at the stored tile
+    // Otherwise any time something is dropped you might pull a bunch of gatherers without need.
+    // See if we are already on the move
+    //
+    //
+    if (util.def(creep.memory.eTarget)) {
+        var nrg =  creep.memory.eTarget; 
+        if( creep.pos.isNearTo(nrg)) {
+            var res = creep.pickup(nrg);
             if (!res) {
                 return true
             } else {
                 dlog('Error scroundng for NRG, creep ' + creep.name + ','
                     + util.getError(res));
+                delete creep.memory.eTarget;
                 return false;
             }
-            // } else {
-            // // dlog('success pkup')
-            // break;
-            // }
         } else {
-            var path = creep.moveTo(scrounges[0], {reusePath: 5, visualizePathStyle: {stroke: 'fffaaf0'}});
+            var path = creep.moveTo(nrg, {reusePath: 5, visualizePathStyle: {stroke: 'fffaaf0'}});
+            return true;
         }
-
-
-        //            if (creep.carry.energy != creep.carryCapacity) {
-        //                // dlog(creep.name + ' - imma hunting')
-        //
-        //                // ////////////////////////////////////////
-        //                // / Begin cock block prevention code
-        //
-        //                var mines = [];
-        //                var check;
-        //                var route;
-        //                while (true) {
-        //
-        //                    // dlog('trying to get to ' + scrounges[s])
-        //                    // dlog('while avoinding' + mines)
-        //                    route = creep.room.findPath(creep.pos, scrounges[s].pos, {
-        //                        // 'avoid' : mines,
-        //                        // 'ignore' : [ scrounges[s].pos ],
-        //                        'ignoreCreeps' : true
-        //                    })
-        //
-        //                    if (route.length == 0) {
-        //                        break;
-        //                    }
-        //
-        //                    var step = route[0];
-        //                    check = new RoomPosition(step.x, step.y, creep.room.name);
-        //                    var redFlag = false
-        //
-        //                    for ( var src in srcs) {
-        //                        var disSrc = srcs[src];
-        //                        var disDistance = distance(disSrc.pos, check)
-        //                        // dlog('next step dist. is ' + disDistance)
-        //                        if (disDistance == 1) {
-        //                            mines.push(check)
-        //                            redFlag = true
-        //                        }
-        //                    }
-        //
-        //                    if (redFlag) {
-        //                        continue;
-        //                    } else {
-        //                        break;
-        //                    }
-        //                }
-        //
-        //                // // End cock block prevention
-        //                // /////////////////////////////////////////
-        //
-        //                if (!check) {
-        //                    dlog('no route??')
-        //                    return false
-        //                }
-        //                var res = creep.move(route[0].direction); // don't stomp
-        //                if (!res) {
-        //                    return true
-        //                } else {
-        //                    if ((res != ERR_TIRED)) {
-        //                        dlog('Error moving to NRG: ' + creep.name + ' - '
-        //                            + util.getError(res))
-        //                        // util.dumpObject(check);
-        //                        return false;
-        //                    }
-        //                }
-        //            }
     }
+    else {
+        creep.memory.eTarget = creep.pos.findClosestByPath(FIND_DROPPED_RESOURCES);
+        util.dumpObject(creep.memory.eTarget)
+        if (!util.def(creep.memory.eTarget)) {
+            return false}
+        var path = creep.moveTo(nrg, {reusePath: 5, visualizePathStyle: {stroke: 'fffaaf0'}});
+        return true;
+    }
+
+    dlog('not quote sure how i got here but oh well')
     return false
 }
 
@@ -485,6 +332,7 @@ module.exports.gatherer = function(creep) {
             creep.harvest(mySource);
         }
     } else { // That night he had a stomach ache
+        if (util.def(creep.memory.eTarget)) {delete creep.memory.eTarget}
         var mySink = Game.getObjectById(creep.memory.sinkId);
 
         if ((mySink == null) || isFull(mySink)) {
