@@ -89,14 +89,9 @@ function surveyRoom(room) {
     }
 }
 
-
-
-
-
 var buildRoads = function(room) {
     var heatm = room.memory.heatmap;
     if (!util.def(heatm)){return}
-    
     for (var x = 1; x<49; x++ ) {
         for (var y = 1; y<49; y++){
            if (heatm[x][y] > 40){room.createConstructionSite(x,y, STRUCTURE_ROAD)}
@@ -127,7 +122,7 @@ var setupSources = function (room) {
                 for (let p in vicinity[y][x]) {
                     var sq = vicinity[y][x][p];
                     if (sq.terrain != 'wall' && sq.type == 'terrain') {
-                        shafts['mineshaft' + count++] = new RoomPosition(x,y,room.name);
+                        shafts['mineshaft' + count++] = {pos: new RoomPosition(x,y,room.name), srcId: sources[i].id};
                     }
                 }
             }

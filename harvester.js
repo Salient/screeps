@@ -11,8 +11,18 @@ function dlog(msg) {
 ////// Begin Next Gen Code
 ////////////////////////////////////////////////////////////////////////
 
-
-
+module.exports.pokeMiners = function(room){
+    if (!util.def(room.memory.shafts)){
+        dlog('refreshing shaft assignments in ' + room.name + ' but no shaft memory')
+        return false;
+    }
+    var shafts = room.memory.shafts;
+    for(var post in shafts) {
+        if(!Game.creeps[shafts[post].assignedTo]) {
+            shafts[post].assignedTo = null;
+        }
+    }
+}
 ////////////////////////////////////////////////////////////////////////
 ////// End Next Gen Code
 ////////////////////////////////////////////////////////////////////////
@@ -150,86 +160,50 @@ module.exports.sortingHat = function(creep) {
 }
 
 function mine(creep) {
-    if (!util.def(creep.memory.srcId)
-        || !util.def(Game.getObjectById(creep.memory.srcId))) {
+    if (!util.def(creep.memory.srcPost)) {
 
+        // Will return a mineshaft object or null
+        var posting = findSource(creep);
 
-        var newsource = findSource(creep);
-        if (util.def(newsource)) {
-            creep.memory.srcId = findSource(creep);
-        } else
-        { dlog('Error, could not assign new source to ' + creep.name);
-        }}
+        if (util.def(posting)) {
+            creep.memory.srcPost = posting;
+        } else { dlog('Error, could not assign new source to ' + creep.name);
+        }
+    }
 
-    var mySrc = Game.getObjectById(creep.memory.srcId);
+    var post = creep.memory.srcPost;
+    var srcObj = Game.getObjectById(post.srcId);
 
-    if (creep.pos.isNearTo(mySrc)
+    if (creep.pos.isNearTo(srcObj)
         && ((creep.carry.energy < creep.carryCapacity) || (creep.carryCapacity == 0))) {
-        var result = creep.harvest(mySrc);
-        //var result = true;
+        var result = creep.harvest(srcObj);
+
         if (!result) {
             return true
         }
 
         if ((result == ERR_NOT_ENOUGH_ENERGY)) {
             // over mined this source
-            dlog(creep.name + ' source is too crowded, finding something else')
-            creep.memory.srcId = findSource(creep);
-            return true
+            dlog(creep.name + ' source is over mined?/')
+            return false
         }
 
         if ((result != ERR_TIRED)) {
-            dlog(' - ' + creep.name + ': Error trying to mine source ' + mySrc
+            dlog(' - ' + creep.name + ': Error trying to mine source ' + post 
                 + ', ' + util.getError(result))
             return false
         } else {
             return true
         }
     } else if (creep.carry.energy == 0) {
-        var res = creep.moveTo(mySrc, {reusePath: 5, visualizePathStyle: {stroke: '#ffaa00'}});
+        var res = creep.moveTo(post.pos.x, post.pos.y, {reusePath: 5, visualizePathStyle: {stroke: '#ffaa00'}});
         if (!res ||  res == ERR_TIRED ) {
             return true;
-        } else {
-            if (!util.def(mySrc)) {
-                dlog('no open sources available to assign');
-                return false;}
-        }
+        } 
     }
-
-    // if (!util.def(creep.memory.sinkId)
-    // || !util.def(Game.getObjectById(creep.memory.sinkId))) {
-    // creep.memory.sinkId = findSink(creep);
-    // }
-    //
-    // var mySink = Game.getObjectById(creep.memory.sinkId);
-    //
-    // if (creep.pos.isNearTo(mySink) && (creep.carry.energy > 0)) {
-    // creep.transferEnergy(mySink)
-    // } else if ((creep.carry.energy == creep.carryCapacity)
-    // && (creep.carryCapacity != 0)) {
-    // var result = creep.moveTo(mySink)
-    //
-    // if (!result) {
-    // return true
-    //
-    // } else if (result != ERR_TIRED) {
-    // dlog(' - ' + creep.name + ': Error trying to (mine) sink ' + mySink
-    // + ', ' + util.getError(result))
-    // }
-    // } else {
-    // var result = creep.moveTo(mySrc)
-    // if (!result) {
-    // return true
-    //
-    // } else if (result != ERR_TIRED) {
-    // dlog(' - ' + creep.name + ': Error returning to mine sink '
-    // + mySink + ', ' + util.getError(result))
-    //
-    // }
-    // }
     return false
-
 }
+
 module.exports.mine = mine
 
 module.exports.shuttle = function(creep) {
@@ -291,7 +265,6 @@ function scrounge(creep, mode) {
     }
     else {
         creep.memory.eTarget = creep.pos.findClosestByPath(FIND_DROPPED_RESOURCES);
-        util.dumpObject(creep.memory.eTarget)
         if (!util.def(creep.memory.eTarget)) {
             return false}
         var path = creep.moveTo(nrg, {reusePath: 5, visualizePathStyle: {stroke: 'fffaaf0'}});
@@ -453,48 +426,20 @@ function findSink(creep) {
 }
 
 function findSource(creep) {
-    var sources = creep.room.find(FIND_SOURCES);
-    var distances = [];
 
-    // dlog('Finding source for ' + creep.name);
+    if (!util.def(creep.room.memory.shafts)) {
+        dlog('creep trying to find source in a room not setup!');
+        return false;
+    } else {var shafts = creep.room.memory.shafts}
 
-    for ( var i in sources) {
-        var source = sources[i];
-        var srcId = source.id;
-        distances.push({
-            "srcId" : srcId,
-            "srcPos" : source.pos,
-            "distance" : distance(creep.pos, source.pos),
-            "energy" : source.energy,
-            "energyCapacity" : source.energyCapacity
-            // "full" : isFull(struct) // TODO, add energy evailable weighting
-        });
-    }
-
-    if (distances.length == 0) {
-        dlog("Error finding source");
-        return false
-    }
-
-
-    // Sort by distances
-    distances.sort(function(a, b) {
-        var weightA = a.distance * b.energy / b.energyCapacity
-        var weightB = b.distance * a.energy / a.energyCapacity
-
-        return (weightA < weightB) ? -1 : 1;
-    });
-
-
-    // Go to closest
-    for (var x in distances) {
-        var res = creep.moveTo(distances[x].srcPos, {reusePath: 5, visualizePathStyle: {stroke: '#ffaaff'}});
-        if (!res || res == ERR_TIRED) {
-            return distances[0].srcId;
+    for (var post in shafts) {
+        if(!util.def(shafts[post].assignedTo)) {
+            shafts[post].assignedTo = creep.name;
+            return shafts[post];
         }
     }
-    dlog('Mining is cockblocked or something is off');
-
+    // No open shafts
+    return null;
 }
 
 function isFull(sink) {

@@ -17,6 +17,11 @@ Game.s = function() {
     {harvest.setupSources(Game.rooms[r]);}
 }
 
+Game.r = function() {
+    for (var r in Game.rooms)
+    {harvest.pokeMiners(Game.rooms[r]);}
+}
+
 Room.prototype.getError = function(msg) {
     return (util.getError(msg));
 }
