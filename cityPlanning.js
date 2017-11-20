@@ -122,7 +122,8 @@ var setupSources = function (room) {
                 for (let p in vicinity[y][x]) {
                     var sq = vicinity[y][x][p];
                     if (sq.terrain != 'wall' && sq.type == 'terrain') {
-                        shafts['mineshaft' + count++] = {pos: new RoomPosition(x,y,room.name), srcId: sources[i].id};
+                        var pos = new RoomPosition(x,y,room.name);
+                        shafts['mineshaft' + count++] = {pos: pos, srcId: sources[i].id};
                     }
                 }
             }
@@ -151,7 +152,7 @@ var bootstrap = function (room) {
     room.memory.heatmap = heatmap;
 
     // TODO this really needs to be optimized 
-    // flagRoads(room) // lay down basic tiles we want to make available for
+     flagRoads(room) // lay down basic tiles we want to make available for
 }
 
 module.exports.surveyRoom = surveyRoom
@@ -209,7 +210,7 @@ module.exports.planRoom = function(room) {
     // at the current controller level
     // New structures available are extensions, walls, and ramparts
     // Later, storage, links, etc.
-    // placeExtensions(room)
+     placeExtensions(room)
 }
 
 var limits = [ {

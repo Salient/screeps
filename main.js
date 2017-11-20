@@ -52,6 +52,7 @@ for (var room in Game.rooms) {
 
     // Manage creep configurations, counts of each type, scale with control level
     population.breed(Game.rooms[room]);
+    population.census(Game.rooms[room])
 
     // 
     roomstrat.strategery(Game.rooms[room]);
@@ -72,6 +73,7 @@ if (!(Game.time % 67)) {
     for (var r in Memory.rooms) {
         if(!Game.rooms[r]) {
             delete Memory.rooms[r];}
+    harvest.pokeMiners(Game.rooms[r]);
     }
 }
 

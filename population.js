@@ -69,7 +69,7 @@ var isValidRole = function(room, role) {
 	}
 
 	if (!util.def(room.memory.strategy)) {// hrm....
-		roomstrat.strategery(room);
+		strat.strategery(room);
 
 	}
 

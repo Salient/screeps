@@ -1,5 +1,5 @@
 var util = require('common');
-
+var _ = require('lodash');
 var DEBUG_HARVEST = true;
 
 function dlog(msg) {
@@ -27,77 +27,6 @@ module.exports.pokeMiners = function(room){
 ////// End Next Gen Code
 ////////////////////////////////////////////////////////////////////////
 
-
-
-function harvestArbiter(creep) {
-
-    var sources = creep.room.memory.sources;
-    var paths = creep.room.memory.paths;
-
-    if (!util.def(sources) || !util.def(paths) || (paths.length == 0)) {
-        dlog('Someone is lpoking for a source, but i don\'t know crap about this room')
-        return; // Wait for room survey and design
-    }
-
-    for ( var src in sources) {
-        var thisSrc = sources[src]
-
-        if (!util.def(thisSrc.attendees)) {
-            thisSrc.attendees = [];
-        } else {
-
-        }
-    }
-
-}
-
-function refreshArbiters(room) {
-
-    // Check each creep that has been assigned to a source and check they
-    // are
-    // still alive and kicking
-    // Actual assignment and balancing is done in the assignSource function
-
-    // Evaluate source assignments
-    var sources = room.memory.sources;
-
-    if (!util.def(sources)) {
-        return // Wait for a room survey to be done
-    }
-
-    for ( var src in sources) {
-        var thisSrc = sources[src]
-
-        if (!util.def(thisSrc.attendees)) {
-            thisSrc.attendees = []; // Should be a list of creep id's
-        } else {
-
-            for ( var slave in thisSrc.attendees) {
-
-                var attenId = thisSrc.attendees[slave]; //
-
-                var attendee = Game.getObjectById(attenId)
-
-                if (util.def(attendee) && (attendee.myTargetId == thisSrc.id)) {
-                    // Check creep is still alive and working on this source
-                    // okay
-                    continue;
-                } else {
-                    dlog('Removing ' + thisSrc.id + ' from creeps assigned to '
-                        + thisSrc.id)
-                    thisSrc.attendees.splice(slave, 1)
-                    // stale id, remove it from the list of id's assigned to
-                    // this source
-                }
-            }
-        }
-    }
-
-    // Evaluate dropped energy assignments
-
-}
-
-module.exports.refreshArbiters = refreshArbiters;
 
 // Optimize energy gathering by available roles in the room
 module.exports.sortingHat = function(creep) {
@@ -160,24 +89,31 @@ module.exports.sortingHat = function(creep) {
 }
 
 function mine(creep) {
+
     if (!util.def(creep.memory.srcPost)) {
-
-        // Will return a mineshaft object or null
+        // Will return a mineshaft object or false if none available
         var posting = findSource(creep);
-
-        if (util.def(posting)) {
+        if (posting) {
             creep.memory.srcPost = posting;
-        } else { dlog('Error, could not assign new source to ' + creep.name);
+            dlog('Assigned mineshaft ' + posting.pos + ' to ' + creep.name)
+        }
+        else  {
+            
+            dlog(' no free mineshafts to assign for ' + creep.name);
+            //Prooobably should come up with a better solution here
+            creep.suicide();
+            return false;
         }
     }
+    var posting = creep.memory.srcPost;
+    var srcObj = Game.getObjectById(posting.srcId);
 
-    var post = creep.memory.srcPost;
-    var srcObj = Game.getObjectById(post.srcId);
+    // No idea why this is needed. 
+    posting.pos = new RoomPosition(posting.pos.x, posting.pos.y, posting.pos.roomName);
 
-    if (creep.pos.isNearTo(srcObj)
+    if (creep.pos.isEqualTo(posting.pos)
         && ((creep.carry.energy < creep.carryCapacity) || (creep.carryCapacity == 0))) {
         var result = creep.harvest(srcObj);
-
         if (!result) {
             return true
         }
@@ -187,19 +123,16 @@ function mine(creep) {
             dlog(creep.name + ' source is over mined?/')
             return false
         }
-
         if ((result != ERR_TIRED)) {
-            dlog(' - ' + creep.name + ': Error trying to mine source ' + post 
+            dlog(' - ' + creep.name + ': Error trying to mine source ' + posting 
                 + ', ' + util.getError(result))
             return false
-        } else {
-            return true
         }
     } else if (creep.carry.energy == 0) {
-        var res = creep.moveTo(post.pos.x, post.pos.y, {reusePath: 5, visualizePathStyle: {stroke: '#ffaa00'}});
+        var res = creep.moveTo(posting,{reusePath: 5, visualizePathStyle: {stroke: '#ffaa00'}});
         if (!res ||  res == ERR_TIRED ) {
             return true;
-        } 
+        }
     }
     return false
 }
@@ -208,8 +141,9 @@ module.exports.mine = mine
 
 module.exports.shuttle = function(creep) {
 
+
     if (!util.def(creep.memory.sinkId)
-        || !util.def(Game.getObjectById(creep.memory.sinkId))) {
+        || !util.def(Game.getObjectById(creep.memory.sinkId))) { // in case it's been destroyed
         creep.memory.sinkId = findSink(creep);
     }
 
@@ -225,14 +159,12 @@ module.exports.shuttle = function(creep) {
         }
     }
     if (creep.carry.energy == creep.carryCapacity) {
-
         var res = creep.moveTo(mySink, {reusePath: 5, visualizePathStyle: {stroke: '#ffaa00'}});
         if (!res || (res == ERR_TIRED)) {
             return true
         } else {
             return false
         }
-
     }
     else {
         // Go scrounge for energy
@@ -246,8 +178,24 @@ function scrounge(creep, mode) {
     // See if we are already on the move
     //
     //
+    //        var nrg = creep.pos.findClosestByPath(FIND_DROPPED_RESOURCES);
+    //        if (creep.pos.isNearTo(nrg)){
+    //            creep.pickup(nrg);
+    //        } else {
+    //        creep.moveTo(nrg)}
+    //    
+    //    return 
+    //    
+    //
     if (util.def(creep.memory.eTarget)) {
-        var nrg =  creep.memory.eTarget; 
+        var nrg =  Game.getObjectById(creep.memory.eTarget);
+        if (!util.def(nrg)){
+            //maybe it disappeared
+            delete creep.memory.eTarget;
+            return false;
+        }
+
+
         if( creep.pos.isNearTo(nrg)) {
             var res = creep.pickup(nrg);
             if (!res) {
@@ -260,15 +208,31 @@ function scrounge(creep, mode) {
             }
         } else {
             var path = creep.moveTo(nrg, {reusePath: 5, visualizePathStyle: {stroke: 'fffaaf0'}});
+            if (path) {
+                dlog(' error moving to : ' + nrg.pos.x +','+ nrg.pos.y + ' ' + util.getError(path));
+                  delete creep.memory.eTarget;
+            }
             return true;
         }
     }
     else {
-        creep.memory.eTarget = creep.pos.findClosestByPath(FIND_DROPPED_RESOURCES);
-        if (!util.def(creep.memory.eTarget)) {
-            return false}
-        var path = creep.moveTo(nrg, {reusePath: 5, visualizePathStyle: {stroke: 'fffaaf0'}});
-        return true;
+
+        // Modify for weighting
+        var newTarget = creep.pos.findClosestByPath(FIND_DROPPED_RESOURCES);
+
+        if (!util.def(newTarget)) {
+            dlog('no dropped energy in the room')
+            return false
+        }
+
+        creep.memory.eTarget = newTarget.id;
+        var path = creep.moveTo(newTarget, {reusePath: 5, visualizePathStyle: {stroke: 'fffaaf0'}});
+        if (path) {
+            dlog(' error: ' + util.getError(path));
+            delete creep.memory.eTarget;
+        } else {
+            return true;
+        }
     }
 
     dlog('not quote sure how i got here but oh well')
@@ -432,6 +396,8 @@ function findSource(creep) {
         return false;
     } else {var shafts = creep.room.memory.shafts}
 
+
+
     for (var post in shafts) {
         if(!util.def(shafts[post].assignedTo)) {
             shafts[post].assignedTo = creep.name;
@@ -439,7 +405,7 @@ function findSource(creep) {
         }
     }
     // No open shafts
-    return null;
+    return false;
 }
 
 function isFull(sink) {

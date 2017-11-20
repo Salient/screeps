@@ -18,11 +18,16 @@ module.exports.taskMinions = function(room) {
 		/// room.memory.heatmap[creep.pos.x][creep.pos.y] += 5;
 
         // minions[dude].say(minions[dude].memory.role);
-		//performTask(minions[dude]);
+		performTask(minions[dude]);
     }
 }
 
 function retask(room, type, role) {
+            // special cases stuff. Maybe find a beter way to do this
+ if( role == 'builder')
+    { var targets = room.find(FIND_CONSTRUCTION_SITES); 
+        if (targets.length < 1) {return}}
+    
     var roomCreeps = room.find(FIND_MY_CREEPS);
     // dlog('was told to retask all ' + type + ' to do ' + role)
     for ( var i in roomCreeps) {
