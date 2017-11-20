@@ -98,10 +98,11 @@ function mine(creep) {
             dlog('Assigned mineshaft ' + posting.pos + ' to ' + creep.name)
         }
         else  {
-            
             dlog(' no free mineshafts to assign for ' + creep.name);
             //Prooobably should come up with a better solution here
             creep.suicide();
+            creep.say('AAAH MOTHERLAND')
+            dlog('AAAAH MOTHERLAND')
             return false;
         }
     }
@@ -194,8 +195,6 @@ function scrounge(creep, mode) {
             delete creep.memory.eTarget;
             return false;
         }
-
-
         if( creep.pos.isNearTo(nrg)) {
             var res = creep.pickup(nrg);
             if (!res) {
@@ -216,17 +215,28 @@ function scrounge(creep, mode) {
         }
     }
     else {
-
-        // Modify for weighting
-        var newTarget = creep.pos.findClosestByPath(FIND_DROPPED_RESOURCES);
+        var newTarget = creep.room.find(FIND_DROPPED_RESOURCES)
+        //var newTarget = creep.pos.findClosestByPath(FIND_DROPPED_RESOURCES);
 
         if (!util.def(newTarget)) {
             dlog('no dropped energy in the room')
             return false
         }
 
-        creep.memory.eTarget = newTarget.id;
-        var path = creep.moveTo(newTarget, {reusePath: 5, visualizePathStyle: {stroke: 'fffaaf0'}});
+        var score = 0;
+        var prime;
+
+        for (var blob  in newTarget){
+            var candidate = newTarget[blob];
+            var tScore = candidate.amount / creep.pos.findPathTo(candidate).length;
+            if (tScore > score){
+                score = tScore;
+                prime = candidate;
+            }
+        }
+
+        creep.memory.eTarget = prime.id;
+        var path = creep.moveTo(prime, {reusePath: 5, visualizePathStyle: {stroke: 'fffaaf0'}});
         if (path) {
             dlog(' error: ' + util.getError(path));
             delete creep.memory.eTarget;
