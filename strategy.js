@@ -6,6 +6,8 @@
 var planning = require('cityPlanning')
 var util = require('common');
 var tasker = require('tasker')
+var _ = require('lodash');
+
 
 Room.prototype.getLevel = function() {
 	return this.controller.level;
@@ -214,14 +216,17 @@ var lvl1room = function(room) {
 }
 
 var lvl2room = function(room) {
+    
+    var shafts = _.keys(room.memory.shafts).length;
 
 	// Need to start planning and building extensions
 	if (!util.def(room.memory.paths)) {
 		planning.designRoom(room)
 	}
 
-    // tasker.retask(room, 'gatherer', 'builder')
-    //tasker.retask(room, 'technician', 'builder')
+    // Logic in tasker checks if there is something to build before retasking
+    tasker.retask(room, 'gatherer', 'builder')
+    tasker.retask(room, 'technician', 'builder')
 
 	var roomConfig = room.memory.strategy;
 	// Setup population goals
@@ -239,7 +244,6 @@ var lvl2room = function(room) {
 
 	// demographics effect build order
 	roomConfig.goalDemographics = {
-		"miner" : 0.3,
 		"workerBee" : 0.25,
 		"private" : 0.2,
 		"technician" : 0.2,
@@ -249,13 +253,13 @@ var lvl2room = function(room) {
 	};
 
 	roomConfig.minDemographics = {
-		"miner" : 3,
+		"miner" : shafts,
 		"workerBee" : 3
 	} // No mins, the goalDemo and max will
 	// control build order this early in room
 
 	roomConfig.maxDemographics = {
-		"miner" : 3,
+		"miner" : shafts,
 		"workerBee" : 3,
 		"private" : 7,
 		"technician" : 15

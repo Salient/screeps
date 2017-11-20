@@ -147,10 +147,12 @@ PLACEHOLDER	modularize/_replaceHolders.js	/^var PLACEHOLDER = '__lodash_placehol
 Promise	modularize/_Promise.js	/^var Promise = getNative(root, 'Promise');$/;"	v
 Room	main.js	/^Room.prototype.getError = function(msg) {$/;"	c
 Room	population.js	/^Room.prototype.popCount = function() {$/;"	c
+Room	strategy.js	/^Room.prototype.getLevel = function() {$/;"	c
 Room	tactics.js	/^Room.prototype.engagementRules = function(room) {$/;"	c
 Room	tasker.js	/^Room.prototype.getSpawning = function() {$/;"	c
 Room.engagementRules	tactics.js	/^Room.prototype.engagementRules = function(room) {$/;"	m
 Room.getError	main.js	/^Room.prototype.getError = function(msg) {$/;"	m
+Room.getLevel	strategy.js	/^Room.prototype.getLevel = function() {$/;"	m
 Room.getSpawning	tasker.js	/^Room.prototype.getSpawning = function() {$/;"	m
 Room.popCount	population.js	/^Room.prototype.popCount = function() {$/;"	m
 S	lodash.custom.min.js	/^return null==t?I:t[n]}}function g(n,t,r,e,u){return u(n,function(n,u,o){r=e?(e=false,n):t(r,n,u,o)}),r}function d(n,t){var r=n.length;for(n.sort(t);r--;)n[r]=n[r].c;return n}function j(n,t){for(var r=-1,e=Array(n);++r<n;)e[r]=t(r);return e}function w(n,t){return f(t,function(t){return[t,n[t]]})}function m(n){return function(t){return n(t)}}function A(n,t){return f(t,function(t){return n[t]})}function S(n){var t=-1,r=Array(n.size);return n.forEach(function(n,e){r[++t]=[e,n]}),r}function x(n,t){return function(r){$/;"	f
@@ -1614,17 +1616,18 @@ retask	tasker.js	/^function retask(room, type, role) {$/;"	f
 reverse	modularize/reverse.js	/^function reverse(array) {$/;"	f
 roomConfig.goalDemographics.gatherer	strategy.js	/^		"gatherer" : 0.05,$/;"	p
 roomConfig.goalDemographics.miner	strategy.js	/^		"miner" : 0.2,$/;"	p
-roomConfig.goalDemographics.miner	strategy.js	/^		"miner" : 0.3,$/;"	p
+roomConfig.goalDemographics.workerBee	strategy.js	/^		"workerBee" : 0.25,$/;"	p
 roomConfig.latestModels.gatherer	strategy.js	/^		'gatherer' : [ WORK, CARRY, MOVE ],$/;"	p
 roomConfig.latestModels.miner	strategy.js	/^		"miner" : [ WORK, WORK, MOVE ],$/;"	p
 roomConfig.maxDemographics.gatherer	strategy.js	/^		"gatherer" : 3,$/;"	p
 roomConfig.maxDemographics.miner	strategy.js	/^		"miner" : 3,$/;"	p
+roomConfig.maxDemographics.miner	strategy.js	/^		"miner" : shafts,$/;"	p
 roomConfig.maxDemographics.private	strategy.js	/^		"private" : 7,$/;"	p
 roomConfig.maxDemographics.scout	strategy.js	/^		"scout" : 8,$/;"	p
 roomConfig.maxDemographics.technician	strategy.js	/^		"technician" : 15$/;"	p
 roomConfig.maxDemographics.workerBee	strategy.js	/^		"workerBee" : 3,$/;"	p
 roomConfig.minDemographics.gatherer	strategy.js	/^		"gatherer" : 3,$/;"	p
-roomConfig.minDemographics.miner	strategy.js	/^		"miner" : 3,$/;"	p
+roomConfig.minDemographics.miner	strategy.js	/^		"miner" : shafts,$/;"	p
 roomConfig.minDemographics.scout	strategy.js	/^		"scout" : 2$/;"	p
 roomConfig.minDemographics.workerBee	strategy.js	/^		"workerBee" : 3$/;"	p
 roomstrat	main.js	/^var roomstrat = require('strategy');$/;"	v
@@ -1739,6 +1742,7 @@ takeRightWhile	modularize/takeRightWhile.js	/^function takeRightWhile(array, pre
 takeWhile	modularize/takeWhile.js	/^function takeWhile(array, predicate) {$/;"	f
 tap	modularize/tap.js	/^function tap(value, interceptor) {$/;"	f
 taskMaster	main.js	/^var taskMaster = require('tasker');$/;"	v
+tasker	strategy.js	/^var tasker = require('tasker')$/;"	v
 templateSettings.escape	modularize/templateSettings.js	/^  'escape': reEscape,$/;"	p
 templateSettings.evaluate	modularize/templateSettings.js	/^  'evaluate': reEvaluate,$/;"	p
 templateSettings.imports	modularize/templateSettings.js	/^  'imports': {$/;"	p
