@@ -218,8 +218,7 @@ function scrounge(creep, mode) {
         var newTarget = creep.room.find(FIND_DROPPED_RESOURCES)
         //var newTarget = creep.pos.findClosestByPath(FIND_DROPPED_RESOURCES);
 
-        if (!util.def(newTarget)) {
-            dlog('no dropped energy in the room')
+        if (!util.def(newTarget) || newTarget.length == 0) {
             return false
         }
 
@@ -228,6 +227,7 @@ function scrounge(creep, mode) {
 
         for (var blob  in newTarget){
             var candidate = newTarget[blob];
+
             var tScore = candidate.amount / creep.pos.findPathTo(candidate).length;
             if (tScore > score){
                 score = tScore;

@@ -198,13 +198,14 @@ var lvl1room = function(room) {
 		"gatherer" : 0.05
 	};
 
-	roomConfig.minDemographics = {} // No mins, the goalDemo and max will
-	// control build order this early in room
+    roomConfig.minDemographics = {
+		"workerBee" : 3,
+    }
 	roomConfig.maxDemographics = {
 		"gatherer" : 2,
 		"miner" : 3,
 		"workerBee" : 3,
-		"private" : 10, // scouts should chill out until an enemy enters the
+		"private" : 1, // scouts should chill out until an enemy enters the
 		// room.
 		"technician" : 5
 	// Technicians should default to upgrading the
