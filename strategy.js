@@ -91,6 +91,8 @@ module.exports.strategery = function(room) {
 	// Sanity checks
 
 	if (!util.def(room.controller)) {
+        dlog(typeof util.def(room.controller))
+        dlog('value is ' + util.def(room.controller))
 		dlog("No controller found in room. Strategy uncertain.");
 		return;
 	}
@@ -103,7 +105,7 @@ module.exports.strategery = function(room) {
 
 		// Contact the city council
 		planning.surveyRoom(room)
-		planning.designRoom(room)
+		//planning.designRoom(room)
 
 		dlog('Room level has changed. Revising all strategery with level '
 				+ roomConfig.curlvl + ' badassery.');
@@ -145,7 +147,7 @@ function bootstrap(room) {
 	// demographics control build order
 	roomConfig.goalDemographics = {
 		"gatherer" : 0.05,
-		"scout" : 0.45,
+		"scout" : 0.25,
 		"miner" : 0.1,
 		"workerBee" : 0.1,
 		"technician" : 0.3
@@ -174,7 +176,7 @@ var lvl1room = function(room) {
 			&& (roomConfig.currentPopulation.workerBee >= 2)) {
 		tasker.retask(room, 'gatherer', 'technician')
 	} else {
-		tasker.retask(room, 'gatherer', 'gatherer') // has no effect if
+        //		tasker.retask(room, 'gatherer', 'gatherer') // has no effect if
 		// already set
 
 	}
@@ -218,8 +220,8 @@ var lvl2room = function(room) {
 		planning.designRoom(room)
 	}
 
-	tasker.retask(room, 'gatherer', 'builder')
-	tasker.retask(room, 'technician', 'builder')
+    // tasker.retask(room, 'gatherer', 'builder')
+    //tasker.retask(room, 'technician', 'builder')
 
 	var roomConfig = room.memory.strategy;
 	// Setup population goals
@@ -256,6 +258,6 @@ var lvl2room = function(room) {
 		"miner" : 3,
 		"workerBee" : 3,
 		"private" : 7,
-		"technician" : 5
+		"technician" : 15
 	}
 }
