@@ -15,7 +15,6 @@ module.exports.taskMinions = function(room) {
     for ( var dude in minions) {
 		var creep = minions[dude];
         // warm up the heat map
-		/// room.memory.heatmap[creep.pos.x][creep.pos.y] += 5;
 
         // minions[dude].say(minions[dude].memory.role);
 		performTask(minions[dude]);
@@ -27,7 +26,7 @@ function retask(room, type, role) {
  if( role == 'builder')
     { var targets = room.find(FIND_CONSTRUCTION_SITES); 
         if (targets.length < 1) {return}}
-    
+
     var roomCreeps = room.find(FIND_MY_CREEPS);
     // dlog('was told to retask all ' + type + ' to do ' + role)
     for ( var i in roomCreeps) {
@@ -99,12 +98,12 @@ var performTask = function(creep) {
     var taskList = creep.memory.taskList;
 
     if (!util.def(taskList)) {
-        dlog('Undefined task list found: ' + creep.name);
+        // dlog('Undefined task list found: ' + creep.name);
         creep.memory.taskList = [];
     }
 
     if (!taskList.length) {
-        dlog('Empty task list found: ' + creep.name);
+        // dlog('Empty task list found: ' + creep.name);
         taskList.push(getDefaultTask(creep));
     }
     // if ((taskList.length > 1) && !(Game.time % 10)) // Periodically refresh
@@ -114,6 +113,13 @@ var performTask = function(creep) {
     // taskList.pop();
     // }
 
+        var curJob = taskList[taskList.length-1] 
+    if(!util.def(creep.room.memory.heatmap)){return}
+    else {var sq = creep.room.memory.heatmap}
+
+        if (( curJob != 'builder' ) && (curJob != 'janitor') && (curJob != 'technician')) {
+           sq[(creep.pos.x)][creep.pos.y] += 5;
+        }
     // Global behavior definitions
     switch (taskList[taskList.length - 1]) {
         case 'miner':
@@ -126,12 +132,12 @@ var performTask = function(creep) {
             harvest.sortingHat(creep);
             break;
         case 'gatherer':
-            harvest.shuttle(creep) || harvest.mine(creep) || build(creep)
-                || harvest.scrounge(creep, 'sweep')
+            harvest.shuttle(creep) || harvest.mine(creep) // || build(creep)
+                || harvest.scrounge(creep)
             break;
         case 'janitor':
-            build(creep);
-            harvest.scrounge(creep, 'sweep') // if there is energy lying around,
+            build(creep) || 
+            harvest.scrounge(creep) // if there is energy lying around,
             // we should
             // stop building and go grab it
 
@@ -180,7 +186,7 @@ var getDefaultTask = function(creep) { // What to do if the creep has
         creep.suicide(); // debug code
     }
 
-    dlog('assigning default task');
+    // dlog('assigning default task');
     switch (role) {
         case 'freeAgent':
         case 'workerBee':

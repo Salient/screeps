@@ -30,6 +30,12 @@ module.exports.getError = function(result) {
 	}
 }
 
+module.exports.getRand = function getRandomIntInclusive(min, max) {
+      min = Math.ceil(min);
+      max = Math.floor(max);
+      return Math.floor(Math.random() * (max - min + 1)) + min; //The maximum is inclusive and the minimum is inclusive 
+    }
+
 module.exports.getFirst = function(data) {
 	for ( var prop in data)
 		return prop;

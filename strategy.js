@@ -3,7 +3,7 @@
  */
 
 // var population = require('population');
-var planning = require('cityPlanning')
+var planning = require('cityPlanning');
 var util = require('common');
 var tasker = require('tasker')
 var _ = require('lodash');
@@ -105,8 +105,9 @@ module.exports.strategery = function(room) {
 	if (roomConfig.curlvl != room.controller.level) {
 		roomConfig.curlvl = room.controller.level;
 
+        planning.placeExtensions(room);
+
 		// Contact the city council
-		planning.surveyRoom(room)
 		//planning.designRoom(room)
 
 		dlog('Room level has changed. Revising all strategery with level '
@@ -119,16 +120,6 @@ module.exports.strategery = function(room) {
 	selectStrat[roomConfig.curlvl](room);
 }
 
-function lvl3room(room) {
-}
-function lvl4room(room) { // build storage
-}
-function lvl5room(room) {
-}
-function lvl6room(room) {
-}
-function lvl7room(room) {
-}
 
 function bootstrap(room) {
 	if ((room.popCount()) >= 8) {
@@ -169,6 +160,7 @@ function bootstrap(room) {
 
 var lvl1room = function(room) {
 	var roomConfig = room.memory.strategy;
+    if (!util.def(roomConfig)){return false}
 	// Just checking if we can get off the ground properly
 	if (room.popCount() < 6) {
 		return bootstrap(room);
@@ -220,14 +212,9 @@ var lvl2room = function(room) {
     
     var shafts = _.keys(room.memory.shafts).length;
 
-	// Need to start planning and building extensions
-	if (!util.def(room.memory.paths)) {
-		planning.designRoom(room)
-	}
-
     // Logic in tasker checks if there is something to build before retasking
     tasker.retask(room, 'gatherer', 'builder')
-    tasker.retask(room, 'technician', 'builder')
+    // tasker.retask(room, 'technician', 'builder')
 
 	var roomConfig = room.memory.strategy;
 	// Setup population goals
@@ -247,22 +234,49 @@ var lvl2room = function(room) {
 	roomConfig.goalDemographics = {
 		"workerBee" : 0.25,
 		"private" : 0.2,
-		"technician" : 0.2,
-		"builder" : 0.3,
+		"technician" : 0.23,
+		"builder" : 0.4,
 		"pfc" : 0.3,
 		"medic" : 0.1
 	};
 
 	roomConfig.minDemographics = {
+		"workerBee" : shafts,
 		"miner" : shafts,
-		"workerBee" : 3
+        "builder" : 4
+    } 
+
+    roomConfig.maxDemographics = {
+		"miner" : shafts,
+        // "workerBee" : shafts,
+		"private" : 7,
+		"technician" : 15
+	}
+}
+
+function lvl3room(room) {
+    
+	var roomConfig = room.memory.strategy;
+    var shafts = _.keys(room.memory.shafts).length;
+    
+    roomConfig.minDemographics = {
+		"workerBee" : shafts,
+		"miner" : shafts,
 	} // No mins, the goalDemo and max will
 	// control build order this early in room
 
 	roomConfig.maxDemographics = {
 		"miner" : shafts,
-		"workerBee" : 3,
+        // "workerBee" : shafts,
 		"private" : 7,
 		"technician" : 15
 	}
+}
+function lvl4room(room) { // build storage
+}
+function lvl5room(room) {
+}
+function lvl6room(room) {
+}
+function lvl7room(room) {
 }

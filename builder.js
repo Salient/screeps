@@ -68,15 +68,16 @@ module.exports = function(creep) {
         if (!util.def(orders) || orders == false ) {
             dlog(creep.name + ' says nothing to build or repair, reverting to prior task')
             creep.memory.taskList.pop();
-            creep.memory.taskList.pop();
             return false;
         } else 
 
-            creep.memory.myTargetId = orders;
+        {creep.memory.myTargetId = orders;}
     }
 
     var target = Game.getObjectById(creep.memory.myTargetId);
-
+    if (!util.def(target) ){
+        creep.memory.myTargetId = null; return false;
+    }
     // check if done
     if (util.def(target.hits) && (target.hits == target.hitsMax)) {
         targetId = null
@@ -156,74 +157,81 @@ function repairDuty(creep) {
 
 function constructionDuty(creep) {
 
-    // TODO: make this part of the room survey and avoid search every tick
-    var constructionSites = creep.room.find(FIND_CONSTRUCTION_SITES), site = null, target = null;
+    if ( creep.getActiveBodyparts(WORK) == 0) {
+        creep.memory.taskList.pop(); return false;
+    }
 
-    // if (constructionSites.length) {
-    // site = constructionSites[Math.floor((Math.random() * 10)
-    // % constructionSites.length)]; // Try to spread out
-    // // construction a bit to make
-    // // pathing easier
-    // } else {
-    // return null;
-    //
-    // }
+    if (!util.def(creep.memory.bTarget) || !util.def( Game.getObjectById(creep.memory.bTarget) )) {
+        // If not listed then it's built by nearest after all these are done
+        var buildPriority = ['extension','container','storage','spawn','link','rampart','road','constructedWall'];
+
+        var newTarget  = creep.room.find(FIND_MY_CONSTRUCTION_SITES); 
+
+        if (!util.def(newTarget)){
+            dlog('no build targets. untasking')
+            //   creep.memory.taskList.pop();
+            return false;
+        }
+
+        // Prioritize
+        for (var need in buildPriority) {
+            var priority = buildPriority[need];
+            for (var site in newTarget) {
+                if (newTarget[site].structureType == priority){
+
+                    creep.memory.bTarget = newTarget[site].id; 
+                    dlog('assinging ' + creep.name + ' build target ' + priority);
+                    return newTarget[site].id; 
+                }
+            }
+        }
+    } 
+
+    if (util.def(creep.memory.bTarget) && util.def( Game.getObjectById(creep.memory.bTarget) )) {
+        creep.memory.bTarget = newTarget[0].id; 
+        return newTarget[0].id;
+    }
+
+    var bTarget = Game.getObjectById(creep.memory.bTarget);
 
     dlog(creep.name + ' on construction duty')
 
-    if (!util.def(constructionSites) || (constructionSites.length == 0)) {
-        // nothing to build?
-        dlog('nothing to build');
-        return false
-    }
+return bTarget;
 
-    // Build priority
-    var buildPriority = {
-        'spawn' : 1,
-        'storage' : 2,
-        'link' : 3,
-        'extension' : 4,
-        'road' : 5,
-        'rampart' : 6,
-        'constructedWall' : 7
-    }
 
-    constructionSites
-        .sort(function(a, b) {
-
-            if (buildPriority[a.structureType] < buildPriority[b.structureType]) {
-                return -1
-
-            } else if (buildPriority[a.structureType] > buildPriority[b.structureType]) {
-                return 1;
-            } else {
-                return 0
-            }
-        })
-
-//    dlog('Priority list')
-//    for (var x = 0; x < constructionSites.length; x++) {
-//        dlog(constructionSites[x].structureType);
-//    }
-    constructionSites.reverse()
-//    dlog('flip round and revese it')
- //   for (var x = 0; x < constructionSites.length; x++) {
-//        dlog(constructionSites[x].id)
-//    }
+    //    constructionSites
+    //        .sort(function(a, b) {
+    //
+    //            if (buildPriority[a.structureType] < buildPriority[b.structureType]) {
+    //                return -1
+    //
+    //            } else if (buildPriority[a.structureType] > buildPriority[b.structureType]) {
+    //                return 1;
+    //            } else {
+    //                return 0
+    //            }
+    //        })
+    //
+    //    dlog('Priority list')
+    //    for (var x = 0; x < constructionSites.length; x++) {
+    //        dlog(constructionSites[x].structureType);
+    //    }
+    //    constructionSites.reverse()
+    //    dlog('flip round and revese it')
+    //   for (var x = 0; x < constructionSites.length; x++) {
+    //        dlog(constructionSites[x].id)
+    //    }
 
     // Check if path exists!! Otherwise, builders can block each other
-    for ( var index in constructionSites) {
-        var target = constructionSites[index]
-
-        var path = creep.moveTo(target, {reusePath: 5, visualizePathStyle: {stroke: '1ffaa00'}});
-
-        if (path != 0) {
-            continue; // Can't do it for some reason.
-        } else {
-            return target.id
+    var res = creep.build(bTarget);
+    if (res == ERR_NOT_IN_RANGE){
+        var path = creep.moveTo(bTarget, {reusePath: 15, visualizePathStyle: {stroke: '1ffaa00'}});
+        if (path && path != ERR_TIRED){
+            dlog('build error : ' + util.getError(path)); return false;
         }
     }
 
+    dlog('shouldnt be here') 
     return null
     //	
     // var structures = creep.room.find(FIND_STRUCTURES);
@@ -281,12 +289,22 @@ module.exports.upgradeRC = upgradeRC;
 
 function upgradeRC(creep) {
     var rc = creep.room.controller;
-
+    if (creep.getActiveBodyparts(WORK) == 0) {
+        creep.memory.taskList.pop(); return false;
+    }
     if (creep.pos.isNearTo(rc) && (creep.carry.energy > 0)) {
         creep.say(sayProgress(rc) + "%");
         creep.upgradeController(rc);
     } else if (creep.carry.energy == creep.carryCapacity) {
         var path = creep.moveTo(rc, {reusePath: 5, visualizePathStyle: {stroke: '1ffaa00'}});
+        if (path) {
+            if (path != ERR_TIRED) {
+                dlog('Tech path error: ' + util.getError(path))
+                // Must be busy with other techs. Go build something instead.
+                creep.memory.taskList.push('builder')
+                return false
+            }
+        }
     } else {
         fillTank(creep);
     }
@@ -294,31 +312,50 @@ function upgradeRC(creep) {
 }
 
 function fillTank(creep) {
-    var structs = creep.room.find(FIND_MY_STRUCTURES);
 
-    creep.say('Filling up my tank');
+    if (!creep.getActiveBodyparts(CARRY)) {return false}
+    if (creep.carry == creep.carryCapacity) {return true}
 
-    if (creep.carry.energy < creep.carryCapacity) {
-        harvest.scrounge(creep, 'sweep');
-        for ( var i in structs) {
-            var struct = structs[i];
-            if ((struct.structureType == STRUCTURE_EXTENSION)
-                || (struct.structureType == 'spawn')
-                || (struct.structureType == STRUCTURE_STORAGE)) {
+    if (!util.def(creep.memory.eTarget) || !util.def(Game.getObjectById(creep.memory.eTarget))){
+        
+        var structs = creep.room.find(FIND_MY_STRUCTURES);
+        creep.say('Filling up my tank');
 
-                if (struct.energy > 0) {
-                    var res = creep.moveTo(struct, {reusePath: 5, visualizePathStyle: {stroke: '1ffaa00'}});
-                    if (creep.pos.isNearTo(struct)) {
-                        creep.withdraw(struct, "energy"); 
+        var takePriority = ['container','storage','extension','spawn'];
+
+        // Prioritize
+        for (var need in takePriority) {
+            var priority = takePriority[need];
+            for (var site in structs) {
+                if ((structs[site].structureType == priority) && (!util.def(structs[site].nrgReserve))) {
+                    if( structs[site].energy > 0) {
+                    
+                    var res = creep.moveTo(structs[site], {reusePath: 5, visualizePathStyle: {stroke: '1ffaa77'}});
+                        
+                        if (!res){
+                            creep.memory.eTarget = structs[site].id; 
+                        }
                     }
                 }
             }
         }
     }
-//    creep.say("hmm....no energy...");
-    // creep.memory.taskList.push('harvestSortingHat');
+    if (!util.def(creep.memory.eTarget) || !util.def(Game.getObjectById(creep.memory.eTarget))){
+        dlog('builders need energy to build, but none stored available');
+        harvest.scrounge(creep)
+        return false;
+    }
 
-    //creep.memory.taskList.pop();
+    var sugarDaddy = Game.getObjectById(creep.memory.eTarget);
+    
+      var res = creep.withdraw(sugarDaddy, "energy"); 
+    if (res == ERR_NOT_IN_RANGE) {
+         var path = creep.moveTo(sugarDaddy, {reusePath: 5, visualizePathStyle: {stroke: '1ffaa00'}});
+        if (path != OK && path != ERR_TIRED) {
+            dlog('error moving to nrg source: ' + util.getError(path))
+               harvest.scrounge(creep)
+        }
+    }
 }
 
 function sayProgress(target) {

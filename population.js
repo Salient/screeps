@@ -304,6 +304,10 @@ function create(type, room) {
 				// Successful creation. Update census count. nextPriority
 				// function makes sure there is a valid one, no need to check
 				currentPopulation[type]++;
+                room.memory.nrgReserve = null;
+                if (util.def(Game.flags['Next: ' + type])) {
+                    Game.flags['Next: ' + type].remove();
+                }
 				room.memory.spawnWaiting = null;
 				return OK;
 			} else {
@@ -319,9 +323,19 @@ function create(type, room) {
 				var cashMoney = getCost(type, room);
 				var cap = room.energyCapacityAvailable;
 				if (cap < cashMoney) {
-			
-				  dlog('Stragey error! Not enough energy capacity to build creep')
-					dlog('Removing the first body part and trying again...')
+                    // return false;	
+              
+                    
+                    dlog('Stragey error! Not enough energy capacity to build creep')
+                    dlog('spawning peon') 
+                   var result = spawn.createCreep([MOVE,WORK,CARRY], 'peon'  
+							+ (Math.floor((Math.random() * 10000))), {
+						"role" : 'peon',
+						"birthRoom" : room.name,
+						"taskList" : ['gatherer', 'shuttle', 'builder']
+					});
+                    return;
+                    dlog('Removing the first body part and trying again...')
 					var tempType = design[type];
 					tempType = tempType.slice(1, tempType.length - 1)
 					var result = spawn.createCreep(tempType, room.name
@@ -337,6 +351,8 @@ function create(type, room) {
 				// dlog('cant build type ' + type)
 				// // Remember for next time, try again
 				room.memory.spawnWaiting = type;
+               room.createFlag(spawn.pos.x+1, spawn.pos.y+1, 'Next: ' + type) 
+                room.memory.nrgReserve = cashMoney; // Signal workers to leave this munch energy
 				break;
 			case ERR_BUSY:
 				// dlog('your mother is a busy woman')
