@@ -137,7 +137,7 @@ function bootstrap(room) {
     // Create roads to mineshafts
 
         for (var sh in shafts) {
-            var thisPath = room.findPath(thisSpawn.pos,shafts[sh].pos, {ignoreRoads: true}) // May need to ignore roads 
+            var thisPath = room.findPath(thisSpawn.pos,shafts[sh].pos, {ignoreRoads: true, ignoreCreeps: true}) // May need to ignore roads 
             // var thisPath = room.findPath(shafts[sh].pos,spwn.pos);
             // Since we've spent the CPU, might as well save it for later
             room.memory.shafts[sh].path = thisPath;
@@ -178,13 +178,14 @@ module.exports.planRoom = function(room) {
 
 
 
-    // Manage roads building
-    buildRoads(room);
 
     // Later, storage, links, etc.
     placeExtensions(room)
     placeContainers(room)
     room.memory.planned = true;
+
+    // Manage roads building
+    buildRoads(room);
 }
 
 function placeAdjacent(room, pos, structure) {

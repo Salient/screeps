@@ -74,6 +74,17 @@ function dlog(msg) {
 	util.dlog('STRATEGY', msg);
 }
 
+// Basic caste definitions
+// 
+// Come up with a base composition, and then scale to available energy capacity
+//
+var castes = {
+    'worker': [ CARRY, WORK, MOVE ],
+    "miner" : [ WORK, WORK, MOVE ],
+    "soldier": [ MOVE, ATTACK, TOUGH, ATTACK, TOUGH, MOVE, RANGED_ATTACK, RANGED_ATTACK, TOUGH,  MOVE], 
+    "medic" : [ MOVE, HEAL, TOUGH ]
+}
+
 module.exports.strategery = function(room) {
 
 	// //////////////

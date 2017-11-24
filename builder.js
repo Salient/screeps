@@ -334,6 +334,7 @@ function fillTank(creep) {
                         
                         if (!res){
                             creep.memory.eTarget = structs[site].id; 
+                            return;
                         }
                     }
                 }
