@@ -78,12 +78,6 @@ function dlog(msg) {
 // 
 // Come up with a base composition, and then scale to available energy capacity
 //
-var castes = {
-    'worker': [ CARRY, WORK, MOVE ],
-    "miner" : [ WORK, WORK, MOVE ],
-    "soldier": [ MOVE, ATTACK, TOUGH, ATTACK, TOUGH, MOVE, RANGED_ATTACK, RANGED_ATTACK, TOUGH,  MOVE], 
-    "medic" : [ MOVE, HEAL, TOUGH ]
-}
 
 module.exports.strategery = function(room) {
 
@@ -91,24 +85,11 @@ module.exports.strategery = function(room) {
 	// Debug
 
 	if (!util.def(room.memory.strategy)) {
-		room.memory.strategy = {};
+        bootstrap(room);
 	}
 
 	var roomConfig = room.memory.strategy;
 
-	if (!util.def(roomConfig.curlvl)) {
-		roomConfig.curlvl = 0;
-	}
-
-	// //////////////
-	// Sanity checks
-
-	if (!util.def(room.controller)) {
-        dlog(typeof util.def(room.controller))
-        dlog('value is ' + util.def(room.controller))
-		dlog("No controller found in room. Strategy uncertain.");
-		return;
-	}
 
 	// /////////////
 	// State check
@@ -116,7 +97,7 @@ module.exports.strategery = function(room) {
 	if (roomConfig.curlvl != room.controller.level) {
 		roomConfig.curlvl = room.controller.level;
 
-        planning.placeExtensions(room);
+        planning.controlLevelChange(room);
 
 		// Contact the city council
 		//planning.designRoom(room)
@@ -124,6 +105,7 @@ module.exports.strategery = function(room) {
 		dlog('Room level has changed. Revising all strategery with level '
 				+ roomConfig.curlvl + ' badassery.');
 	}
+
 
 	var selectStrat = [ bootstrap, lvl1room, lvl2room, lvl3room, lvl4room,
 			lvl5room, lvl6room, lvl7room ];
@@ -133,54 +115,41 @@ module.exports.strategery = function(room) {
 
 
 function bootstrap(room) {
-	if ((room.popCount()) >= 8) {
-		// Enough bootstrapping, proceed to Phase II of the Plan
-		return lvl1room(room);
-	}
-	// Set basic population control parameters
-	var roomConfig = room.memory.strategy;
+return;
+    var strategy = {
+        castes:  {
+            'worker': [ CARRY, WORK, MOVE ],
+            "miner" : [ WORK, WORK, MOVE ],
+            "soldier": [ MOVE, ATTACK, TOUGH, ATTACK, TOUGH, MOVE, RANGED_ATTACK, RANGED_ATTACK, TOUGH,  MOVE], 
+            "medic" : [ MOVE, HEAL, TOUGH ]
+        },
+        curlvl: 0,
+        rulesOfEngagement: 'guard',
+        defcon: 5
+    }
 
-	roomConfig.latestModels = {
-		'gatherer' : [ WORK, CARRY, MOVE ],
-		"miner" : [ WORK, WORK, MOVE ],
-		"scout" : [ ATTACK, ATTACK, MOVE ],
-		"workerBee" : [ CARRY, CARRY, CARRY, MOVE, MOVE, MOVE ],
-		"technician" : [ MOVE, MOVE, WORK, CARRY, CARRY ]
-	};
+room.memory.strategy = strategy;
+}
 
-	// demographics control build order
-	roomConfig.goalDemographics = {
-		"gatherer" : 0.05,
-		"scout" : 0.25,
-		"miner" : 0.1,
-		"workerBee" : 0.1,
-		"technician" : 0.3
-	}
-	roomConfig.minDemographics = {
-		"gatherer" : 3,
-		"scout" : 2
-	// Build two of these first thing
-	}
-	roomConfig.maxDemographics = {
-		"gatherer" : 3,
-		"scout" : 8,
-		"workerBee" : 3,
-		"miner" : 3,
-	}
+module.exports.getCastes = function (room) {
+    if (!util.def(room.memory.strategy)) {
+        bootstrap(room);
+    }
+    return room.memory.strategy.castes;
 }
 
 var lvl1room = function(room) {
-	var roomConfig = room.memory.strategy;
+    var roomConfig = room.memory.strategy;
     if (!util.def(roomConfig)){return false}
-	// Just checking if we can get off the ground properly
-	if (room.popCount() < 6) {
-		return bootstrap(room);
-	}
+    // Just checking if we can get off the ground properly
+    if (room.popCount() < 6) {
+        return bootstrap(room);
+    }
 
-	if (util.def(roomConfig.currentPopulation.workerBee)
-			&& (roomConfig.currentPopulation.workerBee >= 2)) {
-		tasker.retask(room, 'gatherer', 'technician')
-	} else {
+    if (util.def(roomConfig.currentPopulation.workerBee)
+        && (roomConfig.currentPopulation.workerBee >= 2)) {
+        tasker.retask(room, 'gatherer', 'technician')
+    } else {
         //		tasker.retask(room, 'gatherer', 'gatherer') // has no effect if
 		// already set
 

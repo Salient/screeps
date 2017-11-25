@@ -1,214 +1,26 @@
 var util = require('common');
 var strat = require('strategy');
 
-// // ----------------
-// // Main population knobs to tweak. Rest is mostly automatic
-// // This will be updated by strategy as controller increases
-// var design = {
-// 'babyHarvester' : [ WORK, WORK, CARRY, MOVE ],
-// "miner" : [ WORK, WORK, MOVE, MOVE ],
-// // Cost 300, Can get to source, sit there and mine. Probably limit to
-// // three per source
-//
-// "workerBee" : [ CARRY, CARRY, CARRY, MOVE, MOVE, MOVE ],
-// // Cost 300, can shuttle dropped energy to storage
-// };
-//
-// var goalDemographics = { // unit types will be built in order listed
-// "workerBee" : 0.4,
-// "miner" : 0.4,
-// "footSoldier" : 0.1
-// }
-//
-// var minDemographics = { // Help bootstrap early game population
-// 'miner' : 3,
-// 'workerBee' : 3,
-// 'footSoldier' : 2
-// }
-//
-// var maxDemographics = { // Ostensibly prevents choking
-// 'miner' : 3,
-// 'workerBee' : 3,
-// 'footSoldier' : 2
-// }
-// // ------------------
 
 Room.prototype.popCount = function() {
     return this.find(FIND_MY_CREEPS).length
 }
 
-var costLookup = {
-    "work" : 100,
-    "carry" : 50,
-    "tough" : 10,
-    "attack" : 80,
-    "move" : 50,
-    "heal" : 250,
-    "ranged_attack" : 150
-}
-
-var getCost = function(design, room) {
-    var makeup = room.memory.strategy.latestModels[design];
-    if (util.def(makeup)) {
-        var cost = 0;
-        for ( var part in makeup) {
-            cost += costLookup[makeup[part]];
-        }
-        return cost;
-    } else {
-        return null;
+// Takes in an array of body parts
+var getCost = function(body) {
+    var cost =0;
+    for (var part in body) {
+        var bodyPart = body[part];
+        if (util.def(BODYPART_COST[bodyPart])){
+            cost += BODYPART_COST[bodyPart];
+        } else {return ERR_NO_BODYPART}
     }
 }
 
-var isValidRole = function(room, role) {
-
-    // dlog('testing if ' + role + ' is valid for room ' + room);
-
-    if (!util.def(room.memory)) {
-        dlog('dafuq?')
-    }
-
-    if (!util.def(room.memory.strategy)) {// hrm....
-        strat.strategery(room);
-
-    }
-
-    if (!(util.def(room.memory.strategy.latestModels))) {
-        return false;
-    }
-    var design = room.memory.strategy.latestModels;
-
-    for ( var type in design) {
-        // dlog(' is ' + type + ' what im looking for?');
-        if (type == role) {
-            // dlog('herpaderp derp');
-            return true;
-        }
-    }
-    return false;
-}
-
-function nextPriority(room) {
-    // Pull up memory
-    var strategy = room.memory.strategy;
-
-    if(!util.def(strategy)) {
-        strat.strategery(room);
-        return false;
-    }
-
-    // These basic five should be set/updated by strategy periodically
-    // Else, the previous value holds
-    //
-    // DEEEEBUUUUUUG
-    var design = strategy.latestModels;
-    var goalDemographics = strategy.goalDemographics;
-    var maxDemographics = strategy.maxDemographics;
-    var minDemographics = strategy.minDemographics;
-
-    // Not set by strategy, set in main on timer
-
-    // If for some reason the room doesn't know what we have in the room
-    if (!util.def(strategy.currentPopulation)) {
-        strategy.currentPopulation = census(room);
-    }
-
-    var currentPopulation = strategy.currentPopulation;
-
-    var totalPop = room.find(FIND_MY_CREEPS).length;
-
-    // Edge case if there are no creeps yet, build the first in line
-    // else we might divide by the unholy zero
-    if (!totalPop) {
-        if (!util.def(design)) {
-            dlog('wtf2');
-            return null;
-        }
-    }
-
-    // Check minimum numbers
-    for ( var i in minDemographics) {
-        if (!util.def(currentPopulation[i])) {
-            currentPopulation[i] = 0;
-        }
-        // dlog("checking minimums for " + i);
-        // See if we need more of them
-        if (currentPopulation[i] < minDemographics[i]) {
-            // dlog('Must build a minimum of ' + minDemographics[i] + ' ' + i);
-            return (i);
-        }
-    }
-
-    // if (room.memory.populationDebug) {
-    // console
-    // .log('Determining what unit to build next. Current population is '
-    // + totalPop);
-    // }
-
-    // Let's see what we want the room to look like vs. what is here
-    for ( var i in goalDemographics) {
-
-        // If a unit we want isn't present yet, initialize the count for it
-        if (!util.def(currentPopulation[i])) {
-            currentPopulation[i] = 0;
-        }
-
-        // See if we need more of them
-        // dlog('checking if we need more ' + i);
-        if (!isValidRole(room, i)) {
-            //			dlog(i + ' type is no longer in creep definitions.');
-            continue;
-        }
-        if ((currentPopulation[i] / totalPop) < goalDemographics[i]) {
-            // dlog('We have less ' + i + ' than the goal percentage');
-            // Check Maximums
-            if (currentPopulation[i] >= maxDemographics[i]) {
-                // dlog("But we have met the maximum number of " + i);
-                continue;
-            } else {
-                // dlog('yep, creating a ' + i);
-                return (i);
-            }
-        } else {
-
-            // dlog('we have enough ' + i);
-            continue;
-        }
-        // else {
-        // if (room.memory.populationDebug) {
-        // console.log('Don\'t need anymore ' + i);
-        // }
-        // }
-    }
-
-    // return null;
-}
-
-// Show current room unit types and percent of goal
-var printDemographics = function(room) {
-    var goalDemographics = room.memory.strategy.goalDemographics;
-    var currentPopulation = room.memory.strategy.currentPopulation;
-    var minDemographics = room.memory.strategy.minDemographics;
-
-    if (typeof currentPopulation === 'undefined') {
-        room.memory.strategy.currentPopulation = census(room);
-    }
-
-    var totalPop = room.find(FIND_MY_CREEPS).length;
-
-    for ( var c in currentPopulation) {
-        var number = currentPopulation[c];
-        if (c !== 'freeAgent') {
-            console.log("There are " + number + " " + c + " creeps, making up "
-                + (number / totalPop * 100).toFixed(2)
-                + "% of the population. The goal is " + goalDemographics[c]
-                * 100 + "% (with minimum of " + minDemographics[c] + ').');
-        }
-    }
-}
 
 var census = function(room) {
-    var roles = {};
+    var roles = { worker: 0, soldier: 0, miner: 0, medic: 0, technician: 0};
+
     var roomCreeps = room.find(FIND_MY_CREEPS);
     for ( var i in roomCreeps) {
         var youThere = roomCreeps[i];
@@ -235,46 +47,140 @@ var census = function(room) {
     // room
 }
 
-var breed = function(room) {
 
-    // // Short circuit a lot of processing if we've already done it but
-    // couldn't
-    // // finish
-    var bowchickabowchicka = null;
+// TODO change mining logic to only assign shafts to 'miner' class
 
-    if (!util.def(room.memory.spawnWaiting)) {
-        room.memory.spawnWaiting = null;
+function nextPriority(room) {
+    // Check if room setup
+    if (!room.memory.planned) {
+        return
     }
 
-    // if (room.memory.spawnWaiting != null) {
-    // // bowchickabowchicka = room.memory.spawnWaiting;
-    // ; // not sure if having it waiting does much
-    // } else {
-    bowchickabowchicka = nextPriority(room);
-    // }
+    dlog('arbitrating spawn')
+    //  Four main castes 
+    //      1. Worker (Equal parts move, carry, work)
+    //      2. Soldier (Move, tough, attack, ranged_attack)
+    //      3. Medic (Move, tough, heal)
+    //      4. Miner (Move, work)
+    //
+    // Main selection parameters:
+    //  Energy Production:
+    //      If lots of dropped energy in the room, we need more shuttles to go get it.
+    //      Always need a minimum of 3 workers to boot strap room
+    //
+    //      Should start making miners after min. 3 workers, as number of shafts available vs. other priorities
+    //      
+    //  Tech Tree:
+    //      If more than X number of construction sites, need more workers
+    //  Military Production:
+    //
 
-    if (bowchickabowchicka == null) {
-        dlog('wut? no pootang?');
-        return;
-        // var popLimit = room.memory.maxPop;
+    // Verify room population
+    var have = census(room);
+
+    if (have.worker <3) { return 'worker'}
+    var builds = room.find(FIND_MY_CONSTRUCTION_SITES);
+    var nrg = room.find(FIND_DROPPED_RESOURCES);
+    var needsOfTheFew = { 
+        'worker':  builds.length * 10 + nrg.length, 
+        'miner': (Object.keys(room.memory.shafts).length - have.miner) * 25, 
+        'soldier': 15 + ((6 - room.memory.strategy.defcon) * 20),
+        'medic': (have.soldier * 10 ) -30
+    }
+util.dumpObject(needsOfTheFew);
+    var needsOfTheMany = Object.keys(needsOfTheFew)
+        .sort(function(keya, keyb) {
+            return needsOfTheFew[keyb] - needsOfTheFew[keya];
+        })
+
+    // If the score is really high, the need is great. Have creep stop drawing from spawn/extensions until spawn is complete
+    if (needsOfTheFew[needsOfTheMany[0]] > 100 )
+        { room.memory.strategy.nrgReserve = true }
+    
+    return needsOfTheMany[0];
+}
+
+module.exports.nextPriority = nextPriority;
+
+// Show current room unit types and percent of goal
+var printDemographics = function(room) {
+    var goalDemographics = room.memory.strategy.goalDemographics;
+    var currentPopulation = room.memory.strategy.currentPopulation;
+    var minDemographics = room.memory.strategy.minDemographics;
+
+    if (typeof currentPopulation === 'undefined') {
+        room.memory.strategy.currentPopulation = census(room);
     }
 
-    // if (isValidRole(room, bowchickabowchicka)) {
-    if (isValidRole(room, bowchickabowchicka)) {
-        var result = create(bowchickabowchicka, room);
-        if (result < 0) {
-            dlog("Error creating creep: " + util.getError(result));
-            // }
-            // } else {
-            // dlog('invalid design'); // tried to create invalid
-            // creep...probably
-            // // null?
+    var totalPop = room.find(FIND_MY_CREEPS).length;
+
+    for ( var c in currentPopulation) {
+        var number = currentPopulation[c];
+        if (c !== 'freeAgent') {
+            console.log("There are " + number + " " + c + " creeps, making up "
+                + (number / totalPop * 100).toFixed(2)
+                + "% of the population. The goal is " + goalDemographics[c]
+                * 100 + "% (with minimum of " + minDemographics[c] + ').');
         }
-    } else {
-        dlog('Entry ' + bowchickabowchicka
-            + ' is in min demographics, but not in latest models')
     }
 }
+
+
+var spawn = function(room) {
+
+    var want = nextPriority(room);
+
+    var castes = strat.getCastes(room);
+
+    if (!util.def(castes[want])) {
+        dlog('wtf'); return false
+    }
+
+    var pattern = castes[want];
+
+    var cap = room.energyCapacityAvailable;
+
+    // Start casting the spell
+
+    var body = []; 
+    var counter = 0;
+    var cost = 0;
+
+    while (cost <= cap) {
+        body.push(pattern[counter++ % pattern.length]);
+        cost += BODYPART_COST[body[body.length-1]];
+    }
+    // last iteration put us over
+    body.pop()
+
+
+    var spawns = room.find(FIND_MY_SPAWNS);
+    for (var uterus in spawns) {
+        var babyMomma = spawns[uterus];
+        if (!babyMomma.isActive()){
+            continue;
+        }
+        if (util.def(babyMomma.spawning)) {
+            if (Game.time + babyMomma.spawning.remainingTime < room.memory.nextSpawn ) {
+                room.memory.nextSpawn = Game.time + babyMomma.spawning.remainingTime;
+            }
+        }
+        
+        
+ var result = babyMomma.spawnCreep(body, want + '-' + (Math.floor((Math.random() * 10000))), { memory: {
+            "role" : want,
+            "birthRoom" : room.name,
+            "taskList" : []
+            }})
+        switch (result) {
+            case OK: dlog('Spawned ' + want);  room.memory.nrgReserve = false;  break;
+            case ERR_NOT_ENOUGH_ENERGY: room.memory.nextSpawn = Game.time + 10; break;
+            case ERR_BUSY: room.memory.nextSpawn = Game.time + babyMomma.spawning.remainingTime; break;
+                default: dlog('Error spawning - ' + util.getError(result))
+        }
+    }
+}
+
 
 /**
  * Try to find a free spawner to create requested unit type
@@ -370,20 +276,9 @@ function create(type, room) {
     }
 }
 
-function log(msg) {
-    console.log('[Pop] ' + msg);
-}
-
-// / Scratch area
-function buffDesign(design) {
-    var buffedDesign = [];
-    for ( var i in design) {
-    }
-}
-
 function dlog(msg) {
     util.dlog('POPULATION', msg);
 }
 module.exports.census = census;
-module.exports.breed = breed;
+module.exports.breed = spawn;
 module.exports.printDemographics = printDemographics;

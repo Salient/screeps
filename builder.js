@@ -87,19 +87,18 @@ module.exports = function(creep) {
 
     if (target.progress >= 0) {
 
-        if ((creep.pos.isNearTo(target)) && (creep.carry.energy > 0)) {
+        var res = creep.build(target);
+        switch (res) {
+       case OK:  
             creep.say(sayProgress(target) + '%');
-            creep.build(target)
-            return true;
-
-        } else if (creep.carry.energy == creep.carryCapacity) {
-            var res = creep.moveTo(target, {reusePath: 5, visualizePathStyle: {stroke: '1ffaa00'}});
-            return true;
-
-        } else {
+            break;
+case ERR_NOT_IN_RANGE: 
+            creep.moveTo(target, {reusePath: 5, visualizePathStyle: {stroke: '1ffaa00'}});
+                break;
+            case ERR_NOT_ENOUGH_RESOURCES: 
             fillTank(creep);
-            return true;
-
+                break;
+default: dlog('Build command error: ' + util.getError(res));
         }
 
     } else if (needsRepair(target)) {
@@ -312,11 +311,11 @@ function upgradeRC(creep) {
 }
 
 function fillTank(creep) {
-
+creep.say('F')
     if (!creep.getActiveBodyparts(CARRY)) {return false}
     if (creep.carry == creep.carryCapacity) {return true}
 
-    if (!util.def(creep.memory.eTarget) || !util.def(Game.getObjectById(creep.memory.eTarget))){
+    if (!util.def(creep.memory.eTarget) || !util.def(Game.getObjectById(creep.memory.eTarget)) || Game.getObjectById(creep.memory.eTarget).energy == 0){
         
         var structs = creep.room.find(FIND_MY_STRUCTURES);
         creep.say('Filling up my tank');
@@ -329,9 +328,7 @@ function fillTank(creep) {
             for (var site in structs) {
                 if ((structs[site].structureType == priority) && (!util.def(structs[site].nrgReserve))) {
                     if( structs[site].energy > 0) {
-                    
                     var res = creep.moveTo(structs[site], {reusePath: 5, visualizePathStyle: {stroke: '1ffaa77'}});
-                        
                         if (!res){
                             creep.memory.eTarget = structs[site].id; 
                             return;

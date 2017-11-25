@@ -43,10 +43,11 @@ Game.q = function() {
 }
 
 Game.x =function(room) {construct.x(room);} 
+
 Game.t =function() {
     for (var r in Game.rooms) {
-    construct.placeContainers(Game.rooms[r]);} 
-    }    
+        population.nextPriority(Game.rooms[r]);} 
+}    
 
 Room.prototype.getError = function(msg) {
     return (util.getError(msg));
@@ -70,51 +71,53 @@ Creep.prototype.checkPath = function(structure) {
 //profiler.enable();
 //module.exports.loop = function() {
 //   profiler.wrap(function() {
-        // Main.js logic should go here.
+// Main.js logic should go here.
 
-        // Process all the creep
-        for (var unit in Game.creeps) {
-            taskMaster.performTask(Game.creeps[unit]);
-        }
+// Process all the creep
+for (var unit in Game.creeps) {
+    taskMaster.performTask(Game.creeps[unit]);
+}
 
-        // Handle upper level strategy for each room
-        for (var room in Game.rooms) {
-            // Manage building placement, build priorities, and roads
-        if (!(Game.time % 31)) {
-            construct.planRoom(Game.rooms[room]);
-        }
-            // Manage creep configurations, counts of each type, scale with control level
-        if (!(Game.time % 11)) {
-            population.breed(Game.rooms[room]);
-        }
-        if (!(Game.time % 17)) {
-            population.census(Game.rooms[room])
-        }
-            // 
-        if (!(Game.time % 27)) {
-            roomstrat.strategery(Game.rooms[room]);
-        }
-        }
-        // Need to figure out where the best place to put housekeeping stuff. 
+// Handle upper level strategy for each room
+for (var room in Game.rooms) {
+    var thisRoom = Game.rooms[room];
+    // Manage building placement, build priorities, and roads
+    if (!(Game.time % 30)) {
+        construct.planRoom(thisRoom);
+    }
+    // Manage creep configurations, counts of each type, scale with control level
+    // TODO - make this smart and 
+    if (!util.def(thisRoom.memory.nextSpawn)) {
+        thisRoom.memory.nextSpawn = 1;
+    }
+        if (Game.time > thisRoom.memory.nextSpawn)
+    {  population.breed(thisRoom);}
+    
+    if (!(Game.time % 27)) {
+        roomstrat.strategery(thisRoom);
+    }
+}
 
-        if (!(Game.time % 11)) {
-            for(var q in Memory.creeps) {
-                if(!Game.creeps[q]) {
-                    delete Memory.creeps[q];
-                }
-            }
+// Need to figure out where the best place to put housekeeping stuff. 
+if (!(Game.time % 11)) {
+    for(var q in Memory.creeps) {
+        if(!Game.creeps[q]) {
+            delete Memory.creeps[q];
         }
+    }
+}
 
-        if (!(Game.time % 67)) {
-            for (var r in Memory.rooms) {
-                if(!Game.rooms[r]) {
-                    delete Memory.rooms[r];}
-                else {
-                    harvest.pokeMiners(Game.rooms[r]);
-                }
-            }
-        }
-//    });
+//// 
+//        if (!(Game.time % 67)) {
+//            for (var r in Memory.rooms) {
+//                if(!Game.rooms[r]) {
+//                    delete Memory.rooms[r];}
+//                else {
+//                    harvest.pokeMiners(Game.rooms[r]);
+//                }
+//            }
+//        }
+////    });
 //}
 //
 function dlog(msg) {

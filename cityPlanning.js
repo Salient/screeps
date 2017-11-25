@@ -59,6 +59,8 @@ var buildRoads = function(room) {
     }
 }
 
+module.exports.controlLevelChange = function (room){}
+
 // Determines how many creep can mine each source at the same time
 // Assigns array with list of miner posts to room memory 
 var setupSources = function (room) {
