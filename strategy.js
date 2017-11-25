@@ -84,12 +84,12 @@ module.exports.strategery = function(room) {
 	// //////////////
 	// Debug
 
-	if (!util.def(room.memory.strategy)) {
+	if (!util.def(room.memory.strategy) ) {
+        dlog('Bootstrapping!')
         bootstrap(room);
 	}
 
 	var roomConfig = room.memory.strategy;
-
 
 	// /////////////
 	// State check
@@ -110,12 +110,11 @@ module.exports.strategery = function(room) {
 	var selectStrat = [ bootstrap, lvl1room, lvl2room, lvl3room, lvl4room,
 			lvl5room, lvl6room, lvl7room ];
 
-	selectStrat[roomConfig.curlvl](room);
+    //	selectStrat[roomConfig.curlvl](room);
 }
 
 
 function bootstrap(room) {
-return;
     var strategy = {
         castes:  {
             'worker': [ CARRY, WORK, MOVE ],
@@ -125,10 +124,11 @@ return;
         },
         curlvl: 0,
         rulesOfEngagement: 'guard',
-        defcon: 5
+        defcon: 5,
+        curlvl: 0
     }
-
 room.memory.strategy = strategy;
+    room.memory.nextSpawn = 1;
 }
 
 module.exports.getCastes = function (room) {

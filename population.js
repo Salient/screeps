@@ -15,6 +15,7 @@ var getCost = function(body) {
             cost += BODYPART_COST[bodyPart];
         } else {return ERR_NO_BODYPART}
     }
+    return cost;
 }
 
 
@@ -56,7 +57,6 @@ function nextPriority(room) {
         return
     }
 
-    dlog('arbitrating spawn')
     //  Four main castes 
     //      1. Worker (Equal parts move, carry, work)
     //      2. Soldier (Move, tough, attack, ranged_attack)
@@ -77,17 +77,19 @@ function nextPriority(room) {
 
     // Verify room population
     var have = census(room);
-
-    if (have.worker <3) { return 'worker'}
+    if (have.worker <3) { 
+        room.memory.nrgReserve = true;
+        room.memory.nextSpawn = Game.time;
+        return 'worker'
+    }
     var builds = room.find(FIND_MY_CONSTRUCTION_SITES);
     var nrg = room.find(FIND_DROPPED_RESOURCES);
     var needsOfTheFew = { 
-        'worker':  builds.length * 10 + nrg.length, 
+        'worker':  builds.length * 5 + nrg.length, 
         'miner': (Object.keys(room.memory.shafts).length - have.miner) * 25, 
         'soldier': 15 + ((6 - room.memory.strategy.defcon) * 20),
         'medic': (have.soldier * 10 ) -30
     }
-util.dumpObject(needsOfTheFew);
     var needsOfTheMany = Object.keys(needsOfTheFew)
         .sort(function(keya, keyb) {
             return needsOfTheFew[keyb] - needsOfTheFew[keya];
@@ -141,7 +143,6 @@ var spawn = function(room) {
     var cap = room.energyCapacityAvailable;
 
     // Start casting the spell
-
     var body = []; 
     var counter = 0;
     var cost = 0;
@@ -152,7 +153,6 @@ var spawn = function(room) {
     }
     // last iteration put us over
     body.pop()
-
 
     var spawns = room.find(FIND_MY_SPAWNS);
     for (var uterus in spawns) {
@@ -166,17 +166,25 @@ var spawn = function(room) {
             }
         }
         
-        
- var result = babyMomma.spawnCreep(body, want + '-' + (Math.floor((Math.random() * 10000))), { memory: {
+        var result = babyMomma.spawnCreep(body, want + '-' + (Math.floor((Math.random() * 10000))), { memory: {
             "role" : want,
             "birthRoom" : room.name,
             "taskList" : []
             }})
         switch (result) {
             case OK: dlog('Spawned ' + want);  room.memory.nrgReserve = false;  break;
-            case ERR_NOT_ENOUGH_ENERGY: room.memory.nextSpawn = Game.time + 10; break;
+            case ERR_NOT_ENOUGH_ENERGY: // Pick a body that will fit under 300 to make sure it procs
+                if (room.memory.nrgReserve) {
+                while (getCost(body)> 300) { body.pop(); }
+                var ddd = util.getError(babyMomma.spawnCreep(body, want + '-' + (Math.floor((Math.random() * 10000))), { memory: {
+                    "role" : want,
+                    "birthRoom" : room.name,
+                    "taskList" : []
+                }}))
+                }
+                room.memory.nextSpawn = Game.time + 10; break;
             case ERR_BUSY: room.memory.nextSpawn = Game.time + babyMomma.spawning.remainingTime; break;
-                default: dlog('Error spawning - ' + util.getError(result))
+            default: dlog('Error spawning - ' + util.getError(result))
         }
     }
 }

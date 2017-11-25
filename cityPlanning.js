@@ -96,7 +96,31 @@ var setupSources = function (room) {
     room.memory.shafts = shafts;
 }
 
+function createBasicPaths(room) {
 
+    var spwn = Game.getObjectById(room.memory.spawnId);
+    var spth = room.memory.paths.ctrl;
+    for (var st in spth) {
+            var thisStep = spth[st];
+            room.createConstructionSite(thisStep.x, thisStep.y, STRUCTURE_ROAD);
+        }
+
+    // Go ahead and create roads to controller and sources from spawn 
+
+    var shafts = room.memory.shafts;
+
+    // Create roads to mineshafts
+        for (var sh in shafts) {
+            var thisPath = room.findPath(spwn.pos,shafts[sh].pos, {ignoreRoads: true, ignoreCreeps: true}) // May need to ignore roads 
+            // var thisPath = room.findPath(shafts[sh].pos,spwn.pos);
+            // Since we've spent the CPU, might as well save it for later
+            room.memory.shafts[sh].path = thisPath;
+            for (var st in thisPath) {
+                var thisStep = thisPath[st];
+                room.createConstructionSite(thisStep.x, thisStep.y, STRUCTURE_ROAD);
+            }
+        }
+}
 // Bootstrap code to initialize all expected data structures for the room
 function bootstrap(room) {
 
@@ -104,6 +128,8 @@ function bootstrap(room) {
     // Stores in room.memory.shafts
     setupSources(room);
 
+    var spwn= room.find(FIND_MY_SPAWNS)[0];
+    room.memory.spawnId  = spwn.id;
     // Track popular creep routes 
     // Create room matrix and initialize to 0
     var heatmap = [];
@@ -120,36 +146,14 @@ function bootstrap(room) {
         room.memory.paths = {}
     }
 
-    var spwn = room.find(FIND_MY_SPAWNS)[0];
-    room.memory.spawnId = spwn.id;
+   room.memory.paths.ctrl = room.controller.pos.findPathTo(spwn);
 
-    var spth  = room.controller.pos.findPathTo(spwn);
-    
-    for (var st in spth) {
-            var thisStep = spth[st];
-            room.createConstructionSite(thisStep.x, thisStep.y, STRUCTURE_ROAD);
-        }
-
-    room.memory.paths.ctrl = spth; 
-    // Go ahead and create roads to controller and sources from spawn 
-
-    var shafts = room.memory.shafts;
-    // TODO add terminal and minerals
-
-    // Create roads to mineshafts
-
-        for (var sh in shafts) {
-            var thisPath = room.findPath(thisSpawn.pos,shafts[sh].pos, {ignoreRoads: true, ignoreCreeps: true}) // May need to ignore roads 
-            // var thisPath = room.findPath(shafts[sh].pos,spwn.pos);
-            // Since we've spent the CPU, might as well save it for later
-            room.memory.shafts[sh].path = thisPath;
-            for (var st in thisPath) {
-                var thisStep = thisPath[st];
-                room.createConstructionSite(thisStep.x, thisStep.y, STRUCTURE_ROAD);
-            }
-        }
-
-        // Create roads to controller 
+    // Create roads to controller 
+    // Later, storage, links, etc.
+    placeExtensions(room)
+    placeContainers(room)
+    createBasicPaths(room);
+    room.memory.planned = true;
 }
 
 module.exports.bootstrap = bootstrap;
@@ -181,10 +185,6 @@ module.exports.planRoom = function(room) {
 
 
 
-    // Later, storage, links, etc.
-    placeExtensions(room)
-    placeContainers(room)
-    room.memory.planned = true;
 
     // Manage roads building
     buildRoads(room);
@@ -253,19 +253,14 @@ var placeExtensions = function placeExtensions(room) {
 var placeContainers= function placeContainers(room) {
 
     var have = room.find(FIND_STRUCTURES, {filter: { structureType: STRUCTURE_CONTAINER}}).length+room.find(FIND_MY_CONSTRUCTION_SITES, {filter: { structureType: STRUCTURE_CONTAINER}}).length;
-    if ((have) >= room.controller.level) { return } // stagger one per level to spread out construcution
+    if ((have == 5) || (have >= Object.keys(room.memory.shafts).length )) { return } // stagger one per level to spread out construcution
 
-    // I should build more
-    if (!util.def(room.memory.paths) || !util.def(room.memory.paths.ctrl)){
-        dlog('error placing containers, controller path not found'); return false}
-
-    var contPath = room.memory.paths.ctrl;
-    for (var st=2; st<contPath.length; st++ ) {
-        var step = contPath[st];
-        if (placeAdjacent(room, step, STRUCTURE_CONTAINER)) {
-            have++; 
-        };
-        if (have>=5) {return true}
+    for (var x in room.memory.shafts) {
+        var shaft = room.memory.shafts[x];
+        var site = new RoomPosition(shaft.pos.x, shaft.pos.y, room.name);
+        util.dumpObject(site)
+        var res =  room.createConstructionSite(site, STRUCTURE_CONTAINER);
+        dlog('added container: ' + util.getError(res));
     }
 }
 
