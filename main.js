@@ -22,14 +22,14 @@ Game.d = function() {
     }
 }
 
-Game.s = function() {
-    for (var r in Game.rooms)
-    {harvest.setupSources(Game.rooms[r]);}
-}
-
-Game.r = function() {
-    for (var r in Game.rooms)
-    {harvest.pokeMiners(Game.rooms[r]);}
+Game.fe = function() {
+    for (var ff in Game.rooms) {
+        var res=harvest.freeEnergy(Game.rooms[ff]);
+        dlog('Free energy in room ' + ff);
+        for (var type in res) {
+            dlog(type + ": " + res[type])
+        }
+    }
 }
 
 Game.p = function() {
@@ -87,7 +87,7 @@ for (var room in Game.rooms) {
     }
 
     // Manage building placement, build priorities, and roads
-    if (!(Game.time % 30) || !thisRoom.memory.planned) {
+    if (!(Game.time % 13) || !thisRoom.memory.planned) {
         construct.planRoom(thisRoom);
     }
     // Manage creep configurations, counts of each type, scale with control level

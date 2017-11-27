@@ -77,6 +77,13 @@ function nextPriority(room) {
 
     // Verify room population
     var have = census(room);
+    var totalPop = 0;
+
+    for (var i in have){
+    totalPop += have[i];
+    }
+    if (( totalPop > room.controller.level*10) || totalPop> 30) { return false } // TODO tweak this number
+
     if (have.worker <3) { 
         room.memory.nrgReserve = true;
         room.memory.nextSpawn = Game.time;
@@ -86,7 +93,7 @@ function nextPriority(room) {
     var nrg = room.find(FIND_DROPPED_RESOURCES);
     var needsOfTheFew = { 
         'worker':  builds.length * 5 + nrg.length, 
-        'miner': (Object.keys(room.memory.shafts).length - have.miner) * 25, 
+        'miner': (Object.keys(room.memory.shafts).length - have.miner) * 25 * have.worker, 
         'soldier': 15 + ((6 - room.memory.strategy.defcon) * 20),
         'medic': (have.soldier * 10 ) -30
     }
@@ -95,10 +102,12 @@ function nextPriority(room) {
             return needsOfTheFew[keyb] - needsOfTheFew[keya];
         })
 
+     dlog('spawning ' + needsOfTheMany[0] + ' with need rating ' + needsOfTheFew[needsOfTheMany[0]] )
     // If the score is really high, the need is great. Have creep stop drawing from spawn/extensions until spawn is complete
     if (needsOfTheFew[needsOfTheMany[0]] > 100 )
         { room.memory.strategy.nrgReserve = true }
-    
+
+
     return needsOfTheMany[0];
 }
 
@@ -113,6 +122,8 @@ var printDemographics = function(room) {
     if (typeof currentPopulation === 'undefined') {
         room.memory.strategy.currentPopulation = census(room);
     }
+
+    // for (var i in )
 
     var totalPop = room.find(FIND_MY_CREEPS).length;
 
@@ -131,6 +142,7 @@ var printDemographics = function(room) {
 var spawn = function(room) {
 
     var want = nextPriority(room);
+    if (!want) {room.memory.nextSpawn += 90; return;} // do not want
 
     var castes = strat.getCastes(room);
 
@@ -175,6 +187,7 @@ var spawn = function(room) {
             case OK: dlog('Spawned ' + want);  room.memory.nrgReserve = false;  break;
             case ERR_NOT_ENOUGH_ENERGY: // Pick a body that will fit under 300 to make sure it procs
                 if (room.memory.nrgReserve) {
+                    dlog('rice and beans spawning ' + want)
                 while (getCost(body)> 300) { body.pop(); }
                 var ddd = util.getError(babyMomma.spawnCreep(body, want + '-' + (Math.floor((Math.random() * 10000))), { memory: {
                     "role" : want,

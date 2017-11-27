@@ -50,7 +50,23 @@ module.exports.x = placeExtensions;
 //  }
 
 var buildRoads = function(room) {
+
+    var spwn = Game.getObjectById(room.memory.spawnId);
+    var have = room.find(FIND_MY_CONSTRUCTION_SITES, {filter: { structureType: STRUCTURE_ROAD}}).length;
+    var paths = room.memory.paths;
+
+    for (var p in paths) {
+        var hwy =  paths[p];
+        for (var sq in hwy){
+            if (have > 5) {return}; // Let's not get carried away
+            var st = hwy[sq];
+            var res =  room.createConstructionSite(st.x, st.y, STRUCTURE_ROAD);
+            if (!res) {have++;}
+        }
+    }
+
     var heatm = room.memory.heatmap;
+
     if (!util.def(heatm)){return}
     for (var x = 1; x<49; x++ ) {
         for (var y = 1; y<49; y++){
@@ -98,28 +114,19 @@ var setupSources = function (room) {
 
 function createBasicPaths(room) {
 
-    var spwn = Game.getObjectById(room.memory.spawnId);
-    var spth = room.memory.paths.ctrl;
-    for (var st in spth) {
-            var thisStep = spth[st];
-            room.createConstructionSite(thisStep.x, thisStep.y, STRUCTURE_ROAD);
-        }
 
     // Go ahead and create roads to controller and sources from spawn 
 
+    var spwn = Game.getObjectById(room.memory.spawnId);
     var shafts = room.memory.shafts;
+    room.memory.paths.ctrl = room.controller.pos.findPathTo(spwn);
 
     // Create roads to mineshafts
-        for (var sh in shafts) {
-            var thisPath = room.findPath(spwn.pos,shafts[sh].pos, {ignoreRoads: true, ignoreCreeps: true}) // May need to ignore roads 
-            // var thisPath = room.findPath(shafts[sh].pos,spwn.pos);
-            // Since we've spent the CPU, might as well save it for later
-            room.memory.shafts[sh].path = thisPath;
-            for (var st in thisPath) {
-                var thisStep = thisPath[st];
-                room.createConstructionSite(thisStep.x, thisStep.y, STRUCTURE_ROAD);
-            }
-        }
+    for (var sh in shafts) {
+        room.memory.paths['shaft' + sh] = room.findPath(spwn.pos,shafts[sh].pos, {ignoreRoads: true, ignoreCreeps: true}) // May need to ignore roads 
+        // var thisPath = room.findPath(shafts[sh].pos,spwn.pos);
+        // Since we've spent the CPU, might as well save it for later
+    }
 }
 // Bootstrap code to initialize all expected data structures for the room
 function bootstrap(room) {
@@ -141,18 +148,16 @@ function bootstrap(room) {
     }
 
     room.memory.heatmap = heatmap;
-    
-    if (!util.def(room.memory.paths)) {
-        room.memory.paths = {}
-    }
 
-   room.memory.paths.ctrl = room.controller.pos.findPathTo(spwn);
 
     // Create roads to controller 
     // Later, storage, links, etc.
+    createBasicPaths(room);
     placeExtensions(room)
     placeContainers(room)
-    createBasicPaths(room);
+
+    buildRoads(room);
+
     room.memory.planned = true;
 }
 
@@ -168,7 +173,7 @@ module.exports.planRoom = function(room) {
     //  4,  walls around exits 
 
     // Sanity Checks
-    if (!util.def(room.memory.planned)){
+    if (!util.def(room.memory.planned) || !util.def(room.memory.heatmap)){
         bootstrap(room);}
 
     //  Measure traffic around the room
@@ -182,7 +187,7 @@ module.exports.planRoom = function(room) {
         }
     }
 
-
+    placeExtensions(room);
 
 
 
@@ -208,7 +213,7 @@ function placeAdjacent(room, pos, structure) {
                     var derp =room.createConstructionSite(odd,structure); 
                     if (derp == OK) {return true}
                     //      else {  dlog('error placing ' + structure + ', ' + util.getError(derp))
-                        return false;
+                    return false;
                     //}
                 }
             }
@@ -227,26 +232,27 @@ var placeExtensions = function placeExtensions(room) {
 
     // I should build more
 
-    // Should be able to use the path stored with each mineshaft and use it to find space nearby
-    var shortest = 99;
-    for (var sh in room.memory.shafts) {
-        if (room.memory.shafts[sh].path.length < shortest) {
-            shortest = room.memory.shafts[sh].path.length}
+    // make in some checkered pattern around spawn
+    //
+    var origin = Game.getObjectById(room.memory.spawnId).pos;
+
+    if (!util.def(origin)){
+        dlog('big bad voodoo'); return false;
     }
 
-    for (var st=3; st<shortest; st++ ) {
-        for (var sh in room.memory.shafts) {
-            var nrgPath = room.memory.shafts[sh].path;
-            if(!util.def(nrgPath)) {
-                dlog('paths not recorded in mineshaft objects - error'); 
-                return
+    var radius = 2;
+    // start at spawn +/- 2 squares
+    // spiral out
+    while ( have < cap ) {
+        for (var xdelta = -radius + radius%2; xdelta <= radius; xdelta+=2) {
+            for (var ydelta = -radius + radius%2; ydelta <=radius; ydelta+=2) {
+                var site = new RoomPosition(origin.x+xdelta, origin.y+ydelta, room.name);
+                var res =  room.createConstructionSite(site, STRUCTURE_EXTENSION);
+                dlog('placing extension at '+(origin.x+xdelta) +','+ (origin.y + ydelta)+' resut: ' + util.getError(res));
+                if (res == OK ) { have++; }
             }
-            var step = nrgPath[st];
-            if (placeAdjacent(room, step, STRUCTURE_EXTENSION)) {
-                have++; 
-            };
-            if (have>=cap) {return true}
         }
+        radius++;
     }
 }
 

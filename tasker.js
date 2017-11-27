@@ -102,7 +102,7 @@ var performTask = function(creep) {
         creep.memory.taskList = [];
     }
 
-    if (!taskList.length) {
+    if (taskList.length == 0) {
         // dlog('Empty task list found: ' + creep.name);
         taskList.push(getDefaultTask(creep));
     }
@@ -132,8 +132,7 @@ var performTask = function(creep) {
             harvest.sortingHat(creep);
             break;
         case 'gatherer':
-            harvest.shuttle(creep) || harvest.mine(creep) // || build(creep)
-                || harvest.scrounge(creep)
+            harvest.gatherer(creep);
             break;
         case 'janitor':
             build(creep) || 
@@ -196,12 +195,13 @@ var getDefaultTask = function(creep) { // What to do if the creep has
         case 'technician':
         case 'construction':
             return role;
-        case 'private':
-        case 'scout':
-        case 'pfc':
-        case 'footSoldier':
-        case 'cavalry':
-        case 'enforcer':
+        case 'soldier':
+            case 'medic':
+            //        case 'scout':
+            //        case 'pfc':
+            //        case 'footSoldier':
+            //        case 'cavalry':
+            //        case 'enforcer':
             return 'military';
         default:
             console.log('unmatched unit found!');

@@ -6,7 +6,35 @@ function dlog(msg) {
     util.dlog('HARVEST', msg);
 }
 
+/// Utiilty functions
+//
+//
+// Finds all stuff on the ground, returns object with resource types as keys
+function freeEnergy(room){
 
+    var sits = room.find(FIND_DROPPED_RESOURCES);
+    var total ={};
+    for (var dd in sits) {
+        var clump = sits[dd];
+        if (!util.def(total[clump.resourceType])){
+            total[clump.resourceType]=0;
+        }
+        total[clump.resourceType]+=clump.amount;
+    }
+    return total;
+}
+
+module.exports.freeEnergy = freeEnergy;
+
+Game.s = function() {
+    for (var r in Game.rooms)
+    {harvest.setupSources(Game.rooms[r]);}
+}
+
+Game.r = function() {
+    for (var r in Game.rooms)
+    {harvest.pokeMiners(Game.rooms[r]);}
+}
 // Optimize energy gathering by available roles in the room
 module.exports.sortingHat = function(creep) {
 
@@ -66,27 +94,20 @@ module.exports.sortingHat = function(creep) {
     }
 
 }
-function mineWorker(creep) {}
+
+
 function mine(creep) {
 
     // Two scenarios - mining by worker, and mining by miner
 
-    if (creep.memory.role == 'worker'){
-        mineWorker(creep)
-        return;
-    }
-
-    if (!util.def(creep.memory.srcPost)) {
+    if (!util.def(creep.memory.sTarget)) {
         // Will return a mineshaft object or false if none available
         var posting = findSource(creep);
         if (posting) {
-            creep.memory.srcPost = posting;
-            dlog('Assigned mineshaft ' + posting.pos + ' to ' + creep.name)
+            creep.memory.sTarget = posting;
         }
         else  {
-            dlog(' no free mineshafts to assign for ' + creep.name + ', refreshing list');
-            pokeMiners(creep.room)
-
+            dlog(' no free mineshafts to assign for ' + creep.name );
 
             //Prooobably should come up with a better solution here
             //            creep.suicide();
@@ -95,7 +116,7 @@ function mine(creep) {
             return false;
         }
     }
-    var posting = creep.memory.srcPost;
+    var posting = creep.memory.sTarget;
     var srcObj = Game.getObjectById(posting.srcId);
 
     // No idea why this is needed. 
@@ -108,7 +129,7 @@ function mine(creep) {
             case OK: return true; break; 
             case ERR_NOT_ENOUGH_ENERGY: 
                 if (creep.memory.role != 'miner') {
-                    creep.memory.srcPost = null;
+                    creep.memory.sTarget = null;
                 }
                 return false;
                 break;
@@ -119,7 +140,7 @@ function mine(creep) {
                 return false
         }
     } else if (creep.carry.energy == 0) {
-        var res = creep.moveTo(posting,{reusePath: 15, visualizePathStyle: {stroke: '#ffaa00'}});
+        var res = creep.moveTo(posting,{reusePath: 15, visualizePathStyle: {stroke: '#ff1100'}});
         if (!res ||  res == ERR_TIRED ) {
             return true;
         }
@@ -130,7 +151,55 @@ function mine(creep) {
 
 module.exports.mine = mine
 
-module.exports.shuttle = function(creep) {
+function findContainer(creep) {
+
+    var newTargets  = creep.room.find(FIND_MY_STRUCTURES, {
+        filter: { structureType: STRUCTURE_CONTAINER }
+    });
+
+        if (!util.def(newTargets) || newTargets.length == 0) {
+            return false // No containers in the room. Bail.
+        } 
+        
+        var targets = [];
+        
+        for (var blob  in newTargets){
+            var candidate = newTargets[blob];
+
+            if (condidate.store == 0) { continue; }
+
+        
+
+            // var path = creep.pos.findPathTo(candidate, { ignoreCreeps: true});
+            var path = creep.pos.findPathTo(candidate);
+            if (!util.def(path) || path.length == 0 || creep.moveTo(candidate)) {
+                continue;
+            }
+
+            var tScore = candidate.store[RESOURCE_ENERGY] / path.length;
+            targets.push(
+                { targetId: candidate.id,
+                    path: path,
+                    score: tScore
+                });
+        }
+
+
+        if (!util.def(targets) || targets.length == 0) {
+            return false // No accessible energy in the room. Bail.
+        }
+        var hitList = targets.sort(function(a,b){
+            if (a.score > b.score){return 1;}
+            if (a.score < b.score){return -1;}
+            return 0;
+        }); // Get most sensible
+
+    return hitList[0].targetId;
+}
+
+
+function  shuttle(creep) {
+    //Get energy from containers and move it to spawn
 
 
     if (!util.def(creep.memory.sinkId)
@@ -139,6 +208,13 @@ module.exports.shuttle = function(creep) {
     }
 
     var mySink = Game.getObjectById(creep.memory.sinkId);
+
+    if (!util.def(creep.memory.cTarget)){
+        //??    var result = 
+    }
+
+
+
 
     if (creep.pos.isNearTo(mySink) && (creep.carry.energy > 0)) {
         var result = creep.transfer(mySink, RESOURCE_ENERGY);
@@ -159,7 +235,7 @@ module.exports.shuttle = function(creep) {
         }
     }
     if (creep.carry.energy == creep.carryCapacity) {
-        var res = creep.moveTo(mySink, {reusePath: 15, visualizePathStyle: {stroke: '#ffaa00'}});
+        var res = creep.moveTo(mySink, {reusePath: 15, visualizePathStyle: {stroke: '#22aa00'}});
         if (!res || (res == ERR_TIRED)) {
             return true
         } else {
@@ -172,7 +248,50 @@ module.exports.shuttle = function(creep) {
     }
 }
 
-function scrounge(creep, mode) {
+module.exports.shuttle= shuttle;
+
+function findEnergy(creep) {
+
+    var newTargets = creep.room.find(FIND_DROPPED_RESOURCES, {
+        filter: {resourceType: RESOURCE_ENERGY}});
+
+        if (!util.def(newTargets) || newTargets.length == 0) {
+            return false // No dropped energy in the room. Bail.
+        } 
+        
+        var targets = [];
+       
+        for (var blob  in newTargets){
+            var candidate = newTargets[blob];
+
+            // var path = creep.pos.findPathTo(candidate, { ignoreCreeps: true});
+            var path = creep.pos.findPathTo(candidate);
+            if (!util.def(path) || path.length == 0 || creep.moveTo(candidate)) {
+                continue;
+            }
+
+            var tScore = candidate.amount / path.length;
+            targets.push(
+                { targetId: candidate.id,
+                    path: path,
+                    score: tScore
+                });
+        }
+
+
+        if (!util.def(targets) || targets.length == 0) {
+            return false // No accessible energy in the room. Bail.
+        }
+        var hitList = targets.sort(function(a,b){
+            if (a.score > b.score){return 1;}
+            if (a.score < b.score){return -1;}
+            return 0;
+        }); // Get most sensible
+
+    return hitList[0].targetId;
+}
+
+function scrounge(creep) {
     // TODO every 5 ticks or so we should check there is still something at the stored tile
     // Otherwise any time something is dropped you might pull a bunch of gatherers without need.
     // See if we are already on the move
@@ -187,114 +306,119 @@ function scrounge(creep, mode) {
     //    return 
     //    
     //
-    if (util.def(creep.memory.eTarget)) {
-        var nrg =  Game.getObjectById(creep.memory.eTarget);
-        if (!util.def(nrg)){
-            //maybe it disappeared
-            delete creep.memory.eTarget;
-            return false;
-        }
-        if( creep.pos.isNearTo(nrg)) {
-            var res = creep.pickup(nrg);
-            if (!res) {
-                return true
-            } else {
-                dlog('Error scroundng for NRG, creep ' + creep.name + ','
-                    + util.getError(res));
-                delete creep.memory.eTarget;
-                return false;
-            }
-        } else {
-            var path = creep.moveTo(nrg, {reusePath: 15, visualizePathStyle: {stroke: 'fffaaf0'}});
-            if ((path) && (path != 'ERR_TIRED')) {
-                // dlog(' error moving to : ' + nrg.pos.x +','+ nrg.pos.y + ' ' + util.getError(path));
-                delete creep.memory.eTarget;
-                return false;
-            }
-            return true;
-        }
-    }
-    else {
-        var newTarget = creep.room.find(FIND_DROPPED_RESOURCES)
-        //var newTarget = creep.pos.findClosestByPath(FIND_DROPPED_RESOURCES);
-
-        if (!util.def(newTarget) || newTarget.length == 0) {
-            return false
-        }
-
-        var score = 0;
-        var prime;
-
-        for (var blob  in newTarget){
-            var candidate = newTarget[blob];
-
-            var tScore = candidate.amount / creep.pos.findPathTo(candidate).length;
-            if (tScore > score){
-                score = tScore;
-                prime = candidate;
-            }
-        }
-
-        creep.memory.eTarget = prime.id;
-        var path = creep.moveTo(prime, {reusePath: 15, visualizePathStyle: {stroke: 'fffaaf0'}});
-        if ((path) && (path != ERR_TIRED)) {
-            dlog(' error: ' + util.getError(path));
-            creep.say('x')
-            if (creep.getActiveBodyparts(WORK)) {
-                creep.memory.taskList.push('technician')
-            } else {
-                creep.memory.taskList.push('shuttle')
-            }
-
-            delete creep.memory.eTarget;
-
-        } else {
-            return true;
-        }
+    if (!util.def(creep.memory.eTarget) || !util.def(Game.getObjectById(creep.memory.eTarget))) { // If I don't have a target, get one 
+      var res = findEnergy(creep); 
+        
+        if (!util.def(res) || !res) {
+           return false
+        } 
+        creep.memory.eTarget = res;
     }
 
-    // dlog('not quote sure how i got here but oh well')
+
+    var target = Game.getObjectById(creep.memory.eTarget);
+    //    util.dumpObject(target)
+    if (!util.def(target)) {
+    dlog('zomg')}
+    var res = creep.pickup(target);
+
+
+
+    // TODO: possibly reuse path found earlier for more efficiency
+    switch(res){
+        case OK: 
+        case ERR_FULL:    
+            return true; break;
+        case ERR_NOT_IN_RANGE:
+            var move = creep.moveTo(target, {reusePath: 15, visualizePathStyle: {stroke: 'fffaaf0'}});
+            if (move == ERR_NO_PATH) { delete creep.memory.eTarget; return false; }
+            return true; break;
+        default: dlog("Error scrounging: " + util.getError(res) + ' ---- ' + res);
+    }
+
+    dlog('not quote sure how i got here but oh well')
     return false
 }
 
 module.exports.scrounge = scrounge;
 
-module.exports.gatherer = function(creep) {
+function gatherer(creep) {
 
-
-
-    // if (creep.pos.isNearTo(rc) && (creep.carry.energy > 0)) {
-
+    // Priorities are:
+    //  1. Pickup any free energy laying on the ground.
+    //  2. Move energy from a container to extension/spawn if needed.
+    //  3. Mine an energy source.
+    //
+    //
     // On the first day, he ate one apple
     // but he was still hungry
-    if (creep.carry.energy < creep.carryCapacity) {
-        dlog('scrounding');
-        scrounge(creep); // hit up miners and other dropped energy
+
+    if (creep.carry.energy == creep.carryCapacity) { creep.memory.taskState = 'SINK'}
+    if (creep.carry.energy == 0 ) { creep.memory.taskState = 'SOURCE'}
+
+    if (creep.memory.taskState == 'SOURCE') {
+
+    // Each mode should set a target variable, and remove it when it fails
+    // Check for these variables in reverse order of precedence
+
+        //    if (creep.carry.energy < creep.carryCapacity) {
+        if (util.def(creep.memory.cTarget)) {
+            shuttle(creep);
+        }
+        
+        if (util.def(creep.memory.eTarget)){
+            scrounge(creep)
+        }
+        
+        
+        if (util.def(creep.memory.sTarget)){
+            mine(creep);
+        }
+
+        if ( shuttle(creep) || scrounge(creep)|| mine(creep)){
+            return true;
+        } else {
+            var coin = util.getRand(0,1);
+            if (coin){ coin = 'technician';
+            } else {
+                coin = 'builder';
+            }
+            dlog('Retasking ' + creep.memory.role + ' to ' + coin)            
+            creep.memory.taskList.push(coin);
+        }
     }
-
-    // TODO standardize sinks
-
-    // On the second day, he ate through two pears
-    // but he was still hungry.
-    if (creep.carry.energy < creep.carryCapacity) {
-        // TODO: make this valid for every source in the room
-        var mySource = creep.room.find(FIND_SOURCES)[0];
-        creep.moveTo(mySource, {
-            reusePath : 5
-        });
-
-        if (creep.pos.isNearTo(mySource)) {
-            creep.harvest(mySource);
-        }
-    } else { // That night he had a stomach ache
-        if (util.def(creep.memory.eTarget)) {delete creep.memory.eTarget}
+    
+   if (creep.memory.taskState == 'SINK') { 
+     // That night he had a stomach ache
         var mySink = Game.getObjectById(creep.memory.sinkId);
+       // util.dumpObject(mySink)
 
-        if ((mySink == null) || isFull(mySink)) {
-            creep.memory.sinkId = findSink(creep);
+        if (!util.def(mySink) || isFull(mySink)) {
+           var test = findSink(creep);
+            if (!util.def(test)) {
+                dlog('unable to acquire new sink.'); 
+                
+            var coin = util.getRand(0,1);
+            if (coin){ coin = 'technician';
+            } else {
+                coin = 'builder';
+            }
+            dlog('Retasking ' + creep.memory.role + ' to ' + coin)            
+            creep.memory.taskList.push(coin);
+                
+                
+                return false;
+            } else { mySink = Game.getObjectById(test);}
+                //util.dumpObject(mySink)}
+            // gatherer(creep);
         }
-        var res = creep.moveTo(mySink, {reusePath: 15, visualizePathStyle: {stroke: '#ffaaff'}});
-        creep.transferEnergy(mySink);
+        var res = creep.transfer(mySink, RESOURCE_ENERGY);
+        switch (res) {
+            case OK: return true; break;
+            case ERR_NOT_IN_RANGE: creep.moveTo(mySink, {reusePath: 15, visualizePathStyle: {stroke: '#ffaaff'}}); break;
+            case ERR_FULL: delete creep.memory.sinkId; break;// gatherer(creep); break; 
+            default: dlog('error sinking into ' + mySink.structureType + ': ' + util.getError(res));
+        }
     }
 }
 function distance(p1, p2) {
@@ -329,7 +453,7 @@ function findSink(creep) {
     // Check pathing before we return 
     for (var y in containersWithSpace) {
         var target = containersWithSpace[y];
-        var res = creep.moveTo(target, {reusePath: 15, visualizePathStyle: {stroke: '#ffaaff'}});
+        var res = creep.moveTo(target, {reusePath: 15, visualizePathStyle: {stroke: '#ff1122'}});
         if (!res || res == ERR_TIRED) {return target;}
 
     }
@@ -406,6 +530,7 @@ function findSink(creep) {
     // }
     // }
 }
+module.exports.gatherer = gatherer; 
 
 function findSource(creep) {
 
@@ -416,11 +541,18 @@ function findSource(creep) {
         var shafts = creep.room.memory.shafts
     }
 
-    for (var post in shafts) {
-        if (!Game.creeps[shafts[post].assignedTo]) {
-            shafts[post].assignedTo = creep.name;
-            return shafts[post];
+    if (creep.memory.role == 'miner'){
+        for (var post in shafts) {
+            if (!Game.creeps[shafts[post].assignedTo]) {
+                shafts[post].assignedTo = creep.name;
+                return shafts[post];
+            }
         }
+    } else 
+    {
+        var randomShaft = 'mineshaft' + util.getRand(0,Object.keys(shafts).length);
+        if (creep.pos.findPathTo(Game.getObjectById(shafts[randomShaft].srcId))){
+        return shafts[randomShaft]}
     }
     // No open shafts
     return false;

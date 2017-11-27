@@ -89,16 +89,16 @@ module.exports = function(creep) {
 
         var res = creep.build(target);
         switch (res) {
-       case OK:  
-            creep.say(sayProgress(target) + '%');
-            break;
-case ERR_NOT_IN_RANGE: 
-            creep.moveTo(target, {reusePath: 5, visualizePathStyle: {stroke: '1ffaa00'}});
+            case OK:  
+                creep.say(sayProgress(target) + '%');
+                break;
+            case ERR_NOT_IN_RANGE: 
+                creep.moveTo(target, {reusePath: 5, visualizePathStyle: {stroke: '1ffaa00'}});
                 break;
             case ERR_NOT_ENOUGH_RESOURCES: 
-            fillTank(creep);
+                fillTank(creep);
                 break;
-default: dlog('Build command error: ' + util.getError(res));
+            default: dlog('Build command error: ' + util.getError(res));
         }
 
     } else if (needsRepair(target)) {
@@ -195,92 +195,8 @@ function constructionDuty(creep) {
 
     dlog(creep.name + ' on construction duty')
 
-return bTarget;
+    return bTarget;
 
-
-    //    constructionSites
-    //        .sort(function(a, b) {
-    //
-    //            if (buildPriority[a.structureType] < buildPriority[b.structureType]) {
-    //                return -1
-    //
-    //            } else if (buildPriority[a.structureType] > buildPriority[b.structureType]) {
-    //                return 1;
-    //            } else {
-    //                return 0
-    //            }
-    //        })
-    //
-    //    dlog('Priority list')
-    //    for (var x = 0; x < constructionSites.length; x++) {
-    //        dlog(constructionSites[x].structureType);
-    //    }
-    //    constructionSites.reverse()
-    //    dlog('flip round and revese it')
-    //   for (var x = 0; x < constructionSites.length; x++) {
-    //        dlog(constructionSites[x].id)
-    //    }
-
-    // Check if path exists!! Otherwise, builders can block each other
-    var res = creep.build(bTarget);
-    if (res == ERR_NOT_IN_RANGE){
-        var path = creep.moveTo(bTarget, {reusePath: 15, visualizePathStyle: {stroke: '1ffaa00'}});
-        if (path && path != ERR_TIRED){
-            dlog('build error : ' + util.getError(path)); return false;
-        }
-    }
-
-    dlog('shouldnt be here') 
-    return null
-    //	
-    // var structures = creep.room.find(FIND_STRUCTURES);
-    // var options = [];
-    //
-    // for ( var i in structures) {
-    // var s = structures[i];
-    //
-    // // Check if path exists!! Otherwise, builders can block each other
-    // var path = creep.moveTo(s);
-    // if (path) {
-    // continue; // Can't do it for some reason.
-    // }
-    // if (s) {
-    // if (s.hits === null) {
-    // continue;
-    // } else if (needsRepair(s)) {
-    // if (s.structureType === STRUCTURE_RAMPART) {
-    // if (target !== null
-    // && (target.structureType == STRUCTURE_RAMPART)
-    // && (target.hits < s.hits)) {
-    // continue;
-    // }
-    // target = s;
-    // }
-    // if ((s.structureType == STRUCTURE_ROAD)
-    // && (target === null || (target.structureType != STRUCTURE_RAMPART))) {
-    // target = s;
-    // }
-    // if (target === null
-    // || ((s.structureType == STRUCTURE_WALL) && (target === null || ([
-    // STRUCTURE_RAMPART, STRUCTURE_ROAD ]
-    // .indexOf(target.structureType) == -1)))) {
-    // target = s;
-    // }
-    // }
-    // }
-    // }
-    //
-    // if (target === null && site !== null) {
-    // return site.id;
-    // } else if (target !== null && (target.hits < (target.hitsMax / 4))) {
-    // return target.id;
-    // } else if (site !== null) {
-    // return site.id;
-    // } else if (target !== null) {
-    // return target.id;
-    // }
-    // // console.log('failed to find target');
-    // return null;
 }
 
 module.exports.constructionDuty = constructionDuty;
@@ -311,26 +227,26 @@ function upgradeRC(creep) {
 }
 
 function fillTank(creep) {
-creep.say('F')
+    creep.say('F')
     if (!creep.getActiveBodyparts(CARRY)) {return false}
     if (creep.carry == creep.carryCapacity) {return true}
 
-    if (!util.def(creep.memory.eTarget) || !util.def(Game.getObjectById(creep.memory.eTarget)) || Game.getObjectById(creep.memory.eTarget).energy == 0){
-        
+    if (!util.def(creep.memory.wTarget) || !util.def(Game.getObjectById(creep.memory.wTarget)) || Game.getObjectById(creep.memory.wTarget).energy < 50){
+
         var structs = creep.room.find(FIND_MY_STRUCTURES);
-        creep.say('Filling up my tank');
-
         var takePriority = ['container','storage','extension','spawn'];
-
+    creep.memory.wTarget = null;
         // Prioritize
         for (var need in takePriority) {
             var priority = takePriority[need];
+            //    dlog('looking for energy in ' + priority)
             for (var site in structs) {
-                if ((structs[site].structureType == priority) && (!util.def(structs[site].nrgReserve))) {
+                if ((structs[site].structureType == priority) && (!util.def(structs[site].nrgReserve)) &&  structs[site].energy >= 50) {
                     if( structs[site].energy > 0) {
-                    var res = creep.moveTo(structs[site], {reusePath: 5, visualizePathStyle: {stroke: '1ffaa77'}});
+                        var res = creep.moveTo(structs[site], {reusePath: 5, visualizePathStyle: {stroke: '1ffaa77'}});
                         if (!res){
-                            creep.memory.eTarget = structs[site].id; 
+                            creep.memory.wTarget = structs[site].id; 
+                            dlog('selected ' + structs[site].structureType)
                             return;
                         }
                     }
@@ -338,22 +254,29 @@ creep.say('F')
             }
         }
     }
-    if (!util.def(creep.memory.eTarget) || !util.def(Game.getObjectById(creep.memory.eTarget))){
-        dlog('builders need energy to build, but none stored available');
-        harvest.scrounge(creep)
+
+    if (!util.def(creep.memory.wTarget) || !util.def(Game.getObjectById(creep.memory.wTarget))){
+        dlog('builders need energy to build, but none stored available. reverting tasks');
+        creep.memory.taskList.pop();
         return false;
     }
 
-    var sugarDaddy = Game.getObjectById(creep.memory.eTarget);
-    
-      var res = creep.withdraw(sugarDaddy, "energy"); 
-    if (res == ERR_NOT_IN_RANGE) {
-         var path = creep.moveTo(sugarDaddy, {reusePath: 5, visualizePathStyle: {stroke: '1ffaa00'}});
-        if (path != OK && path != ERR_TIRED) {
-            dlog('error moving to nrg source: ' + util.getError(path))
-               harvest.scrounge(creep)
-        }
-    }
+    var sugarDaddy = Game.getObjectById(creep.memory.wTarget);
+    var space = (creep.carryCapacity - creep.carry.energy);
+
+    var res = creep.withdraw(sugarDaddy, "energy", space< 50 ? space : 50) ; 
+    switch (res) {
+        case OK: return true; break;
+            case ERR_NOT_IN_RANGE: 
+           var path = creep.moveTo(sugarDaddy, {reusePath: 5, visualizePathStyle: {stroke: '1ffaa00'}});
+                if (path != OK && path != ERR_TIRED) {
+                    dlog('error moving to nrg source: ' + util.getError(path))
+                    harvest.scrounge(creep)
+                }
+            break;
+        case ERR_NOT_ENOUGH_RESOURCES: creep.memory.wTarget=null;  break;
+            default: dlog('filling tank but ' + util.getError(res))
+      }
 }
 
 function sayProgress(target) {
