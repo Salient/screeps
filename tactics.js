@@ -90,7 +90,7 @@ module.exports.duty = function(creep) {
 
       var post = exits[Math.floor(Math.random()*exits.length)];
       creep.debug = post; 
-      dlog('set');
+        // dlog('set');
     }
   }
 }

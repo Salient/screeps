@@ -136,6 +136,10 @@ function bootstrap(room) {
     setupSources(room);
 
     var spwn= room.find(FIND_MY_SPAWNS)[0];
+    if (!util.def(spwn)) {
+        //this is a new room where I don't have a spawn. bail for now.
+        return false;
+    }
     room.memory.spawnId  = spwn.id;
     // Track popular creep routes 
     // Create room matrix and initialize to 0
@@ -174,7 +178,10 @@ module.exports.planRoom = function(room) {
 
     // Sanity Checks
     if (!util.def(room.memory.planned) || !util.def(room.memory.heatmap)){
-        bootstrap(room);}
+        if (!bootstrap(room)) {
+            return false; // bail for now
+        }
+    }
 
     //  Measure traffic around the room
     var heatm = room.memory.heatmap;

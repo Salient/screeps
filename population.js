@@ -75,6 +75,11 @@ function nextPriority(room) {
     //  Military Production:
     //
 
+    var goalDemo= room.memory.strategy.goalDemographics;
+    //  var currentPopulation = room.memory.strategy.currentPopulation;
+    var minDemo= room.memory.strategy.minDemographics;
+    var maxDemo= room.memory.strategy.maxDemographics;
+    
     // Verify room population
     var have = census(room);
     var totalPop = 0;
@@ -82,6 +87,9 @@ function nextPriority(room) {
     for (var i in have){
     totalPop += have[i];
     }
+   
+   
+    
     if (( totalPop > room.controller.level*10) || totalPop> 30) { return false } // TODO tweak this number
 
     if (have.worker <3) { 
@@ -102,13 +110,15 @@ function nextPriority(room) {
             return needsOfTheFew[keyb] - needsOfTheFew[keya];
         })
 
-     dlog('spawning ' + needsOfTheMany[0] + ' with need rating ' + needsOfTheFew[needsOfTheMany[0]] )
     // If the score is really high, the need is great. Have creep stop drawing from spawn/extensions until spawn is complete
-    if (needsOfTheFew[needsOfTheMany[0]] > 100 )
-        { room.memory.strategy.nrgReserve = true }
-
-
+    if (needsOfTheFew[needsOfTheMany[0]] > 100 ) {
+        dlog('spawning ' + needsOfTheMany[0] + ' with need rating ' + needsOfTheFew[needsOfTheMany[0]] )
+        room.memory.strategy.nrgReserve = true 
     return needsOfTheMany[0];
+    }
+
+    // Nothing really important to spawn right now. Check back in 90 seconds.
+    room.memory.nextSpawn = Game.time + 90;
 }
 
 module.exports.nextPriority = nextPriority;

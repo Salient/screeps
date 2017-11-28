@@ -197,7 +197,7 @@ function findContainer(creep) {
     return hitList[0].targetId;
 }
 
-
+module.exports.findContainer = findContainer;
 function  shuttle(creep) {
     //Get energy from containers and move it to spawn
 
@@ -290,7 +290,7 @@ function findEnergy(creep) {
 
     return hitList[0].targetId;
 }
-
+module.exports.findEnergy = findEnergy;
 function scrounge(creep) {
     // TODO every 5 ticks or so we should check there is still something at the stored tile
     // Otherwise any time something is dropped you might pull a bunch of gatherers without need.
@@ -366,6 +366,7 @@ function gatherer(creep) {
             shuttle(creep);
         }
         
+       
         if (util.def(creep.memory.eTarget)){
             scrounge(creep)
         }
@@ -531,7 +532,8 @@ function findSink(creep) {
     // }
 }
 module.exports.gatherer = gatherer; 
-
+function findOverhead(creep) { return false}
+module.exports.findOverhead = findOverhead;
 function findSource(creep) {
 
     if (!util.def(creep.room.memory.shafts)) {

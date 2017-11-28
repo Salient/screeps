@@ -113,13 +113,22 @@ var performTask = function(creep) {
     // taskList.pop();
     // }
 
-        var curJob = taskList[taskList.length-1] 
-    if(!util.def(creep.room.memory.heatmap)){return}
-    else {var sq = creep.room.memory.heatmap}
+    var curJob = taskList[taskList.length-1] 
+    if(!util.def(creep.room.memory.planned)){
+        return
+    }
+    else {
+        var sq = creep.room.memory.heatmap
+    }
 
-        if (( curJob != 'builder' ) && (curJob != 'janitor') && (curJob != 'technician')) {
-           sq[(creep.pos.x)][creep.pos.y] += 5;
+    if (( curJob != 'builder' ) && (curJob != 'janitor') && (curJob != 'technician')) {
+        var xcor = creep.pos.x;
+        var ycor = creep.pos.y;
+
+        if (xcor > 0 && xcor <49 && ycor>0 && ycor<49) {
+            sq[(creep.pos.x)][creep.pos.y] += 5;
         }
+    }
     // Global behavior definitions
     switch (taskList[taskList.length - 1]) {
         case 'miner':
@@ -136,7 +145,7 @@ var performTask = function(creep) {
             break;
         case 'janitor':
             build(creep) || 
-            harvest.scrounge(creep) // if there is energy lying around,
+                harvest.scrounge(creep) // if there is energy lying around,
             // we should
             // stop building and go grab it
 

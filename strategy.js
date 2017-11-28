@@ -125,7 +125,10 @@ function bootstrap(room) {
         curlvl: 0,
         rulesOfEngagement: 'guard',
         defcon: 5,
-        curlvl: 0
+        curlvl: 0,
+        goalDemo: {},
+        minDemo: {},
+        maxgoalDemo: {}
     }
 room.memory.strategy = strategy;
     room.memory.nextSpawn = 1;
