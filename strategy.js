@@ -125,10 +125,13 @@ function bootstrap(room) {
         curlvl: 0,
         rulesOfEngagement: 'guard',
         defcon: 5,
-        curlvl: 0,
-        goalDemo: {},
-        minDemo: {},
-        maxgoalDemo: {}
+        population:  {
+            maxPop: 30,
+            popPerLvl: 10,
+            minWorker: 3,
+            minerWeight: 55,
+            medicWeight: 35 // Aim for one medic per three soldiers. TODO: code medic behavior
+        }
     }
 room.memory.strategy = strategy;
     room.memory.nextSpawn = 1;
