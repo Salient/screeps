@@ -31,10 +31,6 @@ Game.s = function() {
     {harvest.setupSources(Game.rooms[r]);}
 }
 
-Game.r = function() {
-    for (var r in Game.rooms)
-    {harvest.pokeMiners(Game.rooms[r]);}
-}
 // Optimize energy gathering by available roles in the room
 module.exports.sortingHat = function(creep) {
 
@@ -95,6 +91,18 @@ module.exports.sortingHat = function(creep) {
 
 }
 
+function findAlternateSource(creep) {
+
+    var option = findSource(creep);
+
+    while ( option ) {
+
+        if (Game.getObjectById(option.srcId).energy >  300) {
+            creep.memory.sTarget = option; return option;
+        } 
+    }
+    return false;
+}
 
 function mine(creep) {
 
@@ -127,9 +135,19 @@ function mine(creep) {
         var result = creep.harvest(srcObj);
         switch (result) {
             case OK: return true; break; 
-            case ERR_NOT_ENOUGH_ENERGY: 
+            case ERR_NOT_ENOUGH_RESOURCES: 
                 if (creep.memory.role != 'miner') {
                     creep.memory.sTarget = null;
+                }
+                else {
+                    if (srcObj.ticksToRegeneration > 80) { // source overmined
+                        posting.assignedTo='choke';
+                       var alternate = findAlternateSource(creep);
+                        if (!alternate) { // miners too efficient, need less
+                            creep.say('AHHHHH MO')
+                            creep.suicide(); 
+                        }
+                    }
                 }
                 return false;
                 break;
@@ -152,48 +170,50 @@ function mine(creep) {
 module.exports.mine = mine
 
 function findContainer(creep) {
-
     var newTargets  = creep.room.find(FIND_MY_STRUCTURES, {
         filter: { structureType: STRUCTURE_CONTAINER }
     });
 
-        if (!util.def(newTargets) || newTargets.length == 0) {
-            return false // No containers in the room. Bail.
-        } 
-        
-        var targets = [];
-        
-        for (var blob  in newTargets){
-            var candidate = newTargets[blob];
+    if (!util.def(newTargets) || newTargets.length == 0) {
+dlog(' asdf here')
+        return false // No containers in the room. Bail.
+    } 
 
-            if (condidate.store == 0) { continue; }
+    var targets = [];
 
-        
+    for (var blob  in newTargets){
+        var candidate = newTargets[blob];
 
-            // var path = creep.pos.findPathTo(candidate, { ignoreCreeps: true});
-            var path = creep.pos.findPathTo(candidate);
-            if (!util.def(path) || path.length == 0 || creep.moveTo(candidate)) {
-                continue;
-            }
+        if (condidate.store == 0) { continue; }
 
-            var tScore = candidate.store[RESOURCE_ENERGY] / path.length;
-            targets.push(
-                { targetId: candidate.id,
-                    path: path,
-                    score: tScore
-                });
+
+
+        // var path = creep.pos.findPathTo(candidate, { ignoreCreeps: true});
+        var path = creep.pos.findPathTo(candidate);
+        if (!util.def(path) || path.length == 0 || creep.moveTo(candidate)) {
+            continue;
         }
 
+        var tScore = candidate.store[RESOURCE_ENERGY] / path.length;
+        targets.push(
+            { targetId: candidate.id,
+                path: path,
+                score: tScore
+            });
+    }
 
-        if (!util.def(targets) || targets.length == 0) {
-            return false // No accessible energy in the room. Bail.
-        }
-        var hitList = targets.sort(function(a,b){
-            if (a.score > b.score){return 1;}
+
+    if (!util.def(targets) || targets.length == 0) {
+        dlog('no container targes')
+        return false // No accessible energy in the room. Bail.
+    }
+    var hitList = targets.sort(function(a,b){
+        if (a.score > b.score){return 1;}
             if (a.score < b.score){return -1;}
             return 0;
         }); // Get most sensible
 
+    dlog('got container')
     return hitList[0].targetId;
 }
 
@@ -243,7 +263,7 @@ function  shuttle(creep) {
         }
     }
     else {
-        // Go scrounge for energy
+       // Go scrounge for energy
         return scrounge(creep, 'collect');
     }
 }
@@ -260,10 +280,10 @@ function findEnergy(creep) {
         } 
         
         var targets = [];
-       
+      var totalE = 0;  
         for (var blob  in newTargets){
             var candidate = newTargets[blob];
-
+totalE += candidate.amount;
             // var path = creep.pos.findPathTo(candidate, { ignoreCreeps: true});
             var path = creep.pos.findPathTo(candidate);
             if (!util.def(path) || path.length == 0 || creep.moveTo(candidate)) {
@@ -278,7 +298,12 @@ function findEnergy(creep) {
                 });
         }
 
-
+    if (totalE < 300) {
+        if (creep.memory.taskList[creep.memory.taskList.length-1] != 'gatherer'){
+            dlog('Energy crisis! Retasking to gatherer')
+            creep.memory.taskList.push('gatherer');
+        }
+        }
         if (!util.def(targets) || targets.length == 0) {
             return false // No accessible energy in the room. Bail.
         }
@@ -532,20 +557,24 @@ function findSink(creep) {
     // }
 }
 module.exports.gatherer = gatherer; 
-function findOverhead(creep) { return false}
+function findOverhead(creep) { 
+    if (creep.room.memory.nrgReserve) {
+        return false
+    }
+    else { return false}
+}
 module.exports.findOverhead = findOverhead;
 function findSource(creep) {
 
     if (!util.def(creep.room.memory.shafts)) {
-        dlog('creep trying to find source in a room not setup!');
-        return false;
+        dlog('creep trying to find source in a room not setup!'); return false;
     } else {
         var shafts = creep.room.memory.shafts
     }
 
     if (creep.memory.role == 'miner'){
         for (var post in shafts) {
-            if (!Game.creeps[shafts[post].assignedTo]) {
+            if (!Game.creeps[shafts[post].assignedTo] || shafts[post].assignedTo == 'choke') {
                 shafts[post].assignedTo = creep.name;
                 return shafts[post];
             }

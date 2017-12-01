@@ -34,7 +34,7 @@ Game.fe = function() {
 
 Game.p = function() {
     for (var r in Game.rooms)
-    {construct.bootstrap(Game.rooms[r]);}
+    {roomstrat.bootstrap(Game.rooms[r]);}
 }
 
 Game.q = function() {

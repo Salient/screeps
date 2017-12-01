@@ -232,46 +232,50 @@ function fillTank(creep) {
     if (creep.carry == creep.carryCapacity) {return true}
 
 
+    if (!util.def(creep.memory.eTarget)){
     var nrg = harvest.findContainer(creep);
     if (!nrg) {
+        dlog('no containers')
         nrg = harvest.findEnergy(creep);
         if (!nrg) {
+        dlog('no ground scraps')
            nrg = harvest.findOverhead(creep);
-            if (!nfg) {
+            if (!nrg) {
+                dlog('nothing stored?')
         dlog('builders need energy to build, but none stored available. reverting tasks');
         creep.memory.taskList.pop();
         return false;
         }
         }        
     }
+    }
 
+    
     var gas = Game.getObjectById(nrg);
-    util.dumpObject(gas)
-    if (!util.def(gas)) {dlog('dunno')}
+    //    util.dumpObject(gas)
+    if (!util.def(gas)) { delete creep.memory.eTarget; return true; } else {creep.memory.eTarget = nrg}
 
     if (util.def(gas.energy)){
-        dlog('picking up energy')
+           dlog('picking up energy')
         var res = creep.pickup(gas);
     } else if (util.def(gas.store)) {
         dlog('picking up container')
         var res = creep.withdraw(gas, RESOURCE_ENERGY);
     }
 
-
     switch (res) {
         case OK: return true; break;
         case ERR_NOT_IN_RANGE: 
-            var path = creep.moveTo(sugarDaddy, {reusePath: 5, visualizePathStyle: {stroke: '1ffaa00'}});
+            var path = creep.moveTo(gas, {reusePath: 5, visualizePathStyle: {stroke: '1ffaa00'}});
             if (path != OK && path != ERR_TIRED) {
-                dlog('error moving to nrg source: ' + util.getError(path))
+                dlog('error moving to nrg1 source: ' + util.getError(path))
                 harvest.scrounge(creep)
             }
-            break;
-        case ERR_NOT_ENOUGH_RESOURCES: creep.memory.wTarget=null;  break;
+            return true; break;
+        case ERR_NOT_ENOUGH_RESOURCES: creep.memory.eTarget=null;  break;
         default: dlog('filling tank but ' + util.getError(res))
     }
     return;
-
     if (!util.def(creep.memory.wTarget) || !util.def(Game.getObjectById(creep.memory.wTarget)) || Game.getObjectById(creep.memory.wTarget).energy < 50){
 
         var structs = creep.room.find(FIND_MY_STRUCTURES);
@@ -281,16 +285,16 @@ function fillTank(creep) {
         dance:
         for (var need in takePriority) {
             var priority = takePriority[need];
-            dlog('looking for energy in ' + priority)
+            //    dlog('looking for energy in ' + priority)
             for (var site in structs) {
                 if (structs[site].structureType == priority) {
                     if ((((priority == 'container') || (priority == 'storage')) && (structs[site].store >=50)) || 
                         (((priority == 'extension') || (priority == 'spawn')) && (structs[site].energy >=50)))  {
-                        dlog('passed sniff test')
+                        //           dlog('passed sniff test')
                         var res = creep.moveTo(structs[site], {reusePath: 5, visualizePathStyle: {stroke: '1ffaa77'}});
                         if (!res){
                             creep.memory.wTarget = structs[site].id; 
-                            dlog('selected ' + structs[site].structureType)
+                            //   dlog('selected ' + structs[site].structureType)
                             break dance;
                         } else {dlog('passed ' + util.getError(res))}
                     } else {dlog('sniff failed for ' + priority)}
@@ -312,9 +316,11 @@ function fillTank(creep) {
     switch (res) {
         case OK: return true; break;
         case ERR_NOT_IN_RANGE: 
-            var path = creep.moveTo(sugarDaddy, {reusePath: 5, visualizePathStyle: {stroke: '1ffaa00'}});
+           dlog('') 
+util.dumpObject(sugarDaddy)
+            var path = creep.moveTo(sugarDaddy.pos, {reusePath: 5, visualizePathStyle: {stroke: '1ffaa00'}});
             if (path != OK && path != ERR_TIRED) {
-                dlog('error moving to nrg source: ' + util.getError(path))
+                dlog('error moving to nrg2 source: ' + util.getError(path))
                 harvest.scrounge(creep)
             }
             break;

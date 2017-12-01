@@ -119,6 +119,7 @@ function createBasicPaths(room) {
 
     var spwn = Game.getObjectById(room.memory.spawnId);
     var shafts = room.memory.shafts;
+    room.memory.paths = {};
     room.memory.paths.ctrl = room.controller.pos.findPathTo(spwn);
 
     // Create roads to mineshafts

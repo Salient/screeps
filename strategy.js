@@ -117,8 +117,8 @@ module.exports.strategery = function(room) {
 function bootstrap(room) {
     var strategy = {
         castes:  {
-            'worker': [ CARRY, WORK, MOVE ],
-            "miner" : [ WORK, WORK, MOVE ],
+            'worker': [ CARRY, WORK, MOVE, MOVE ],
+            "miner" : [ MOVE, WORK, WORK, WORK, WORK],
             "soldier": [ MOVE, ATTACK, TOUGH, ATTACK, TOUGH, MOVE, RANGED_ATTACK, RANGED_ATTACK, TOUGH,  MOVE], 
             "medic" : [ MOVE, HEAL, TOUGH ]
         },
@@ -136,7 +136,7 @@ function bootstrap(room) {
 room.memory.strategy = strategy;
     room.memory.nextSpawn = 1;
 }
-
+module.exports.bootstrap = bootstrap;
 module.exports.getCastes = function (room) {
     if (!util.def(room.memory.strategy)) {
         bootstrap(room);
