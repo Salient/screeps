@@ -93,10 +93,16 @@ function nextPriority(room) {
         return 'worker'
     }
 
+    var nrg  = creep.room.find(FIND_DROPPED_RESOURCES, {
+        filter: {resourceType: RESOURCE_ENERGY}});
+var loot =0;
+    for (var glob in nrg) {
+        loot += nrg[glob].amount;
+    }
+
     var builds = room.find(FIND_MY_CONSTRUCTION_SITES);
-    var nrg = room.find(FIND_DROPPED_RESOURCES);
     var needsOfTheFew = { 
-        'worker':  builds.length * 5 + nrg.length * (Object.keys(room.memory.shafts).length - have.miner), 
+        'worker':  builds.length * 5 + loot + popCon.minerWeight * (Object.keys(room.memory.shafts).length - have.miner), 
         'miner': ((Object.keys(room.memory.shafts).length - have.miner)*have.worker) * popCon.minerWeight, 
         'soldier': 15 + ((6 - room.memory.strategy.defcon) * 20),
         'medic': ((have.soldier - have.medic) * popCon.medicWeight )
@@ -107,7 +113,8 @@ function nextPriority(room) {
         })
     // If the score is really high, the need is great. Have creep stop drawing from spawn/extensions until spawn is complete
     if (needsOfTheFew[needsOfTheMany[0]] > 100 ) {
-        dlog('next needed ' + needsOfTheMany[0] + ' with need rating ' + needsOfTheFew[needsOfTheMany[0]] )
+        dlog('Need' + needsOfTheMany[0] + ' with score ' + needsOfTheFew[needsOfTheMany[0]] )
+        dlog('Next' + needsOfTheMany[1] + ' with score ' + needsOfTheFew[needsOfTheMany[1]] )
         room.memory.strategy.nrgReserve = room.energyCapacityAvailable; 
         return needsOfTheMany[0];
     }
