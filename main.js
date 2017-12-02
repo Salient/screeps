@@ -4,7 +4,7 @@ var construct = require('cityPlanning');
 var util = require('common');
 var harvest = require('harvester');
 var taskMaster = require('tasker');
-//const profiler = require('screeps-profiler');
+const profiler = require('screeps-profiler');
 
 
 // Prototype extensions
@@ -68,9 +68,9 @@ Creep.prototype.checkPath = function(structure) {
 
 
 // This line monkey patches the global prototypes.
-//profiler.enable();
-//module.exports.loop = function() {
-//   profiler.wrap(function() {
+profiler.enable();
+module.exports.loop = function() {
+   profiler.wrap(function() {
 // Main.js logic should go here.
 
 // Process all the creep
@@ -87,7 +87,7 @@ for (var room in Game.rooms) {
     }
 
     // Manage building placement, build priorities, and roads
-    if (!(Game.time % 13) || !thisRoom.memory.planned) {
+    if (!(Game.time % 23) || !thisRoom.memory.planned) {
         construct.planRoom(thisRoom);
     }
     // Manage creep configurations, counts of each type, scale with control level
@@ -113,8 +113,8 @@ if (!(Game.time % 67)) {
             delete Memory.rooms[r];}
     }
 }
-////    });
-//}
+    });
+}
 //
 function dlog(msg) {
     util.dlog('MAIN', msg);

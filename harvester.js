@@ -170,21 +170,23 @@ function mine(creep) {
 module.exports.mine = mine
 
 function findContainer(creep) {
-    var newTargets  = creep.room.find(FIND_MY_STRUCTURES, {
-        filter: { structureType: STRUCTURE_CONTAINER }
-    });
+    //    var newTargets  = creep.room.find(FIND_MY_STRUCTURES, {
+    //        filter: { structureType: STRUCTURE_CONTAINER }
+    //    });
+    var newTargets = creep.room.find(FIND_MY_STRUCTURES);
 
     if (!util.def(newTargets) || newTargets.length == 0) {
-dlog(' asdf here')
+        // dlog(' asdf here')
         return false // No containers in the room. Bail.
     } 
 
     var targets = [];
-
+    //     util.dumpObject(newTargets);
+    return
     for (var blob  in newTargets){
         var candidate = newTargets[blob];
 
-        if (condidate.store == 0) { continue; }
+        if (candidate.store == 0) { continue; }
 
 
 

@@ -227,48 +227,53 @@ function upgradeRC(creep) {
 }
 
 function fillTank(creep) {
+    // Temp code
+    creep.memory.taskList.pop();
+    return true;
+
     creep.say('F')
     if (!creep.getActiveBodyparts(CARRY)) {return false}
     if (creep.carry == creep.carryCapacity) {return true}
-
-
-    if (!util.def(creep.memory.eTarget)){
-    var nrg = harvest.findContainer(creep);
-    if (!nrg) {
-        dlog('no containers')
-        nrg = harvest.findEnergy(creep);
-        if (!nrg) {
-        dlog('no ground scraps')
-           nrg = harvest.findOverhead(creep);
-            if (!nrg) {
-                dlog('nothing stored?')
-        dlog('builders need energy to build, but none stored available. reverting tasks');
-        creep.memory.taskList.pop();
-        return false;
-        }
-        }        
-    }
-    }
-
     
+    var nrg = creep.memory.eTarget;
+    if (!util.def(nrg)){
+        var nrg = harvest.findContainer(creep);
+        if (!nrg) {
+            //        dlog('no containers')
+            nrg = harvest.findEnergy(creep);
+            if (!nrg) {
+                //    dlog('no ground scraps')
+                nrg = harvest.findOverhead(creep);
+                if (!nrg) {
+                    dlog('nothing stored?')
+                    dlog('builders need energy to build, but none stored available. reverting tasks');
+                    creep.memory.taskList.pop();
+                    return false;
+                }
+            }        
+        }
+    }
     var gas = Game.getObjectById(nrg);
     //    util.dumpObject(gas)
-    if (!util.def(gas)) { delete creep.memory.eTarget; return true; } else {creep.memory.eTarget = nrg}
-
+    if (!util.def(gas)) {
+        delete creep.memory.eTarget;dlog(creep.name + ': weird');
+        return true; 
+    } else {
+        creep.memory.eTarget = nrg;
+    }
     if (util.def(gas.energy)){
-           dlog('picking up energy')
+        //dlog('picking up energy')
         var res = creep.pickup(gas);
     } else if (util.def(gas.store)) {
-        dlog('picking up container')
+        // dlog('picking up container')
         var res = creep.withdraw(gas, RESOURCE_ENERGY);
     }
-
     switch (res) {
         case OK: return true; break;
         case ERR_NOT_IN_RANGE: 
             var path = creep.moveTo(gas, {reusePath: 5, visualizePathStyle: {stroke: '1ffaa00'}});
             if (path != OK && path != ERR_TIRED) {
-                dlog('error moving to nrg1 source: ' + util.getError(path))
+                dlog('error moving to nrg source: ' + util.getError(path))
                 harvest.scrounge(creep)
             }
             return true; break;
@@ -316,8 +321,8 @@ function fillTank(creep) {
     switch (res) {
         case OK: return true; break;
         case ERR_NOT_IN_RANGE: 
-           dlog('') 
-util.dumpObject(sugarDaddy)
+            dlog('') 
+            util.dumpObject(sugarDaddy)
             var path = creep.moveTo(sugarDaddy.pos, {reusePath: 5, visualizePathStyle: {stroke: '1ffaa00'}});
             if (path != OK && path != ERR_TIRED) {
                 dlog('error moving to nrg2 source: ' + util.getError(path))
