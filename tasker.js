@@ -14,7 +14,13 @@ module.exports.taskMinions = function(room) {
     var minions = room.find(FIND_MY_CREEPS);
     for ( var dude in minions) {
 		var creep = minions[dude];
+
+        if (room.planned && creep.memory.taskList[creep.memory.taskList.length - 1] != 'builder') {
         // warm up the heat map
+        var x = (creep.pos.x < 1 ) ? 1 : (creep.pos.x > 48) ? 48 : creep.pos.x;
+        var y = (creep.pos.y < 1 ) ? 1 : (creep.pos.y > 48) ? 48 : creep.pos.y;
+            room.memory.heatmap[x][y]++;
+        }
 
         // minions[dude].say(minions[dude].memory.role);
 		performTask(minions[dude]);
@@ -24,7 +30,7 @@ module.exports.taskMinions = function(room) {
 function retask(room, type, role) {
             // special cases stuff. Maybe find a beter way to do this
  if( role == 'builder')
-    { var targets = room.find(FIND_CONSTRUCTION_SITES); 
+    { var targets = room.find(FIND_MY_CONSTRUCTION_SITES); 
         if (targets.length < 1) {return}}
 
     var roomCreeps = room.find(FIND_MY_CREEPS);
@@ -112,23 +118,8 @@ var performTask = function(creep) {
     // // dlog('refreshing the task list for ' + creep.name);
     // taskList.pop();
     // }
-
     var curJob = taskList[taskList.length-1] 
-    if(!util.def(creep.room.memory.planned)){
-        return
-    }
-    else {
-        var sq = creep.room.memory.heatmap
-    }
-
-    if (( curJob != 'builder' ) && (curJob != 'janitor') && (curJob != 'technician')) {
-        var xcor = creep.pos.x;
-        var ycor = creep.pos.y;
-
-        if (xcor > 0 && xcor <49 && ycor>0 && ycor<49) {
-            sq[(creep.pos.x)][creep.pos.y] += 5;
-        }
-    }
+    
     // Global behavior definitions
     switch (taskList[taskList.length - 1]) {
         case 'miner':
@@ -199,6 +190,7 @@ var getDefaultTask = function(creep) { // What to do if the creep has
         case 'freeAgent':
         case 'workerBee':
         case 'gatherer':
+        case 'worker':
             return 'harvestSortingHat';
         case 'miner':
         case 'technician':

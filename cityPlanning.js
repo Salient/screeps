@@ -58,7 +58,7 @@ var buildRoads = function(room) {
     for (var p in paths) {
         var hwy =  paths[p];
         for (var sq in hwy){
-            if (have > 5) {return}; // Let's not get carried away
+            if (have > 5) {break;}; // Let's not get carried away
             var st = hwy[sq];
             var res =  room.createConstructionSite(st.x, st.y, STRUCTURE_ROAD);
             if (!res) {have++;}
@@ -70,7 +70,7 @@ var buildRoads = function(room) {
     if (!util.def(heatm)){return}
     for (var x = 1; x<49; x++ ) {
         for (var y = 1; y<49; y++){
-            if (heatm[x][y] > 40){room.createConstructionSite(x,y, STRUCTURE_ROAD)}
+            if (heatm[x][y] > 15){room.createConstructionSite(x,y, STRUCTURE_ROAD)}
         }
     }
 }
@@ -167,6 +167,12 @@ function bootstrap(room) {
 }
 
 module.exports.bootstrap = bootstrap;
+
+
+// Everything decays. Should look every while or so and shore up 
+function refreshRoom(room) {
+
+}
 module.exports.planRoom = function(room) {
 
     // Take a look around, see what needs doing

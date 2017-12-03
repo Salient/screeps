@@ -62,22 +62,22 @@ module.exports = function(creep) {
     // workerBee(creep);
     // return;
 
-    var targetId = creep.memory.myTargetId
-    if (!util.def(targetId) || !util.def(Game.getObjectById(targetId))) {
-        var orders = constructionDuty(creep) || repairDuty(creep);
+    if (!util.def(creep.memory.bTarget) || !util.def(Game.getObjectById(creep.memory.bTarget))) {
+        var orders = findSite(creep) || repairDuty(creep);
         if (!util.def(orders) || orders == false ) {
             dlog(creep.name + ' says nothing to build or repair, reverting to prior task')
             creep.memory.taskList.pop();
             return false;
-        } else 
-
-        {creep.memory.myTargetId = orders;}
+        } 
+        else { creep.memory.bTarget = orders;}
     }
 
-    var target = Game.getObjectById(creep.memory.myTargetId);
+    var target = Game.getObjectById(creep.memory.bTarget);
     if (!util.def(target) ){
-        creep.memory.myTargetId = null; return false;
+        dlog('problem is here');
+        creep.memory.bTarget = null; return false;
     }
+
     // check if done
     if (util.def(target.hits) && (target.hits == target.hitsMax)) {
         targetId = null
@@ -98,6 +98,7 @@ module.exports = function(creep) {
             case ERR_NOT_ENOUGH_RESOURCES: 
                 fillTank(creep);
                 break;
+            case ERR_RCL_NOT_ENOUGH: creep.memory.taskList.pop();         creep.memory.bTarget = null; return false; break; 
             default: dlog('Build command error: ' + util.getError(res));
         }
 
@@ -154,7 +155,7 @@ function repairDuty(creep) {
     }
 }
 
-function constructionDuty(creep) {
+function findSite(creep) {
 
     if ( creep.getActiveBodyparts(WORK) == 0) {
         creep.memory.taskList.pop(); return false;
@@ -168,7 +169,7 @@ function constructionDuty(creep) {
 
         if (!util.def(newTarget)){
             dlog('no build targets. untasking')
-            //   creep.memory.taskList.pop();
+            creep.memory.taskList.pop();
             return false;
         }
 
@@ -186,20 +187,23 @@ function constructionDuty(creep) {
         }
     } 
 
-    if (util.def(creep.memory.bTarget) && util.def( Game.getObjectById(creep.memory.bTarget) )) {
-        creep.memory.bTarget = newTarget[0].id; 
-        return newTarget[0].id;
-    }
+    dlog('shouldnt be here!');
+    return false;
 
-    var bTarget = Game.getObjectById(creep.memory.bTarget);
+    //if (util.def(creep.memory.bTarget) && util.def( Game.getObjectById(creep.memory.bTarget) )) {
+    //    creep.memory.bTarget = newTarget[0].id; 
+    //    return newTarget[0].id;
+    //}
 
-    dlog(creep.name + ' on construction duty')
+    //var bTarget = Game.getObjectById(creep.memory.bTarget);
 
-    return bTarget;
+    //dlog(creep.name + ' on construction duty')
+
+    //return bTarget;
 
 }
 
-module.exports.constructionDuty = constructionDuty;
+module.exports.findSite = findSite;
 module.exports.upgradeRC = upgradeRC;
 
 function upgradeRC(creep) {
@@ -229,20 +233,19 @@ function upgradeRC(creep) {
 function fillTank(creep) {
     // Temp code
     creep.memory.taskList.pop();
-    return true;
 
     creep.say('F')
     if (!creep.getActiveBodyparts(CARRY)) {return false}
     if (creep.carry == creep.carryCapacity) {return true}
-    
+
     var nrg = creep.memory.eTarget;
     if (!util.def(nrg)){
         var nrg = harvest.findContainer(creep);
         if (!nrg) {
-            //        dlog('no containers')
+                   dlog('no containers')
             nrg = harvest.findEnergy(creep);
             if (!nrg) {
-                //    dlog('no ground scraps')
+                    dlog('no ground scraps')
                 nrg = harvest.findOverhead(creep);
                 if (!nrg) {
                     dlog('nothing stored?')

@@ -86,6 +86,7 @@ function nextPriority(room) {
     }
 
 
+    var vetoMiner = (openShaft(room)) ? 1 : 0;
     if (( totalPop > room.controller.level*popCon.popPerLvl) || totalPop> popCon.maxPop) { return false } // TODO tweak this number
 
     if (have.worker < popCon.minWorker) { 
@@ -93,7 +94,7 @@ function nextPriority(room) {
         return 'worker'
     }
 
-    var nrg  = creep.room.find(FIND_DROPPED_RESOURCES, {
+    var nrg  = room.find(FIND_DROPPED_RESOURCES, {
         filter: {resourceType: RESOURCE_ENERGY}});
 var loot =0;
     for (var glob in nrg) {
@@ -103,7 +104,7 @@ var loot =0;
     var builds = room.find(FIND_MY_CONSTRUCTION_SITES);
     var needsOfTheFew = { 
         'worker':  builds.length * 5 + loot + popCon.minerWeight * (Object.keys(room.memory.shafts).length - have.miner), 
-        'miner': ((Object.keys(room.memory.shafts).length - have.miner)*have.worker) * popCon.minerWeight, 
+        'miner': ((Object.keys(room.memory.shafts).length - have.miner)*have.worker) * popCon.minerWeight * vetoMiner, 
         'soldier': 15 + ((6 - room.memory.strategy.defcon) * 20),
         'medic': ((have.soldier - have.medic) * popCon.medicWeight )
     }
@@ -149,6 +150,23 @@ var printDemographics = function(room) {
     }
 }
 
+
+function openShaft(room) {
+
+    if (!util.def(room.memory.shafts)) {
+         return false;
+    } else {
+        var shafts = room.memory.shafts
+    }
+
+        for (var post in shafts) {
+            if (!Game.creeps[shafts[post].assignedTo] && shafts[post].assignedTo != 'choke')  {
+               return true; 
+            }
+        }
+    
+    return false;
+}
 
 var spawn = function(room) {
 
