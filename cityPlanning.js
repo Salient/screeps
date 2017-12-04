@@ -75,7 +75,10 @@ var buildRoads = function(room) {
     }
 }
 
-module.exports.controlLevelChange = function (room){}
+module.exports.controlLevelChange = function (room){
+    placeExtensions(room);
+    placeContainers(room);
+}
 
 // Determines how many creep can mine each source at the same time
 // Assigns array with list of miner posts to room memory 
@@ -262,6 +265,7 @@ var placeExtensions = function placeExtensions(room) {
             for (var ydelta = -radius + radius%2; ydelta <=radius; ydelta+=2) {
                 var site = new RoomPosition(origin.x+xdelta, origin.y+ydelta, room.name);
                 var res =  room.createConstructionSite(site, STRUCTURE_EXTENSION);
+                // if (res == ERR_RCL_NOT_ENOUGH){return}
                 dlog('placing extension at '+(origin.x+xdelta) +','+ (origin.y + ydelta)+' resut: ' + util.getError(res));
                 if (res == OK ) { have++; }
             }

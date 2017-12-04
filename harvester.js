@@ -107,7 +107,6 @@ function findAlternateSource(creep) {
 function mine(creep) {
 
     // Two scenarios - mining by worker, and mining by miner
-dlog(creep.name + ' in mine')
     if (!util.def(creep.memory.sTarget)) {
         // Will return a mineshaft object or false if none available
         var posting = findSource(creep);
@@ -115,7 +114,6 @@ dlog(creep.name + ' in mine')
             creep.memory.sTarget = posting;
         }
         else  {
-            dlog(' no free mineshafts to assign for ' + creep.name );
 
             //Prooobably should come up with a better solution here
             creep.say('AAAH MOTHERLAND')
@@ -127,11 +125,11 @@ dlog(creep.name + ' in mine')
     var posting = creep.memory.sTarget;
     var srcObj = Game.getObjectById(posting.srcId);
 
-    if (creep.pos.findPathTo(Game.getObjectById(posting.srcId)) ||  posting.assignedTo != creep.name ) {
+    //if (creep.pos.findPathTo(Game.getObjectById(posting.srcId)) ||  posting.assignedTo != creep.name && creep.memory.role != 'miner') {
 
-        dlog(creep.name + ' uh wut ' + posting.assignedTo + ' ' )
-        delete creep.memory.sTarget; false;
-    }
+    //    dlog(creep.name + ' uh wut ' + posting.assignedTo + ' ' )
+    //    delete creep.memory.sTarget; false;
+    //}
 
 
     // No idea why this is needed. 
@@ -148,8 +146,7 @@ dlog(creep.name + ' in mine')
                 }
                 else {
                     if (srcObj.ticksToRegeneration > 80) { // source overmined
-                        dlog('energy source exhausted');
-                        posting.assignedTo='choke';
+                        // posting.assignedTo='choke';
                         return
                         var alternate = findAlternateSource(creep);
                         if (!alternate) { // miners too efficient, need less
@@ -158,7 +155,6 @@ dlog(creep.name + ' in mine')
                         }
                     }
                 }
-                dlog(creep.name + ' out mine')
                 return false;
                 break;
             case ERR_TIRED: break;
@@ -167,12 +163,25 @@ dlog(creep.name + ' in mine')
                     + ', ' + util.getError(result))
                 return false
         }
-    } else if (creep.carry.energy == 0) {
+    } else if (creep.carryCapacity != 0) {
+        // worker can stall waiting for a miner to move that never will.
+        var occupado = false;
+        var check = creep.room.lookAt(posting);
+
+        for (var item in check) {
+            if (check[item].type == 'creep') {
+                creep.memory.sTarget = null; return false; 
+            }
+        }
+    } 
+    
+    
+    else if (creep.carry.energy == 0) {
         var res = creep.moveTo(posting,{reusePath: 15, visualizePathStyle: {stroke: '#ff1100'}});
         if (!res ||  res == ERR_TIRED ) {
             return true;
         }
-        dlog('mine error : ' + util.getError(res))  
+        dlog(creep.name + ' mine error : ' + util.getError(res))  
     }
     return false
 }
@@ -337,7 +346,6 @@ function scrounge(creep) {
     //    
     //    return 
     //    
-    dlog(creep.name + ' in scrounge')
     if (!util.def(creep.memory.targetUpdated)) {
         creep.memory.targetUpdated = 0;
     } else if (!util.def(creep.memory.eTarget) && creep.memory.targetUpdated + 90 < Game.time) {
@@ -351,7 +359,6 @@ function scrounge(creep) {
 
         if (!util.def(res) || !res) {
             // No energy. Mark it and remember
-            dlog(creep.name + ' out scrounge')
             delete creep.memory.eTarget;
             creep.memory.targetUpdated = Game.time;
             return false
@@ -600,6 +607,7 @@ function findSource(creep) {
     if (creep.memory.role == 'miner'){
         for (var post in shafts) {
             if (!Game.creeps[shafts[post].assignedTo] || shafts[post].assignedTo== creep.name) {
+                dlog('assinging shaft ' + post + ' to ' + creep.name)
                 shafts[post].assignedTo = creep.name;
                 return shafts[post];
             }
@@ -608,6 +616,7 @@ function findSource(creep) {
     {
         var randomShaft = 'mineshaft' + util.getRand(0,Object.keys(shafts).length-1);
         if (creep.pos.findPathTo(Game.getObjectById(shafts[randomShaft].srcId))){
+            dlog('lending shaft ' + randomShaft + ' to ' + creep.name)  
             return shafts[randomShaft]}
     }
     // No open shafts

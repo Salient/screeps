@@ -39,7 +39,7 @@ Game.p = function() {
 
 Game.q = function() {
     for (var r in Game.rooms)
-    {population.printDemographics(Game.rooms[r]);}
+    {construct.controlLevelChange(Game.rooms[r]);}
 }
 
 Game.x =function(room) {construct.x(room);} 
