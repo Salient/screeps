@@ -48,21 +48,8 @@ function retask(room, type, role) {
         }
     }
 }
-
 module.exports.retask = retask
 
-//
-// function addTask(creep, task) {
-// dlog('preempting creep ' + creep.name + ' task list to ' + task);
-//
-// if (task == 'construction') {
-// creep.memory.taskList.push('')
-// }
-// }
-
-function dlog(msg) {
-    util.dlog('TASKER', msg);
-}
 
 Room.prototype.getSpawning = function() {
     var babbysForming = {};
@@ -76,21 +63,6 @@ Room.prototype.getSpawning = function() {
 
     return babbysForming;
 }
-
-// Creep.prototype.isSpawning = function() {
-// var howBabbysFormed = this.room.getSpawning();
-// if (howBabbysFormed.length) {
-// for ( var x in howBabbysFormed) {
-// if (howBabbysFormed == creep) {
-// return true;
-// } else {
-// return false;
-// }
-// }
-// }
-//
-// }
-
 
 var performTask = function(creep) {
     if (creep.spawning) {
@@ -156,24 +128,7 @@ var performTask = function(creep) {
             dlog('Unhandled creep task! (' + taskList[taskList.length - 1] + ')');
     }
 }
-
 module.exports.performTask = performTask;
-
-// // Get
-// module.exports.houseKeeping = function() {
-// var keys = Object.keys(Game.creeps); // Get array of my creeps
-//
-// // List periodic maintenance functions here
-// var honeyDoList = [ harvest.pickUpJunk() ];
-//
-// for ( var task in honeyDoList) {
-// var unluckyOne = keys[Math.floor(keys.length * Math.random())]; // Select
-// // a
-// // random
-// // creep
-// Game.creeps[unluckyOne].memory.taskQueue.unshift(honeyDoList[task]);
-// }
-// }
 
 var getDefaultTask = function(creep) { // What to do if the creep has
     // nothing to do
@@ -208,4 +163,32 @@ var getDefaultTask = function(creep) { // What to do if the creep has
             console.log('unmatched unit found!');
             return 'harvestSortingHat';
     }
+}
+
+// // Get
+// module.exports.houseKeeping = function() {
+// var keys = Object.keys(Game.creeps); // Get array of my creeps
+//
+// // List periodic maintenance functions here
+// var honeyDoList = [ harvest.pickUpJunk() ];
+//
+// for ( var task in honeyDoList) {
+// var unluckyOne = keys[Math.floor(keys.length * Math.random())]; // Select
+// // a
+// // random
+// // creep
+// Game.creeps[unluckyOne].memory.taskQueue.unshift(honeyDoList[task]);
+// }
+// }
+
+//
+// function addTask(creep, task) {
+// dlog('preempting creep ' + creep.name + ' task list to ' + task);
+//
+// if (task == 'construction') {
+// creep.memory.taskList.push('')
+// }
+// }
+function dlog(msg) {
+    util.dlog('TASKER', msg);
 }

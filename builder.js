@@ -163,7 +163,7 @@ function findSite(creep) {
 
     if (!util.def(creep.memory.bTarget) || !util.def( Game.getObjectById(creep.memory.bTarget) )) {
         // If not listed then it's built by nearest after all these are done
-        var buildPriority = ['extension','container','storage','spawn','link','rampart','road','constructedWall'];
+        var buildPriority = ['extension','container','storage', 'tower', 'spawn','link','rampart','road','constructedWall'];
 
         var newTarget  = creep.room.find(FIND_MY_CONSTRUCTION_SITES); 
 
@@ -187,7 +187,7 @@ function findSite(creep) {
         }
     } 
 
-    dlog('shouldnt be here!');
+    //dlog('shouldnt be here!');
     return false;
 
     //if (util.def(creep.memory.bTarget) && util.def( Game.getObjectById(creep.memory.bTarget) )) {
@@ -242,10 +242,10 @@ function fillTank(creep) {
     if (!util.def(nrg)){
         var nrg = harvest.findContainer(creep);
         if (!nrg) {
-                   dlog('no containers')
+            dlog('no containers')
             nrg = harvest.findEnergy(creep);
             if (!nrg) {
-                    dlog('no ground scraps')
+                dlog('no ground scraps')
                 nrg = harvest.findOverhead(creep);
                 if (!nrg) {
                     dlog('nothing stored?')
@@ -259,16 +259,18 @@ function fillTank(creep) {
     var gas = Game.getObjectById(nrg);
     //    util.dumpObject(gas)
     if (!util.def(gas)) {
-        delete creep.memory.eTarget;dlog(creep.name + ': weird');
+        delete creep.memory.eTarget;
+        delete creep.memory.cTarget;
         return true; 
-    } else {
-        creep.memory.eTarget = nrg;
-    }
+    } 
+
     if (util.def(gas.energy)){
         //dlog('picking up energy')
+        creep.memory.eTarget = nrg;
         var res = creep.pickup(gas);
     } else if (util.def(gas.store)) {
         // dlog('picking up container')
+        creep.memory.cTarget = nrg;
         var res = creep.withdraw(gas, RESOURCE_ENERGY);
     }
     switch (res) {
