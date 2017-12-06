@@ -105,7 +105,6 @@ function nextPriority(room) {
         room.memory.nrgReserve = 300; // Guarantee we can still light this rocket
         return 'worker'
     }
-
     var nrg = room.find(FIND_DROPPED_RESOURCES, {
         filter: {
             resourceType: RESOURCE_ENERGY
@@ -115,9 +114,6 @@ function nextPriority(room) {
     for (var glob in nrg) {
         loot += nrg[glob].amount;
     }
-
-
-
 
     var builds = room.find(FIND_MY_CONSTRUCTION_SITES);
     var needsOfTheFew = {
@@ -132,8 +128,8 @@ function nextPriority(room) {
         })
         // If the score is really high, the need is great. Have creep stop drawing from spawn/extensions until spawn is complete
     if (needsOfTheFew[needsOfTheMany[0]] > 100) {
-        dlog('Need' + needsOfTheMany[0] + ' with score ' + needsOfTheFew[needsOfTheMany[0]])
-        dlog('Next' + needsOfTheMany[1] + ' with score ' + needsOfTheFew[needsOfTheMany[1]])
+        // dlog('Need' + needsOfTheMany[0] + ' with score ' + needsOfTheFew[needsOfTheMany[0]])
+        //  dlog('Next' + needsOfTheMany[1] + ' with score ' + needsOfTheFew[needsOfTheMany[1]])
         room.memory.strategy.nrgReserve = room.energyCapacityAvailable;
         return needsOfTheMany[0];
     }
@@ -209,21 +205,9 @@ function needMiner(room) {
         // softCount +=workCount;
     }
     // WORK parts harvest 2 nrg per tick
+    dlog('Current mining efficiency: ' + horsepower*2);
 
-    var themTharHills = 0;
-    var sources = room.find(FIND_SOURCES);
-    for (var ore in sources) {
-        var deposit = sources[ore];
-        if (!util.def(deposit.ticksToRegeneration)) {
-            // hasn't been touched yet. might as well call it 300t
-            themTharHills += (sources[ore].energy / 300);
-        } else {
-            themTharHills += (sources[ore].energy / sources[ore].ticksToRegeneration);
-        }
-    }
-    dlog('Energy density remaining in room: ' + themTharHills + 'E/t, current mining throughput: ' + horsepower + 'E/t');
-
-    if (themTharHills > horsepower) {
+    if ( horsepower < 30) {
         return true
     } else {
         return false

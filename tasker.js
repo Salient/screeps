@@ -19,7 +19,7 @@ module.exports.taskMinions = function(room) {
         // warm up the heat map
         var x = (creep.pos.x < 1 ) ? 1 : (creep.pos.x > 48) ? 48 : creep.pos.x;
         var y = (creep.pos.y < 1 ) ? 1 : (creep.pos.y > 48) ? 48 : creep.pos.y;
-            room.memory.heatmap[x][y]++;
+            room.memory.heatmap[x][y]+=5;
         }
 
         // minions[dude].say(minions[dude].memory.role);

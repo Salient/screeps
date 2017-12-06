@@ -61,6 +61,18 @@ module.exports = function(creep) {
     // If we are here, seems there is no extension with energy
     // workerBee(creep);
     // return;
+    if (creep.carry.energy == creep.carryCapacity) {
+        creep.memory.taskState = 'SINK'
+    }
+    if (creep.carry.energy == 0) {
+        creep.memory.taskState = 'SOURCE'
+        fillTank(creep);
+        return true;
+    }
+    
+    if (creep.memory.taskStatus == 'SOURCE') {
+        fillTank(creep); return true;
+    }
 
     if (!util.def(creep.memory.bTarget) || !util.def(Game.getObjectById(creep.memory.bTarget))) {
         var orders = findSite(creep) || repairDuty(creep);
@@ -84,6 +96,7 @@ module.exports = function(creep) {
         creep.say('Done!')
         return true;
     }
+
 
     if (target.progress >= 0) {
 

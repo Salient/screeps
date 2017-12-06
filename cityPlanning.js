@@ -77,7 +77,19 @@ var buildRoads = function(room) {
 
 module.exports.controlLevelChange = function (room){
     placeExtensions(room);
+    placeDefences(room);
     placeContainers(room);
+}
+
+function placeWalls(room) {
+
+
+}
+
+function placeDefences(room) {
+
+placeWalls(room);
+
 }
 
 // Determines how many creep can mine each source at the same time
@@ -85,6 +97,7 @@ module.exports.controlLevelChange = function (room){
 var setupSources = function (room) {
 
     var sources = room.find(FIND_SOURCES);
+    room.memory.sources = sources;
     var shafts = {};
     var count = 0;
 
@@ -114,6 +127,12 @@ var setupSources = function (room) {
     // Assign it to memory and be done
     room.memory.shafts = shafts;
 }
+
+function refInfra(room) {
+    placeContainers(room);
+}
+module.exports.refInfra = refInfra;
+
 
 function createBasicPaths(room) {
 

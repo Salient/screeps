@@ -9,8 +9,9 @@ var taskMaster = require('tasker');
 
 // Prototype extensions
 Game.f = function() {
-    for (var ff in Game.flags)
-    {Game.flags[ff].remove();}
+    for (var ff in Game.flags) {
+        Game.flags[ff].remove();
+    }
 }
 
 Game.d = function() {
@@ -24,7 +25,7 @@ Game.d = function() {
 
 Game.fe = function() {
     for (var ff in Game.rooms) {
-        var res=harvest.freeEnergy(Game.rooms[ff]);
+        var res = harvest.freeEnergy(Game.rooms[ff]);
         dlog('Free energy in room ' + ff);
         for (var type in res) {
             dlog(type + ": " + res[type])
@@ -33,21 +34,28 @@ Game.fe = function() {
 }
 
 Game.p = function() {
-    for (var r in Game.rooms)
-    {roomstrat.bootstrap(Game.rooms[r]);}
+    for (var r in Game.rooms) {
+        roomstrat.bootstrap(Game.rooms[r]);
+    }
 }
 
 Game.q = function() {
-    for (var r in Game.rooms)
-    {construct.controlLevelChange(Game.rooms[r]);}
+    for (var r in Game.rooms) {
+        construct.controlLevelChange(Game.rooms[r]);
+    }
 }
 
-Game.x =function(room) {construct.x(room);} 
-
-Game.t =function() {
+Game.x = function() {
     for (var r in Game.rooms) {
-        population.nextPriority(Game.rooms[r]);} 
-}    
+        construct.refInfra(Game.rooms[r]);
+    }
+}
+
+Game.t = function() {
+    for (var r in Game.rooms) {
+        population.nextPriority(Game.rooms[r]);
+    }
+}
 
 Room.prototype.getError = function(msg) {
     return (util.getError(msg));
@@ -91,15 +99,19 @@ for (var room in Game.rooms) {
     }
     // Manage creep configurations, counts of each type, scale with control level
     // TODO - make this smart and 
-    if (Game.time > thisRoom.memory.nextSpawn)
-    {  population.breed(thisRoom);}
+    if (Game.time > thisRoom.memory.nextSpawn) {
+        population.breed(thisRoom);
+    }
 
+    if (!(Game.time % 300)) {
+        construct.refInfra(thisRoom);
+    }
 }
 
 // Need to figure out where the best place to put housekeeping stuff. 
 if (!(Game.time % 11)) {
-    for(var q in Memory.creeps) {
-        if(!Game.creeps[q]) {
+    for (var q in Memory.creeps) {
+        if (!Game.creeps[q]) {
             delete Memory.creeps[q];
         }
     }
@@ -108,8 +120,9 @@ if (!(Game.time % 11)) {
 //// 
 if (!(Game.time % 67)) {
     for (var r in Memory.rooms) {
-        if(!Game.rooms[r]) {
-            delete Memory.rooms[r];}
+        if (!Game.rooms[r]) {
+            delete Memory.rooms[r];
+        }
     }
 }
 //    });
