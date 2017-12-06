@@ -577,6 +577,15 @@ function distance(p1, p2) {
         Math.pow((p1.y - p2.y), 2)));
 }
 
+function findCashMoney(creep){
+
+    var containersWithSpace = creep.room.find(FIND_STRUCTURES, {
+        filter: (i) => i.structureType == STRUCTURE_CONTAINER &&
+        i.store[RESOURCE_ENERGY] < i.storeCapacity[RESOURCE_ENERGY]
+    });
+    var scraps = creep.pos.findClosestByPath(FIND_DROPPED_ENERGY);
+    var cans = creep.pos.findClosestByPath(FIND_);
+}
 function findSink(creep) {
     var structs = creep.room.find(FIND_MY_STRUCTURES);
 
@@ -741,7 +750,7 @@ function findSource(creep) {
         var mineHole = shafts[post];
 
         if (!Game.creeps[mineHole.assignedTo] || (mineHole.assignedTo == 'unassigned')) {
-            if (creep.memory.role == miner) {
+            if (creep.memory.role == 'miner') {
                 mineHole.assignedTo = creep.name;
             }
         }

@@ -253,10 +253,10 @@ function fillTank(creep) {
 
     var nrg = creep.memory.eTarget;
     if (!util.def(nrg)){
-        var nrg = harvest.findContainer(creep);
+            nrg = harvest.findEnergy(creep);
         if (!nrg) {
             dlog('no containers')
-            nrg = harvest.findEnergy(creep);
+        nrg = harvest.findContainer(creep);
             if (!nrg) {
                 dlog('no ground scraps')
                 nrg = harvest.findOverhead(creep);
