@@ -539,9 +539,9 @@ function gatherer(creep) {
                     coin = 'builder';
                 }
                 dlog('Retasking while sink ' + creep.name + '(' + creep.memory.role + ') to ' + coin)
-                for (var x = 0; x < 5; x++) {
+                //for (var x = 0; x < 5; x++) {
                     creep.memory.taskList.push(coin);
-                }
+                //}
 
                 return false;
             } else {
@@ -585,16 +585,15 @@ function hitUp(creep, target) {
     if (util.def(target.resourceType)) {
         return creep.pickup(target);
     } else if (util.def(target.structureType)) {
-        return creep.withdraw(targ, RESOURCE_ENERGY);
+        return creep.withdraw(target, RESOURCE_ENERGY);
     }
 }
 module.exports.hitUp = hitUp;
 
 function findCashMoney(creep) {
 
-    dlog('finding money')
-    var cash = [creep.pos.findClosestByRange(FIND_DROPPED_ENERGY, {
-            filter: (i) => i.amount > 50
+    var cash = [creep.pos.findClosestByRange(FIND_DROPPED_RESOURCES, {
+            filter: (i) => i.amount > 50 && i.resourceType == RESOURCE_ENERGY
         }),
         creep.pos.findClosestByRange(FIND_STRUCTURES, {
             filter: (i) => i.structureType == STRUCTURE_CONTAINER &&

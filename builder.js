@@ -63,6 +63,8 @@ module.exports = function(creep) {
     // return;
     if (creep.carry.energy == creep.carryCapacity) {
         creep.memory.taskState = 'SINK'
+            // TEMP CODE vvv
+        creep.memory.taskList.pop();
     }
     if (creep.carry.energy == 0) {
         creep.memory.taskState = 'SOURCE'
@@ -70,7 +72,7 @@ module.exports = function(creep) {
         return true;
     }
 
-    if (creep.memory.taskStatus == 'SOURCE') {
+    if (creep.memory.taskState == 'SOURCE') {
         fillTank(creep);
         return true;
     }
@@ -249,28 +251,42 @@ function upgradeRC(creep) {
         creep.memory.taskList.pop();
         return false;
     }
-    if (creep.pos.isNearTo(rc) && (creep.carry.energy > 0)) {
-        creep.say(sayProgress(rc) + "%");
-        creep.upgradeController(rc);
-    } else if (creep.carry.energy == creep.carryCapacity) {
-        var path = creep.moveTo(rc, {
-            reusePath: 5,
-            visualizePathStyle: {
-                stroke: '1ffaa00'
-            }
-        });
-        if (path) {
-            if (path != ERR_TIRED) {
-                dlog('Tech path error: ' + util.getError(path))
-                    // Must be busy with other techs. Go build something instead.
-                creep.memory.taskList.push('builder')
-                return false
-            }
-        }
-    } else {
-        fillTank(creep);
+
+    if (creep.carry.energy == creep.carryCapacity && (creep.memory.taskState != 'SINK')) { // Just filled up. 
+        creep.memory.taskState = 'SINK'
+            // TEMP CODE vvv
+        creep.memory.taskList.pop();
     }
 
+    if (creep.carry.energy == 0) {
+        creep.memory.taskState = 'SOURCE'
+        fillTank(creep);
+        return true;
+    }
+
+    if (creep.memory.taskState == 'SOURCE') {
+        fillTank(creep);
+        return true;
+    }
+
+    var res = creep.upgradeController(rc);
+
+    switch (res) {
+        case OK:
+            creep.say(sayProgress(rc) + "%");
+            return true;
+            break;
+        case ERR_NOT_IN_RANGE:
+            var path = creep.moveTo(rc, {
+                reusePath: 5,
+                visualizePathStyle: {
+                    stroke: '1ffaa00'
+                }
+            });
+            if (path != OK && path != ERR_TIRED) {
+                dlog('Tech path error: ' + util.getError(path));
+            }
+    }
 }
 
 
