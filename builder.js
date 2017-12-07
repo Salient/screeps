@@ -243,114 +243,139 @@ function upgradeRC(creep) {
 
 }
 
+
 function fillTank(creep) {
-    // Temp code
-    creep.memory.taskList.pop();
 
-    creep.say('F')
-    if (!creep.getActiveBodyparts(CARRY)) {return false}
-    if (creep.carry == creep.carryCapacity) {return true}
 
-    var nrg = creep.memory.eTarget;
-    if (!util.def(nrg)){
-            nrg = harvest.findEnergy(creep);
-        if (!nrg) {
-            dlog('no containers')
-        nrg = harvest.findContainer(creep);
-            if (!nrg) {
-                dlog('no ground scraps')
-                nrg = harvest.findOverhead(creep);
-                if (!nrg) {
-                    dlog('nothing stored?')
-                    dlog('builders need energy to build, but none stored available. reverting tasks');
-                    creep.memory.taskList.pop();
-                    return false;
-                }
-            }        
-        }
-    }
-    var gas = Game.getObjectById(nrg);
-    //    util.dumpObject(gas)
-    if (!util.def(gas)) {
-        delete creep.memory.eTarget;
-        delete creep.memory.cTarget;
-        return true; 
-    } 
+    creep.say('Filling up my tank');
+var targ = Game.getObjectId(harvest.findCashMoney);
 
-    if (util.def(gas.energy)){
-        //dlog('picking up energy')
-        creep.memory.eTarget = nrg;
-        var res = creep.pickup(gas);
-    } else if (util.def(gas.store)) {
-        // dlog('picking up container')
-        creep.memory.cTarget = nrg;
-        var res = creep.withdraw(gas, RESOURCE_ENERGY);
-    }
-    switch (res) {
-        case OK: return true; break;
-        case ERR_NOT_IN_RANGE: 
-            var path = creep.moveTo(gas, {reusePath: 5, visualizePathStyle: {stroke: '1ffaa00'}});
-            if (path != OK && path != ERR_TIRED) {
-                dlog('error moving to nrg source: ' + util.getError(path))
-                harvest.scrounge(creep)
-            }
-            return true; break;
-        case ERR_NOT_ENOUGH_RESOURCES: creep.memory.eTarget=null;  break;
-        default: dlog('filling tank but ' + util.getError(res))
-    }
-    return;
-    if (!util.def(creep.memory.wTarget) || !util.def(Game.getObjectById(creep.memory.wTarget)) || Game.getObjectById(creep.memory.wTarget).energy < 50){
-
-        var structs = creep.room.find(FIND_MY_STRUCTURES);
-        var takePriority = ['container','storage','extension','spawn'];
-        creep.memory.wTarget = null;
-        // Prioritize
-        dance:
-        for (var need in takePriority) {
-            var priority = takePriority[need];
-            //    dlog('looking for energy in ' + priority)
-            for (var site in structs) {
-                if (structs[site].structureType == priority) {
-                    if ((((priority == 'container') || (priority == 'storage')) && (structs[site].store >=50)) || 
-                        (((priority == 'extension') || (priority == 'spawn')) && (structs[site].energy >=50)))  {
-                        //           dlog('passed sniff test')
-                        var res = creep.moveTo(structs[site], {reusePath: 5, visualizePathStyle: {stroke: '1ffaa77'}});
-                        if (!res){
-                            creep.memory.wTarget = structs[site].id; 
-                            //   dlog('selected ' + structs[site].structureType)
-                            break dance;
-                        } else {dlog('passed ' + util.getError(res))}
-                    } else {dlog('sniff failed for ' + priority)}
-                }
-            }
-        }
-    }
-
-    if (!util.def(creep.memory.wTarget) || !util.def(Game.getObjectById(creep.memory.wTarget))){
-        dlog('builders need energy to build, but none stored available. reverting tasks');
-        creep.memory.taskList.pop();
+    if (!util.def(targ)){
         return false;
     }
 
-    var sugarDaddy = Game.getObjectById(creep.memory.wTarget);
-    var space = (creep.carryCapacity - creep.carry.energy);
+    var res = harvest.hitUp(targ);
 
-    var res = creep.withdraw(sugarDaddy, "energy", space< 50 ? space : 50) ; 
     switch (res) {
-        case OK: return true; break;
+        case OK: break;
         case ERR_NOT_IN_RANGE: 
-            dlog('') 
-            util.dumpObject(sugarDaddy)
-            var path = creep.moveTo(sugarDaddy.pos, {reusePath: 5, visualizePathStyle: {stroke: '1ffaa00'}});
-            if (path != OK && path != ERR_TIRED) {
-                dlog('error moving to nrg2 source: ' + util.getError(path))
-                harvest.scrounge(creep)
-            }
+                    var pap = creep.moveTo(struct, {reusePath: 5, visualizePathStyle: {stroke: '1ffaa00'}});
             break;
-        case ERR_NOT_ENOUGH_RESOURCES: creep.memory.wTarget=null;  break;
-        default: dlog('filling tank but ' + util.getError(res))
+            default: dlog('def') 
     }
+
 }
+
+
+
+//function fillTank(creep) {
+//    // Temp code
+//    creep.memory.taskList.pop();
+//
+//    creep.say('F')
+//    if (!creep.getActiveBodyparts(CARRY)) {return false}
+//    if (creep.carry == creep.carryCapacity) {return true}
+//
+//    var nrg = creep.memory.eTarget;
+//    if (!util.def(nrg)){
+//            nrg = harvest.findEnergy(creep);
+//        if (!nrg) {
+//            dlog('no containers')
+//        nrg = harvest.findContainer(creep);
+//            if (!nrg) {
+//                dlog('no ground scraps')
+//                nrg = harvest.findOverhead(creep);
+//                if (!nrg) {
+//                    dlog('nothing stored?')
+//                    dlog('builders need energy to build, but none stored available. reverting tasks');
+//                    creep.memory.taskList.pop();
+//                    return false;
+//                }
+//            }        
+//        }
+//    }
+//    var gas = Game.getObjectById(nrg);
+//    //    util.dumpObject(gas)
+//    if (!util.def(gas)) {
+//        delete creep.memory.eTarget;
+//        delete creep.memory.cTarget;
+//        return true; 
+//    } 
+//
+//    if (util.def(gas.energy)){
+//        //dlog('picking up energy')
+//        creep.memory.eTarget = nrg;
+//        var res = creep.pickup(gas);
+//    } else if (util.def(gas.store)) {
+//        // dlog('picking up container')
+//        creep.memory.cTarget = nrg;
+//        var res = creep.withdraw(gas, RESOURCE_ENERGY);
+//    }
+//    switch (res) {
+//        case OK: return true; break;
+//        case ERR_NOT_IN_RANGE: 
+//            var path = creep.moveTo(gas, {reusePath: 5, visualizePathStyle: {stroke: '1ffaa00'}});
+//            if (path != OK && path != ERR_TIRED) {
+//                dlog('error moving to nrg source: ' + util.getError(path))
+//                harvest.scrounge(creep)
+//            }
+//            return true; break;
+//        case ERR_NOT_ENOUGH_RESOURCES: creep.memory.eTarget=null;  break;
+//        default: dlog('filling tank but ' + util.getError(res))
+//    }
+//    return;
+//    if (!util.def(creep.memory.wTarget) || !util.def(Game.getObjectById(creep.memory.wTarget)) || Game.getObjectById(creep.memory.wTarget).energy < 50){
+//
+//        var structs = creep.room.find(FIND_MY_STRUCTURES);
+//        var takePriority = ['container','storage','extension','spawn'];
+//        creep.memory.wTarget = null;
+//        // Prioritize
+//        dance:
+//        for (var need in takePriority) {
+//            var priority = takePriority[need];
+//            //    dlog('looking for energy in ' + priority)
+//            for (var site in structs) {
+//                if (structs[site].structureType == priority) {
+//                    if ((((priority == 'container') || (priority == 'storage')) && (structs[site].store >=50)) || 
+//                        (((priority == 'extension') || (priority == 'spawn')) && (structs[site].energy >=50)))  {
+//                        //           dlog('passed sniff test')
+//                        var res = creep.moveTo(structs[site], {reusePath: 5, visualizePathStyle: {stroke: '1ffaa77'}});
+//                        if (!res){
+//                            creep.memory.wTarget = structs[site].id; 
+//                            //   dlog('selected ' + structs[site].structureType)
+//                            break dance;
+//                        } else {dlog('passed ' + util.getError(res))}
+//                    } else {dlog('sniff failed for ' + priority)}
+//                }
+//            }
+//        }
+//    }
+//
+//    if (!util.def(creep.memory.wTarget) || !util.def(Game.getObjectById(creep.memory.wTarget))){
+//        dlog('builders need energy to build, but none stored available. reverting tasks');
+//        creep.memory.taskList.pop();
+//        return false;
+//    }
+//
+//    var sugarDaddy = Game.getObjectById(creep.memory.wTarget);
+//    var space = (creep.carryCapacity - creep.carry.energy);
+//
+//    var res = creep.withdraw(sugarDaddy, "energy", space< 50 ? space : 50) ; 
+//    switch (res) {
+//        case OK: return true; break;
+//        case ERR_NOT_IN_RANGE: 
+//            dlog('') 
+//            util.dumpObject(sugarDaddy)
+//            var path = creep.moveTo(sugarDaddy.pos, {reusePath: 5, visualizePathStyle: {stroke: '1ffaa00'}});
+//            if (path != OK && path != ERR_TIRED) {
+//                dlog('error moving to nrg2 source: ' + util.getError(path))
+//                harvest.scrounge(creep)
+//            }
+//            break;
+//        case ERR_NOT_ENOUGH_RESOURCES: creep.memory.wTarget=null;  break;
+//        default: dlog('filling tank but ' + util.getError(res))
+//    }
+//}
 
 function sayProgress(target) {
 

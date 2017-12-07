@@ -577,15 +577,57 @@ function distance(p1, p2) {
         Math.pow((p1.y - p2.y), 2)));
 }
 
-function findCashMoney(creep){
+function hitUp(creep, target) {
 
-    var containersWithSpace = creep.room.find(FIND_STRUCTURES, {
-        filter: (i) => i.structureType == STRUCTURE_CONTAINER &&
-        i.store[RESOURCE_ENERGY] < i.storeCapacity[RESOURCE_ENERGY]
-    });
-    var scraps = creep.pos.findClosestByPath(FIND_DROPPED_ENERGY);
-    var cans = creep.pos.findClosestByPath(FIND_);
+    if (util.def(target.resourceType)) {
+        return creep.pickup(target);
+    } else if (util.def(target.structureType)) {
+        return creep.withdraw(targ, RESOURCE_ENERGY);
+    }
 }
+module.exports.hitUp = hitUp;
+
+function findCashMoney(creep) {
+
+    var cash = [creep.pos.findClosestByRange(FIND_DROPPED_ENERGY, {
+            filter: (i) => i.amount > 50
+        }),
+        creep.pos.findClosestByRange(FIND_STRUCTURES, {
+            filter: (i) => i.structureType == STRUCTURE_CONTAINER &&
+                i.store[RESOURCE_ENERGY] > 50
+        }),
+        creep.pos.findClosestByRange(FIND_STRUCTURES, {
+            filter: (i) => i.structureType == STRUCTURE_EXTENSION &&
+                i.energy > 50
+        })
+    ];
+
+    var score = 0;
+    var best = null;
+
+    for (var money in cash) {
+        if (!util.def(cash[money])) {
+            continue;
+        }
+
+        var option = cash[money];
+        var size = (util.def(option.amount) ? option.amount : (util.def(option.energy) ? option.energy : option.store[RESOURCE_ENERGY]));
+        var range = creep.pos.getRangeTo(option);
+
+        if (size / range > score) {
+            score = size / range;
+            best = option;
+        }
+    }
+
+    if (score == 0 || !util.def(best)) {
+        return false;
+    }
+    return best.id;
+}
+
+module.exports.findCashMoney = findCashMoney;
+
 function findSink(creep) {
     var structs = creep.room.find(FIND_MY_STRUCTURES);
 
