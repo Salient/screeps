@@ -142,7 +142,7 @@ function mine(creep) {
 
             //Prooobably should come up with a better solution here
             creep.say('AAAH MOTHERLAND')
-            //creep.suicide();
+                //creep.suicide();
             dlog('AAAAH MOTHERLAND')
             return false;
         }
@@ -578,7 +578,10 @@ function distance(p1, p2) {
 }
 
 function hitUp(creep, target) {
-
+    if (!util.def(target)) {
+        dlog('not suing hitup right.')
+        return;
+    }
     if (util.def(target.resourceType)) {
         return creep.pickup(target);
     } else if (util.def(target.structureType)) {
@@ -589,6 +592,7 @@ module.exports.hitUp = hitUp;
 
 function findCashMoney(creep) {
 
+    dlog('finding money')
     var cash = [creep.pos.findClosestByRange(FIND_DROPPED_ENERGY, {
             filter: (i) => i.amount > 50
         }),
@@ -635,7 +639,7 @@ function findSink(creep) {
 
     var containersWithSpace = creep.room.find(FIND_STRUCTURES, {
         filter: (i) => i.structureType == STRUCTURE_CONTAINER &&
-        i.store[RESOURCE_ENERGY] < i.storeCapacity[RESOURCE_ENERGY]
+            i.store[RESOURCE_ENERGY] < i.storeCapacity[RESOURCE_ENERGY]
     });
 
     for (var x in containersWithSpace) {
@@ -800,9 +804,9 @@ function findSource(creep) {
         return mineHole;
     }
 
-// Whelp...i guess nothing is available 
-dlog('No mineshafts available...');
-return false;
+    // Whelp...i guess nothing is available 
+    dlog('No mineshafts available...');
+    return false;
 }
 
 function isFull(sink) {

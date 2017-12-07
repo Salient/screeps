@@ -2,4 +2,5 @@ config.js
 Gruntfile.js
 /node_modules/
 *.swp
+*.swo
 tags

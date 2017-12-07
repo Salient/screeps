@@ -15,7 +15,7 @@ Structure.prototype.needsWorkers = function() {
     }
     var count = 0;
     attendees.sort();
-    for ( var creep in attendees) {
+    for (var creep in attendees) {
         if (attendees[creep].hits > 0) {
             count++;
         } else {
@@ -69,25 +69,28 @@ module.exports = function(creep) {
         fillTank(creep);
         return true;
     }
-    
+
     if (creep.memory.taskStatus == 'SOURCE') {
-        fillTank(creep); return true;
+        fillTank(creep);
+        return true;
     }
 
     if (!util.def(creep.memory.bTarget) || !util.def(Game.getObjectById(creep.memory.bTarget))) {
         var orders = findSite(creep) || repairDuty(creep);
-        if (!util.def(orders) || orders == false ) {
+        if (!util.def(orders) || orders == false) {
             dlog(creep.name + ' says nothing to build or repair, reverting to prior task')
             creep.memory.taskList.pop();
             return false;
-        } 
-        else { creep.memory.bTarget = orders;}
+        } else {
+            creep.memory.bTarget = orders;
+        }
     }
 
     var target = Game.getObjectById(creep.memory.bTarget);
-    if (!util.def(target) ){
+    if (!util.def(target)) {
         dlog('problem is here');
-        creep.memory.bTarget = null; return false;
+        creep.memory.bTarget = null;
+        return false;
     }
 
     // check if done
@@ -102,17 +105,27 @@ module.exports = function(creep) {
 
         var res = creep.build(target);
         switch (res) {
-            case OK:  
+            case OK:
                 creep.say(sayProgress(target) + '%');
                 break;
-            case ERR_NOT_IN_RANGE: 
-                creep.moveTo(target, {reusePath: 5, visualizePathStyle: {stroke: '1ffaa00'}});
+            case ERR_NOT_IN_RANGE:
+                creep.moveTo(target, {
+                    reusePath: 5,
+                    visualizePathStyle: {
+                        stroke: '1ffaa00'
+                    }
+                });
                 break;
-            case ERR_NOT_ENOUGH_RESOURCES: 
+            case ERR_NOT_ENOUGH_RESOURCES:
                 fillTank(creep);
                 break;
-            case ERR_RCL_NOT_ENOUGH: creep.memory.taskList.pop();         creep.memory.bTarget = null; return false; break; 
-            default: dlog('Build command error: ' + util.getError(res));
+            case ERR_RCL_NOT_ENOUGH:
+                creep.memory.taskList.pop();
+                creep.memory.bTarget = null;
+                return false;
+                break;
+            default:
+                dlog('Build command error: ' + util.getError(res));
         }
 
     } else if (needsRepair(target)) {
@@ -123,7 +136,12 @@ module.exports = function(creep) {
             return true;
 
         } else if (creep.carry.energy == creep.carryCapacity) {
-            var res = creep.moveTo(target, {reusePath: 5, visualizePathStyle: {stroke: '1ffaa00'}});
+            var res = creep.moveTo(target, {
+                reusePath: 5,
+                visualizePathStyle: {
+                    stroke: '1ffaa00'
+                }
+            });
             return true;
 
         } else {
@@ -151,7 +169,7 @@ function repairDuty(creep) {
     var options = [];
 
     // TODO: can I sort structures in order of damage?
-    for ( var i in structures) {
+    for (var i in structures) {
         var s = structures[i];
 
         var intendedPath = creep.checkPath(s);
@@ -162,7 +180,12 @@ function repairDuty(creep) {
         }
 
         if (s.needsRepair()) {
-            var res = creep.moveTo(s, {reusePath: 5, visualizePathStyle: {stroke: '1ffaa00'}});
+            var res = creep.moveTo(s, {
+                reusePath: 5,
+                visualizePathStyle: {
+                    stroke: '1ffaa00'
+                }
+            });
             creep.repair(s);
         }
     }
@@ -170,17 +193,18 @@ function repairDuty(creep) {
 
 function findSite(creep) {
 
-    if ( creep.getActiveBodyparts(WORK) == 0) {
-        creep.memory.taskList.pop(); return false;
+    if (creep.getActiveBodyparts(WORK) == 0) {
+        creep.memory.taskList.pop();
+        return false;
     }
 
-    if (!util.def(creep.memory.bTarget) || !util.def( Game.getObjectById(creep.memory.bTarget) )) {
+    if (!util.def(creep.memory.bTarget) || !util.def(Game.getObjectById(creep.memory.bTarget))) {
         // If not listed then it's built by nearest after all these are done
-        var buildPriority = ['extension','container','storage', 'tower', 'spawn','link','rampart','road','constructedWall'];
+        var buildPriority = ['extension', 'container', 'storage', 'tower', 'spawn', 'link', 'rampart', 'road', 'constructedWall'];
 
-        var newTarget  = creep.room.find(FIND_MY_CONSTRUCTION_SITES); 
+        var newTarget = creep.room.find(FIND_MY_CONSTRUCTION_SITES);
 
-        if (!util.def(newTarget)){
+        if (!util.def(newTarget)) {
             dlog('no build targets. untasking')
             creep.memory.taskList.pop();
             return false;
@@ -190,15 +214,15 @@ function findSite(creep) {
         for (var need in buildPriority) {
             var priority = buildPriority[need];
             for (var site in newTarget) {
-                if (newTarget[site].structureType == priority){
+                if (newTarget[site].structureType == priority) {
 
-                    creep.memory.bTarget = newTarget[site].id; 
+                    creep.memory.bTarget = newTarget[site].id;
                     dlog('assinging ' + creep.name + ' build target ' + priority);
-                    return newTarget[site].id; 
+                    return newTarget[site].id;
                 }
             }
         }
-    } 
+    }
 
     //dlog('shouldnt be here!');
     return false;
@@ -222,17 +246,23 @@ module.exports.upgradeRC = upgradeRC;
 function upgradeRC(creep) {
     var rc = creep.room.controller;
     if (creep.getActiveBodyparts(WORK) == 0) {
-        creep.memory.taskList.pop(); return false;
+        creep.memory.taskList.pop();
+        return false;
     }
     if (creep.pos.isNearTo(rc) && (creep.carry.energy > 0)) {
         creep.say(sayProgress(rc) + "%");
         creep.upgradeController(rc);
     } else if (creep.carry.energy == creep.carryCapacity) {
-        var path = creep.moveTo(rc, {reusePath: 5, visualizePathStyle: {stroke: '1ffaa00'}});
+        var path = creep.moveTo(rc, {
+            reusePath: 5,
+            visualizePathStyle: {
+                stroke: '1ffaa00'
+            }
+        });
         if (path) {
             if (path != ERR_TIRED) {
                 dlog('Tech path error: ' + util.getError(path))
-                // Must be busy with other techs. Go build something instead.
+                    // Must be busy with other techs. Go build something instead.
                 creep.memory.taskList.push('builder')
                 return false
             }
@@ -248,20 +278,25 @@ function fillTank(creep) {
 
 
     creep.say('Filling up my tank');
-var targ = Game.getObjectId(harvest.findCashMoney);
-
-    if (!util.def(targ)){
+    var targ = Game.getObjectById(harvest.findCashMoney(creep));
+    if (!util.def(targ)) {
         return false;
     }
-
-    var res = harvest.hitUp(targ);
-
+    var res = harvest.hitUp(creep, targ);
+    // // dlog("hitting up " + targ.pos.x + ',' + targ.pos.y + ' - ' + util.getError(res))
     switch (res) {
-        case OK: break;
-        case ERR_NOT_IN_RANGE: 
-                    var pap = creep.moveTo(struct, {reusePath: 5, visualizePathStyle: {stroke: '1ffaa00'}});
+        case OK:
             break;
-            default: dlog('def') 
+        case ERR_NOT_IN_RANGE:
+            var pap = creep.moveTo(targ, {
+                reusePath: 5,
+                visualizePathStyle: {
+                    stroke: '1ffaa00'
+                }
+            });
+            break;
+        default:
+            dlog('def')
     }
 
 }
