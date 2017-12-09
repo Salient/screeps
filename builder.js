@@ -1,61 +1,40 @@
 var util = require('common');
 var harvest = require('harvester'); // useful for energy finding routines
 
-Structure.prototype.needsWorkers = function() {
-    var attendees = this.memory.workers;
-    var maxAttendees = this.memory.maxWorkers;
+//Structure.prototype.needsWorkers = function() {
+//    var attendees = this.memory.workers;
+//    var maxAttendees = this.memory.maxWorkers;
+//
+//    if (typeof attendees === 'undefined') {
+//        attendees = 0;
+//    }
+//
+//    if (typeof maxAttendees === 'undefined') {
+//        maxAttendees = 1; // If not defined, be conservative to prevent log
+//        // jams
+//    }
+//    var count = 0;
+//    attendees.sort();
+//    for (var creep in attendees) {
+//        if (attendees[creep].hits > 0) {
+//            count++;
+//        } else {
+//            destroy(attendees[creep]);
+//        }
+//    }
+//}
+//
+//Structure.prototype.needsRepair = function() {
+//    return this.hits < this.hitsMax * .8;
+//};
+//
+//Structure.prototype.isDone = function() {
+//    return (this.hits == this.hitsMax);
+//};
 
-    if (typeof attendees === 'undefined') {
-        attendees = 0;
-    }
 
-    if (typeof maxAttendees === 'undefined') {
-        maxAttendees = 1; // If not defined, be conservative to prevent log
-        // jams
-    }
-    var count = 0;
-    attendees.sort();
-    for (var creep in attendees) {
-        if (attendees[creep].hits > 0) {
-            count++;
-        } else {
-            destroy(attendees[creep]);
-        }
-    }
-}
-
-Structure.prototype.needsRepair = function() {
-    return this.hits < this.hitsMax * .8;
-};
-
-Structure.prototype.isDone = function() {
-    return (this.hits == this.hitsMax);
-};
-
-var buildExtension = function(creep) {
-
-    var numExts = 0;
-    var structs = creep.room.find(FIND_MY_STRUCTURES);
-    structs.forEach(function(s) {
-        if (structs[s].structureType == 'STRUCTURE_EXTESION') {
-            numExts++;
-        }
-    });
-
-    var maxExts = creep.room.memory.maxExts;
-    if (typeof maxExts !== 'undefined') {
-        if (numExts < maxExts) {
-
-            // build ext.
-        }
-    }
-}
-
-function dlog(msg) {
-    util.dlog('CONSTRUCTION', msg);
-}
-
-module.exports = function(creep) {
+ 
+function builder(creep) {
     // Take a look around the room for something to do
 
     // If we are here, seems there is no extension with energy
@@ -64,11 +43,12 @@ module.exports = function(creep) {
     if (creep.carry.energy == creep.carryCapacity) {
         creep.memory.taskState = 'SINK'
             // TEMP CODE vvv
-        creep.memory.taskList.pop();
+        // creep.memory.taskList.pop();
     }
     if (creep.carry.energy == 0) {
         creep.memory.taskState = 'SOURCE'
         fillTank(creep);
+        creep.memory.taskList.pop();
         return true;
     }
 
@@ -160,6 +140,8 @@ module.exports = function(creep) {
     }
 }
 
+module.exports.builder = builder;
+
 function needsRepair(target) {
     // console.log('needs repair? ' + target.hits + '/' + target.hitsMax);
     return target.hits < (target.hitsMax / 2);
@@ -225,106 +207,92 @@ function findSite(creep) {
             }
         }
     }
-
-    //dlog('shouldnt be here!');
     return false;
-
-    //if (util.def(creep.memory.bTarget) && util.def( Game.getObjectById(creep.memory.bTarget) )) {
-    //    creep.memory.bTarget = newTarget[0].id; 
-    //    return newTarget[0].id;
-    //}
-
-    //var bTarget = Game.getObjectById(creep.memory.bTarget);
-
-    //dlog(creep.name + ' on construction duty')
-
-    //return bTarget;
-
 }
 
 module.exports.findSite = findSite;
 module.exports.upgradeRC = upgradeRC;
 
 function upgradeRC(creep) {
-    var rc = creep.room.controller;
-    if (creep.getActiveBodyparts(WORK) == 0) {
-        creep.memory.taskList.pop();
-        return false;
-    }
+	var rc = creep.room.controller;
+	if (creep.getActiveBodyparts(WORK) == 0) {
+		creep.memory.taskList.pop();
+		return false;
+	}
 
-    if (creep.carry.energy == creep.carryCapacity && (creep.memory.taskState != 'SINK')) { // Just filled up. 
-        creep.memory.taskState = 'SINK'
-            // TEMP CODE vvv
-        creep.memory.taskList.pop();
-    }
+	if (creep.carry.energy == creep.carryCapacity
+			&& (creep.memory.taskState != 'SINK')) { // Just filled up.
+		creep.memory.taskState = 'SINK'
+		// TEMP CODE vvv
+		creep.memory.taskList.pop();
+	}
 
-    if (creep.carry.energy == 0) {
-        creep.memory.taskState = 'SOURCE'
-        fillTank(creep);
-        return true;
-    }
+	if (creep.carry.energy == 0) {
+		creep.memory.taskState = 'SOURCE'
+		fillTank(creep);
+		return true;
+	}
 
-    if (creep.memory.taskState == 'SOURCE') {
-        fillTank(creep);
-        return true;
-    }
+	if (creep.memory.taskState == 'SOURCE') {
+		fillTank(creep);
+		return true;
+	}
 
-    var res = creep.upgradeController(rc);
+	var res = creep.upgradeController(rc);
 
-    switch (res) {
-        case OK:
-            creep.say(sayProgress(rc) + "%");
-            return true;
-            break;
-        case ERR_NOT_IN_RANGE:
-            var path = creep.moveTo(rc, {
-                reusePath: 5,
-                visualizePathStyle: {
-                    stroke: '1ffaa00'
-                }
-            });
-            if (path != OK && path != ERR_TIRED) {
-                dlog('Tech path error: ' + util.getError(path));
-            }
-    }
+	switch (res) {
+	case OK:
+		creep.say(sayProgress(rc) + "%");
+		return true;
+		break;
+	case ERR_NOT_IN_RANGE:
+		var path = creep.moveTo(rc, {
+			reusePath : 5,
+			visualizePathStyle : {
+				stroke : '1ffaa00'
+			}
+		});
+		if (path != OK && path != ERR_TIRED) {
+			dlog('Tech path error: ' + util.getError(path));
+		}
+	}
 }
 
 
 function fillTank(creep) {
 
-
-    creep.say('Filling up my tank');
-    var targ = Game.getObjectById(harvest.findCashMoney(creep));
-    if (!util.def(targ)) {
-        return false;
-    }
-    var res = harvest.hitUp(creep, targ);
-    // // dlog("hitting up " + targ.pos.x + ',' + targ.pos.y + ' - ' + util.getError(res))
-    switch (res) {
-        case OK:
-            break;
-        case ERR_NOT_IN_RANGE:
-            var pap = creep.moveTo(targ, {
-                reusePath: 5,
-                visualizePathStyle: {
-                    stroke: '1ffaa00'
-                }
-            });
-            break;
-        default:
-            dlog('def')
-    }
-
+	creep.say('Filling up my tank');
+	var targ = Game.getObjectById(harvest.findCashMoney(creep));
+	if (!util.def(targ)) {
+		return false;
+	}
+	var res = harvest.hitUp(creep, targ);
+	// // dlog("hitting up " + targ.pos.x + ',' + targ.pos.y + ' - ' +
+	// util.getError(res))
+	switch (res) {
+	case OK:
+		break;
+	case ERR_NOT_IN_RANGE:
+		var pap = creep.moveTo(targ, {
+			reusePath : 5,
+			visualizePathStyle : {
+				stroke : '1ffaa00'
+			}
+		});
+		break;
+	default:
+		dlog('def')
+	}
 }
 
 
 
-//function fillTank(creep) {
-//    // Temp code
-//    creep.memory.taskList.pop();
+// function fillTank(creep) {
+// // Temp code
+// creep.memory.taskList.pop();
 //
-//    creep.say('F')
-//    if (!creep.getActiveBodyparts(CARRY)) {return false}
+// creep.say('F')
+// if (!creep.getActiveBodyparts(CARRY)) {return false}
 //    if (creep.carry == creep.carryCapacity) {return true}
 //
 //    var nrg = creep.memory.eTarget;
@@ -437,4 +405,8 @@ function sayProgress(target) {
     } else {
         dlog('say what?')
     }
+}
+
+function dlog(msg) {
+    util.dlog('CONSTRUCTION', msg);
 }

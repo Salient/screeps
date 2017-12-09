@@ -27,45 +27,46 @@ module.exports.taskMinions = function(room) {
     }
 }
 
-function retask(room, type, role) {
-            // special cases stuff. Maybe find a beter way to do this
- if( role == 'builder')
-    { var targets = room.find(FIND_MY_CONSTRUCTION_SITES); 
-        if (targets.length < 1) {return}}
+//function retask(room, type, role) {
+//            // special cases stuff. Maybe find a beter way to do this
+// if( role == 'builder')
+//    { var targets = room.find(FIND_MY_CONSTRUCTION_SITES); 
+//        if (targets.length < 1) {return}}
+//
+//    var roomCreeps = room.find(FIND_MY_CREEPS);
+//    // dlog('was told to retask all ' + type + ' to do ' + role)
+//    for ( var i in roomCreeps) {
+//        var youThere = roomCreeps[i];
+//        var yourJob = youThere.memory.role;
+//        var taskList = youThere.memory.taskList;
+//        if (util.def(yourJob) && (yourJob == type)
+//            && (taskList[taskList.length - 1] != role)) {
+//            // Check the latest task isn't already set to type
+//            dlog('preempting creep ' + youThere.name + ' task list to ' + role);
+//
+//            youThere.memory.taskList.push(role)
+//        }
+//    }
+//}
+//module.exports.retask = retask
 
-    var roomCreeps = room.find(FIND_MY_CREEPS);
-    // dlog('was told to retask all ' + type + ' to do ' + role)
-    for ( var i in roomCreeps) {
-        var youThere = roomCreeps[i];
-        var yourJob = youThere.memory.role;
-        var taskList = youThere.memory.taskList;
-        if (util.def(yourJob) && (yourJob == type)
-            && (taskList[taskList.length - 1] != role)) {
-            // Check the latest task isn't already set to type
-            dlog('preempting creep ' + youThere.name + ' task list to ' + role);
-
-            youThere.memory.taskList.push(role)
-        }
-    }
-}
-module.exports.retask = retask
-
-
-Room.prototype.getSpawning = function() {
-    var babbysForming = {};
-    var spawns = this.find(FIND_MY_SPAWNS);
-    for ( var n in spawns) {
-        var spawn = spawns[n];
-        if (util.def(spawn.spawning)) {
-            babbysForming[spawn.spawning.name] = true;
-        }
-    }
-
-    return babbysForming;
-}
+//
+//Room.prototype.getSpawning = function() {
+//    var babbysForming = {};
+//    var spawns = this.find(FIND_MY_SPAWNS);
+//    for ( var n in spawns) {
+//        var spawn = spawns[n];
+//        if (util.def(spawn.spawning)) {
+//            babbysForming[spawn.spawning.name] = true;
+//        }
+//    }
+//
+//    return babbysForming;
+//}
 
 var performTask = function(creep) {
-    if (creep.spawning) {
+    
+	if (creep.spawning) {
         return;
     }
 
@@ -93,25 +94,15 @@ var performTask = function(creep) {
     var curJob = taskList[taskList.length-1] 
     
     // Global behavior definitions
-    switch (taskList[taskList.length - 1]) {
+    switch (curJob) {
         case 'miner':
             harvest.mine(creep);
             break;
         case 'shuttle':
             harvest.shuttle(creep);
             break;
-        case 'harvestSortingHat': // Shuttle creep have the parts to be useful
-            harvest.sortingHat(creep);
-            break;
         case 'gatherer':
             harvest.gatherer(creep);
-            break;
-        case 'janitor':
-            build(creep) || 
-                harvest.scrounge(creep) // if there is energy lying around,
-            // we should
-            // stop building and go grab it
-
             break;
         case 'military':
             military.duty(creep);
@@ -120,39 +111,36 @@ var performTask = function(creep) {
             build.upgradeRC(creep);
             break;
         case 'builder':
-            build(creep);
+            build.builder(creep);
             break;
-        case 'freeAgent':
-            harvest.sortingHat(creep);
+        case 'damageControl':
+            build.repair(creep);
+            break;
         default:
             dlog('Unhandled creep task! (' + taskList[taskList.length - 1] + ')');
     }
+
 }
 module.exports.performTask = performTask;
 
 var getDefaultTask = function(creep) { // What to do if the creep has
     // nothing to do
+	
     var role = Memory.creeps[creep.name].role; // Access memory like this in
     // case creep is still spawning.
 
-    if (typeof role === 'undefined') {
-        dlog('aaaahhh motherland!');
-        creep.suicide(); // debug code
+    if (!util.def(role)) {
+		    	role = 'worker'
     }
 
     // dlog('assigning default task');
     switch (role) {
-        case 'freeAgent':
-        case 'workerBee':
-        case 'gatherer':
         case 'worker':
-            return 'harvestSortingHat';
+            return 'gatherer';
         case 'miner':
-        case 'technician':
-        case 'construction':
-            return role;
+        		return 'miner'
         case 'soldier':
-            case 'medic':
+         case 'medic':
             //        case 'scout':
             //        case 'pfc':
             //        case 'footSoldier':
@@ -161,7 +149,7 @@ var getDefaultTask = function(creep) { // What to do if the creep has
             return 'military';
         default:
             console.log('unmatched unit found!');
-            return 'harvestSortingHat';
+            return 'gatherer';
     }
 }
 

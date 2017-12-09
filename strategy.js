@@ -131,7 +131,8 @@ function bootstrap(room) {
             minWorker: 3,
             minerWeight: 55,
             medicWeight: 35 // Aim for one medic per three soldiers. TODO: code medic behavior
-        }
+        },
+        maxBuildSites: 5
     }
 room.memory.strategy = strategy;
     room.memory.nextSpawn = 1;
