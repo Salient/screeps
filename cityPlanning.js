@@ -88,7 +88,7 @@ var buildRoads = function(room) {
 		var hwy = paths[p];
 		for ( var sq in hwy) {
 			if (have > room.memory.strategy.maxBuildSites) {
-				break;
+				return true;;
 			}
 			; // Let's not get carried away
 			var st = hwy[sq];
@@ -103,18 +103,17 @@ var buildRoads = function(room) {
 
 	if (!util.def(heatm)) {
 		return
-
-		
-
-				
-
-		
-
 	}
 	for (var x = 1; x < 49; x++) {
 		for (var y = 1; y < 49; y++) {
 			if (heatm[x][y] > 15) {
-				room.createConstructionSite(x, y, STRUCTURE_ROAD)
+				if (have > room.memory.strategy.maxBuildSites) {
+					return true;
+				}
+				var res = room.createConstructionSite(x, y, STRUCTURE_ROAD)
+			if (!res) {
+				have++;
+			}
 			}
 		}
 	}
@@ -178,11 +177,7 @@ var setupSources = function(room) {
 }
 
 function refInfra(room) {
-	dlog('perform infra ent')
-
 	placeContainers(room);
-	dlog('perform infra exit')
-
 }
 module.exports.refInfra = refInfra;
 

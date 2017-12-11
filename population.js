@@ -61,6 +61,8 @@ function nextPriority(room) {
 	if (!room.memory.planned) {
 		return
 
+		
+
 	}
 
 	// Four main castes
@@ -94,17 +96,20 @@ function nextPriority(room) {
 		totalPop += have[i];
 	}
 
-	var vetoMiner = (needMiner(room)) ? 1 : 0;
+	// Less, stronger creep > lots of weak creep
 	if ((totalPop > room.controller.level * popCon.popPerLvl)
 			|| totalPop > popCon.maxPop) {
 		return false
 	} // TODO tweak this number
 
-	if (have.worker < popCon.minWorker) {
+	// Are we bootstrapping?
+	if (have.worker < popCon.minWorker || (have.miner > popCon.minWorker && have.worker < room.controller.level * 2)) { //arbitrary shenanigans here
 		room.memory.nrgReserve = 300; // Guarantee we can still light this
-										// rocket
+		// rocket
 		return 'worker'
 	}
+
+	// How is the Economy? Are there enough workers transporting energy?
 	var nrg = room.find(FIND_DROPPED_RESOURCES, {
 		filter : {
 			resourceType : RESOURCE_ENERGY
@@ -114,6 +119,12 @@ function nextPriority(room) {
 	for ( var glob in nrg) {
 		loot += nrg[glob].amount;
 	}
+
+	// Are we over mining the room?
+	var vetoMiner = (needMiner(room)) ? 1 : 0;
+
+	// Are we under attack?
+	var enemies = room.find(FIND_HOSTILE_CREEPS).length;
 
 	var builds = room.find(FIND_MY_CONSTRUCTION_SITES).length;
 	var needsOfTheFew = {
@@ -130,15 +141,14 @@ function nextPriority(room) {
 	// If the score is really high, the need is great. Have creep stop drawing
 	// from spawn/extensions until spawn is complete
 	if (needsOfTheFew[needsOfTheMany[0]] > 100) {
-		// dlog('Need' + needsOfTheMany[0] + ' with score ' +
-		// needsOfTheFew[needsOfTheMany[0]])
-		// dlog('Next' + needsOfTheMany[1] + ' with score ' +
-		// needsOfTheFew[needsOfTheMany[1]])
+		 dlog('Need' + needsOfTheMany[0] + ' with score ' +
+		 needsOfTheFew[needsOfTheMany[0]])
+		 dlog('Next' + needsOfTheMany[1] + ' with score ' +
+		 needsOfTheFew[needsOfTheMany[1]])
 		room.memory.strategy.nrgReserve = room.energyCapacityAvailable;
 		return needsOfTheMany[0];
 	}
-	// Nothing really important to spawn right now. Check back in 90 seconds.
-	room.memory.nextSpawn = Game.time + 90;
+	return false;
 }
 
 module.exports.nextPriority = nextPriority;
@@ -186,13 +196,13 @@ function openShaft(room) {
 	return false;
 }
 
-function nrgGone(room) {
-	var ore = room.find(FIND_SOURCES);
-	for ( var ton in ore) {
-		var spot = ore[ton];
-		// if (spot.energy < 50 && spot.ticksToRegeneration > 30)
-	}
-}
+//function nrgGone(room) {
+//	var ore = room.find(FIND_SOURCES);
+//	for ( var ton in ore) {
+//		var spot = ore[ton];
+//		// if (spot.energy < 50 && spot.ticksToRegeneration > 30)
+//	}
+//}
 
 function needMiner(room) {
 
@@ -209,7 +219,6 @@ function needMiner(room) {
 		// softCount +=workCount;
 	}
 	// WORK parts harvest 2 nrg per tick
-	dlog('Current mining efficiency: ' + horsepower * 2);
 
 	if (horsepower < 30) {
 		return true
@@ -219,35 +228,44 @@ function needMiner(room) {
 }
 
 var spawn = function(room) {
-
+	dlog('spawn logic')
 	room.memory.nextSpawn = Game.time + 5;
 
 	var goodCall = false;
-	;
 	var spawns = room.find(FIND_MY_SPAWNS);
 	for ( var uterus in spawns) {
 		var babyMomma = spawns[uterus];
 		if (!babyMomma.isActive()) {
+			dlog('spawn inactive!')
 			continue;
 		}
+		
 		if (util.def(babyMomma.spawning)) {
+			dlog('spawn busy...spawning!')
+dlog(babyMomma.spawning.remainingTime)
 			if (Game.time + babyMomma.spawning.remainingTime < room.memory.nextSpawn) {
+				dlog('setting spawn timer')
 				room.memory.nextSpawn = Game.time
 						+ babyMomma.spawning.remainingTime;
 				continue;
 			}
 		} else {
 			goodCall = true
+			dlog('noice')
 		}
 	}
 	if (!goodCall) {
+		dlog('bad call dude')
 		return false
 	}
 
 	var want = nextPriority(room);
 	if (!want) {
-		room.memory.nextSpawn += 90;
-		return;
+		// Nothing really important to spawn right now. Check back in 90
+		// seconds.
+		dlog('do not want!')
+		room.memory.nextSpawn = Game.time + 90;
+		return false;
 	} // do not want
 
 	var cap = room.energyCapacityAvailable;
@@ -256,7 +274,7 @@ var spawn = function(room) {
 	if (util.def(room.memory.nrgReserve)) {
 		if (room.energyAvailable < room.memory.nrgReserve) {
 			dlog('ahm chargin\' mah lazerz!');
-			room.memory.nextSpawn += 90;
+			room.memory.nextSpawn = Game.time + 90;
 			return;
 		} else {
 			cap = room.memory.nrgReserve;
@@ -282,7 +300,7 @@ var spawn = function(room) {
 	}
 	// last iteration put us over
 	body.pop()
-
+dlog ('im thinking i want a ' + body);
 	var result = babyMomma.spawnCreep(body, want + '-'
 			+ (Math.floor((Math.random() * 10000))), {
 		memory : {
@@ -297,12 +315,13 @@ var spawn = function(room) {
 		room.memory.nrgReserve = false;
 		break;
 	case ERR_NOT_ENOUGH_ENERGY: // Pick a body that will fit under 300 to make
-								// sure it procs
+		// sure it procs
 		if (room.memory.nrgReserve) {
 			dlog('rice and beans spawning ' + want);
-			room.memory.nextSpawn += 90; // Try again in 90 sec s
+			break;
 		} else {
-			room.memory.nextSpawn += 15;
+			room.memory.nextSpawn = Game.time + (cap - room.energyAvailable)/50*10;
+			return;
 		} // Try again in 90 sec s
 		break;
 	// while (getCost(body)> 300) { body.pop(); }
@@ -314,106 +333,111 @@ var spawn = function(room) {
 	default:
 		dlog('Error spawning - ' + util.getError(result))
 	}
-
+	if (babyMomma.spawning) {
+		room.memory.nextSpawn = Game.time + babyMomma.spawning.remainingTime;
+		return true
+	}
+	room.memory.nextSpawn = Game.time + 90; // Try again in 90 sec
+	return true;
 }
 
 /**
  * Try to find a free spawner to create requested unit type
- */
-function create(type, room) {
-
-	var strategy = room.memory.strategy;
-
-	var design = strategy.latestModels;
-	var currentPopulation = strategy.currentPopulation;
-
-	var roomSpawns = room.find(FIND_MY_SPAWNS);
-	for ( var i in roomSpawns) {
-		var spawn = roomSpawns[i];
-		var baby = spawn.canCreateCreep(design[type]);
-		if (baby == OK) { // Create creep with a somewhat descriptive name
-
-			var result = spawn.createCreep(design[type], room.name + "*" + type
-					+ '.' + (Math.floor((Math.random() * 10000))), {
-				"role" : type,
-				"birthRoom" : room.name,
-				"taskList" : []
-			});
-
-			if (typeof result === "string") {
-				dlog('Spawning ' + type + ' creep...')
-				// Successful creation. Update census count. nextPriority
-				// function makes sure there is a valid one, no need to check
-				currentPopulation[type]++;
-				room.memory.nrgReserve = null;
-				if (util.def(Game.flags['Next: ' + type])) {
-					Game.flags['Next: ' + type].remove();
-				}
-				room.memory.spawnWaiting = null;
-				return OK;
-			} else {
-				// Check error log here.
-				dlog("Possible name collision trying to create a creep! Unusual.");
-			}
-		} else {
-			// Disposition
-			switch (baby) {
-			case ERR_NOT_ENOUGH_ENERGY:
-
-				// check it's *possible* to have enough energy
-				var cashMoney = getCost(type, room);
-				var cap = room.energyCapacityAvailable;
-				if (cap < cashMoney) {
-					// return false;
-
-					dlog('Stragey error! Not enough energy capacity to build creep')
-					if (room.memory.strategy.currentPopulation['peon'] <= 7) {
-						dlog('spawning peon')
-						var result = spawn.createCreep([ MOVE, WORK, CARRY ],
-								'peon' + (Math.floor((Math.random() * 10000))),
-								{
-									"role" : 'peon',
-									"birthRoom" : room.name,
-									"taskList" : [ 'gatherer', 'shuttle',
-											'builder' ]
-								});
-						return;
-					}
-					dlog('Removing the first body part and trying again...')
-					var tempType = design[type];
-					tempType = tempType.slice(1, tempType.length - 1)
-					var result = spawn.createCreep(tempType, room.name
-							+ "-weakened-" + type + '.'
-							+ (Math.floor((Math.random() * 10000))), {
-						"role" : type,
-						"birthRoom" : room.name,
-						"taskList" : []
-					});
-
-				}
-				// dlog('WE REQUIRE MORE VESPENE GAS')
-				// dlog('cant build type ' + type)
-				// // Remember for next time, try again
-				room.memory.spawnWaiting = type;
-				room.createFlag(spawn.pos.x + 1, spawn.pos.y + 1, 'Next: '
-						+ type)
-				room.memory.nrgReserve = cashMoney; // Signal workers to leave
-													// this munch energy
-				break;
-			case ERR_BUSY:
-				// dlog('your mother is a busy woman')
-				// Remember for next time, try again
-				room.memory.spawnWaiting = type;
-				break;
-			case ERR_INVALID_ARGS:
-				dlog("Error birthing creep of type " + type + "!");
-				break;
-			default:
-				return baby;
-			}
-		}
-	}
-}
+// */
+//function create(type, room) {
+//
+//	var strategy = room.memory.strategy;
+//
+//	var design = strategy.latestModels;
+//	var currentPopulation = strategy.currentPopulation;
+//
+//	var roomSpawns = room.find(FIND_MY_SPAWNS);
+//	for ( var i in roomSpawns) {
+//		var spawn = roomSpawns[i];
+//		var baby = spawn.canCreateCreep(design[type]);
+//		if (baby == OK) { // Create creep with a somewhat descriptive name
+//
+//			var result = spawn.createCreep(design[type], room.name + "*" + type
+//					+ '.' + (Math.floor((Math.random() * 10000))), {
+//				"role" : type,
+//				"birthRoom" : room.name,
+//				"taskList" : []
+//			});
+//
+//			if (typeof result === "string") {
+//				dlog('Spawning ' + type + ' creep...')
+//				// Successful creation. Update census count. nextPriority
+//				// function makes sure there is a valid one, no need to check
+//				currentPopulation[type]++;
+//				room.memory.nrgReserve = null;
+//				if (util.def(Game.flags['Next: ' + type])) {
+//					Game.flags['Next: ' + type].remove();
+//				}
+//				room.memory.spawnWaiting = null;
+//				return OK;
+//			} else {
+//				// Check error log here.
+//				dlog("Possible name collision trying to create a creep! Unusual.");
+//			}
+//		} else {
+//			// Disposition
+//			switch (baby) {
+//			case ERR_NOT_ENOUGH_ENERGY:
+//
+//				// check it's *possible* to have enough energy
+//				var cashMoney = getCost(type, room);
+//				var cap = room.energyCapacityAvailable;
+//				if (cap < cashMoney) {
+//					// return false;
+//
+//					dlog('Stragey error! Not enough energy capacity to build creep')
+//					if (room.memory.strategy.currentPopulation['peon'] <= 7) {
+//						dlog('spawning peon')
+//						var result = spawn.createCreep([ MOVE, WORK, CARRY ],
+//								'peon' + (Math.floor((Math.random() * 10000))),
+//								{
+//									"role" : 'peon',
+//									"birthRoom" : room.name,
+//									"taskList" : [ 'gatherer', 'shuttle',
+//											'builder' ]
+//								});
+//						return;
+//					}
+//					dlog('Removing the first body part and trying again...')
+//					var tempType = design[type];
+//					tempType = tempType.slice(1, tempType.length - 1)
+//					var result = spawn.createCreep(tempType, room.name
+//							+ "-weakened-" + type + '.'
+//							+ (Math.floor((Math.random() * 10000))), {
+//						"role" : type,
+//						"birthRoom" : room.name,
+//						"taskList" : []
+//					});
+//
+//				}
+//				// dlog('WE REQUIRE MORE VESPENE GAS')
+//				// dlog('cant build type ' + type)
+//				// // Remember for next time, try again
+//				room.memory.spawnWaiting = type;
+//				room.createFlag(spawn.pos.x + 1, spawn.pos.y + 1, 'Next: '
+//						+ type)
+//				room.memory.nrgReserve = cashMoney; // Signal workers to leave
+//				// this munch energy
+//				break;
+//			case ERR_BUSY:
+//				// dlog('your mother is a busy woman')
+//				// Remember for next time, try again
+//				room.memory.spawnWaiting = type;
+//				break;
+//			case ERR_INVALID_ARGS:
+//				dlog("Error birthing creep of type " + type + "!");
+//				break;
+//			default:
+//				return baby;
+//			}
+//		}
+//	}
+//}
 
 function dlog(msg) {
 	util.dlog('POPULATION', msg);

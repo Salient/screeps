@@ -12,14 +12,14 @@ var taskMaster = require('tasker');
 //    }
 //}
 //
-//Game.d = function() {
-//    for (var ff in Game.rooms) {
-//        var sits = Game.rooms[ff].find(FIND_CONSTRUCTION_SITES);
-//        for (var dd in sits) {
-//            sits[dd].remove()
-//        }
-//    }
-//}
+Game.d = function() {
+    for (var ff in Game.rooms) {
+        var sits = Game.rooms[ff].find(FIND_CONSTRUCTION_SITES);
+        for (var dd in sits) {
+            sits[dd].remove()
+        }
+    }
+}
 //
 ////Game.fe = function() {
 ////    for (var ff in Game.rooms) {
@@ -80,9 +80,10 @@ Game.x = function() {
 // Main.js logic should go here.
 
 // Handle upper level strategy for each room
+
 for (var room in Game.rooms) {
     var thisRoom = Game.rooms[room];
-
+//dlog('Next spawn in ' + thisRoom.name + ' in ' + (thisRoom.memory.nextSpawn - Game.time));
     if (!(Game.time % 27)) {
         roomstrat.strategery(thisRoom);
     }
