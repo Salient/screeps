@@ -241,7 +241,10 @@ function fillTank(creep) {
 		var pap = creep.moveTo(targ, {
 			reusePath : 5,
 			visualizePathStyle : {
-				stroke : '1ffaa00'
+				stroke : '1ffaa00',
+				fill: 'red',
+			opacity: 1,
+			strokeWidth: 3
 			}
 		});
 		if (pap == OK || pap == ERR_TIRED) {
@@ -453,7 +456,9 @@ function scrounge(creep) {
         return false;
     }
     //
-    if (!util.def(creep.memory.eTarget) || !util.def(Game.getObjectById(creep.memory.eTarget)) || (creep.memory.targetUpdated + 90) < Game.time) { // If I
+    if (!util.def(creep.memory.eTarget) || 
+    		!util.def(Game.getObjectById(creep.memory.eTarget)) || 
+    		(creep.memory.targetUpdated + 90) < Game.time) { // If I
 																																					// don't
 																																					// have
 																																					// a
@@ -490,10 +495,30 @@ function scrounge(creep) {
             var move = creep.moveTo(target, {
                 reusePath: 15,
                 visualizePathStyle: {
-                    stroke: 'fffaaf0'
+                	fill: 'green',
+                    stroke: '#00ff00',
+                    strokeWidth: .3,
+                    opacity: .5,
+                    lineStyle: 'dashed'
                 }
             });
-// if (move == ERR_NO_PATH) {
+            
+// {
+// fill: 'transparent',
+// stroke: '#fff',
+// lineStyle: 'dashed',
+// strokeWidth: .15,
+// opacity: .1
+// }
+// width number
+// Line width, default is 0.1.
+// color string
+// Line color in any web format, default is #ffffff (white).
+// opacity number
+// Opacity value, default is 0.5.
+// lineStyle string
+// Either undefined (solid line), dashed, or dotted. Default is undefined.
+// // if (move == ERR_NO_PATH) {
 // delete creep.memory.eTarget;
 // dlog('hmm');
 // return false;
@@ -557,7 +582,7 @@ function gatherer(creep) {
     		var pap = creep.moveTo(targ, {
     			reusePath : 5,
     			visualizePathStyle : {
-    				stroke : '1ffaa00'
+    				stroke : '00FF00'
     			}
     		});
     		if (pap == OK || pap == ERR_TIRED) {return true} 
@@ -719,7 +744,9 @@ function findSink(creep) {
 	
     var targets = creep.room.find(FIND_MY_STRUCTURES,  {
         filter: (i) => i.energy < i.energyCapacity});
-        
+        if (targets.length == 0) {
+        	return false;
+        }
 
     // dlog('Finding sink for ' + creep.name);
 // //
@@ -765,60 +792,61 @@ function findSink(creep) {
         }
 
     }
-
-
-    var distances = [];
-
-    for (var i in structs) {
-        var struct = structs[i];
-        var structid = struct.id;
-        // dlog('is ' + struct.structureType + ' full? ' + isFull(struct))
-
-        if ((struct.structureType == STRUCTURE_STORAGE) || (struct.structureType == STRUCTURE_EXTENSION) ||
-            (struct.structureType == 'spawn')) {
-
-            // check there is a path
-            if ((creep.moveTo(struct) != ERR_NO_PATH) && (!isFull(struct))) {
-                // calculate distance
-                // dlog('adding candidate')
-                distances.push({
-                    "structid": structid,
-                    "distance": creep.pos.getRangeTo(struct),
-                });
-                // dlog('ID ' + structid + ' distance is '
-                // + distances[structid].toFixed(3));
-
-            }
-        }
-    }
-
-    // dlog('found ' + distances.length)
-
-    if (!distances.length) {
-        // dlog('seems all the nrg storage is full! I should build nore....');
-        return
-    }
-
-    // Sort by distances
-
-    distances.sort(function(a, b) {
-        if (a.distance > b.distance) {
-            return 1;
-        }
-        if (a.distance < b.distance) {
-            return -1;
-        }
-        return 0;
-    });
-
-    // Use first not-full option
-    for (var candidate in distances) {
-        if (distances[candidate].isFull) {
-            continue;
-        } else {
-            return distances[candidate].structid;
-        }
-    }
+//
+//
+// var distances = [];
+//
+// for (var i in structs) {
+// var struct = structs[i];
+// var structid = struct.id;
+// // dlog('is ' + struct.structureType + ' full? ' + isFull(struct))
+//
+// if ((struct.structureType == STRUCTURE_STORAGE) || (struct.structureType ==
+// STRUCTURE_EXTENSION) ||
+// (struct.structureType == 'spawn')) {
+//
+// // check there is a path
+// if ((creep.moveTo(struct) != ERR_NO_PATH) && (!isFull(struct))) {
+// // calculate distance
+// // dlog('adding candidate')
+// distances.push({
+// "structid": structid,
+// "distance": creep.pos.getRangeTo(struct),
+// });
+// // dlog('ID ' + structid + ' distance is '
+// // + distances[structid].toFixed(3));
+//
+// }
+// }
+// }
+//
+// // dlog('found ' + distances.length)
+//
+// if (!distances.length) {
+// // dlog('seems all the nrg storage is full! I should build nore....');
+// return
+// }
+//
+// // Sort by distances
+//
+// distances.sort(function(a, b) {
+// if (a.distance > b.distance) {
+// return 1;
+// }
+// if (a.distance < b.distance) {
+// return -1;
+// }
+// return 0;
+// });
+//
+// // Use first not-full option
+// for (var candidate in distances) {
+// if (distances[candidate].isFull) {
+// continue;
+// } else {
+// return distances[candidate].structid;
+// }
+// }
 
     // if we are here, there are no non-full sinks. just move to the closest one
     // and wait
@@ -881,7 +909,7 @@ function findSource(creep) {
         var mineHole = shafts[post];
 
         // If it's abandoned, or if a miner needs priority over a worker
-        if (!Game.creeps[mineHole.assignedTo] || (creep.memory.role == 'miner' && (Game.creeps[mineHole.assigntedTo].memory.role == 'worker'))) {
+        if (!Game.creeps[mineHole.assignedTo] || (creep.memory.role == 'miner' && (Game.creeps[mineHole.assignedTo].memory.role == 'worker'))) {
             if (shafts[post].srcId == recall.lastAssignedSrc) {
                 var backupShaft = mineHole;
             } else {
@@ -893,10 +921,10 @@ function findSource(creep) {
     }
     
     // Didn't find anything at our preferred source. Was there another option?
-    if (util.def(backupSrc)) {
-        recall.lastAssignedSrc = backupSrc.srcId;
-        backupSrc.assignedTo = creep.name;
-        return backupSrc;
+    if (util.def(backupShaft)) {
+        recall.lastAssignedSrc = backupShaft.srcId;
+        backupShaft.assignedTo = creep.name;
+        return backupShaft;
     }
 
     // Whelp...i guess nothing is available

@@ -4,6 +4,8 @@ var construct = require('cityPlanning');
 var util = require('common');
 var harvest = require('harvester');
 var taskMaster = require('tasker');
+var baseSupport = require('baseControl');
+
 //const profiler = require('screeps-profiler');
 
 //Game.f = function() {
@@ -83,7 +85,10 @@ Game.x = function() {
 
 for (var room in Game.rooms) {
     var thisRoom = Game.rooms[room];
-//dlog('Next spawn in ' + thisRoom.name + ' in ' + (thisRoom.memory.nextSpawn - Game.time));
+    if (!(Math.floor(thisRoom.memory.nextSpawn - Game.time)%10)) {
+dlog('Next spawn in ' + thisRoom.name + ' in ' + Math.floor((thisRoom.memory.nextSpawn - Game.time)));
+
+}
     if (!(Game.time % 27)) {
         roomstrat.strategery(thisRoom);
     }
@@ -101,6 +106,8 @@ for (var room in Game.rooms) {
     if (!(Game.time % 300)) {
         construct.refInfra(thisRoom);
     }
+    
+    baseSupport.towerControl(thisRoom);
 }
 
 // Need to figure out where the best place to put housekeeping stuff. 
