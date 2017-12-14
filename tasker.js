@@ -22,7 +22,7 @@ module.exports.taskMinions = function(room) {
 					: creep.pos.x;
 			var y = (creep.pos.y < 1) ? 1 : (creep.pos.y > 48) ? 48
 					: creep.pos.y;
-			room.memory.heatmap[x][y] += 15;
+			room.memory.heatmap[x][y] += 10;
 		}
 
 		// minions[dude].say(minions[dude].memory.role);

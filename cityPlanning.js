@@ -127,7 +127,30 @@ module.exports.controlLevelChange = function(room) {
 
 function placeWalls(room) {
 
+    for (var x = 0; x<50; x++) {
+        var tile = Game.map.getTerrainAt(x,0,room.name);
+        if (tile != 'wall'){
+            var startExit = x++;
+            while (Game.map.getTerrainAt(x,0,room.name) != 'wall') {
+            x++; 
+            }
+            var endExit = --x;
+
+            dlog('exit from  ' + startExit + 
+               ' to '+ endExit)}
+    }
+
 }
+function startWall(pos) {
+
+			var x = (pos.x < 1) ? 1 : (pos.x > 48) ? 48
+					: pos.x;
+			var y = (pos.y < 1) ? 1 : (pos.y > 48) ? 48
+					: pos.y;
+    var site = new RoomPosition(x,y,pos.roomName);
+    site.createConstructionSite(STRUCTURE_WALL);
+}
+module.exports.p = placeWalls;
 
 function placeDefences(room) {
 

@@ -33,11 +33,11 @@ Game.d = function() {
 ////    }
 ////}
 //
-//Game.p = function() {
-//    for (var r in Game.rooms) {
-//        roomstrat.bootstrap(Game.rooms[r]);
-//    }
-//}
+Game.p = function() {
+    for (var r in Game.rooms) {
+        construct.p(Game.rooms[r]);
+    }
+}
 //
 //Game.q = function() {
 //    for (var r in Game.rooms) {
@@ -86,7 +86,7 @@ Game.x = function() {
 for (var room in Game.rooms) {
     var thisRoom = Game.rooms[room];
     if (!(Math.floor(thisRoom.memory.nextSpawn - Game.time)%10)) {
-dlog('Next spawn in ' + thisRoom.name + ' in ' + Math.floor((thisRoom.memory.nextSpawn - Game.time)));
+        // dlog('Next spawn in ' + thisRoom.name + ' in ' + Math.floor((thisRoom.memory.nextSpawn - Game.time)));
 
 }
     if (!(Game.time % 27)) {
@@ -101,7 +101,7 @@ dlog('Next spawn in ' + thisRoom.name + ' in ' + Math.floor((thisRoom.memory.nex
  
     if (Game.time > thisRoom.memory.nextSpawn) {
     	population.spawn(thisRoom);
-    }
+   }
 
     if (!(Game.time % 300)) {
         construct.refInfra(thisRoom);

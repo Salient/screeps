@@ -1,5 +1,11 @@
 var util = require('common');
 var strat = require('strategy');
+var harvest = require('harvester');
+
+
+// TODO increase spawn delay by population in room
+
+
 
 Room.prototype.popCount = function() {
 	return this.find(FIND_MY_CREEPS).length
@@ -103,7 +109,8 @@ function nextPriority(room) {
 	} // TODO tweak this number
 
 	// Are we bootstrapping?
-	if (have.worker < popCon.minWorker || (have.miner > popCon.minWorker && have.worker < room.controller.level * 2)) { //arbitrary shenanigans here
+    //if (have.worker < popCon.minWorker || (have.miner > popCon.minWorker && have.worker < room.controller.level * 2)) { //arbitrary shenanigans here
+	if (have.worker < popCon.minWorker ||  have.worker < room.controller.level * 1.5) { //arbitrary shenanigans here
 		room.memory.nrgReserve = 300; // Guarantee we can still light this
 		// rocket
 		return 'worker'
@@ -121,7 +128,7 @@ function nextPriority(room) {
 	}
 
 	// Are we over mining the room?
-	var vetoMiner = (needMiner(room)) ? 1 : 0;
+	var vetoMiner = (harvest.needMiner(room)) ? 1 : 0;
 
 	// Are we under attack?
 	var enemies = room.find(FIND_HOSTILE_CREEPS).length;
@@ -141,10 +148,10 @@ function nextPriority(room) {
 	// If the score is really high, the need is great. Have creep stop drawing
 	// from spawn/extensions until spawn is complete
 	if (needsOfTheFew[needsOfTheMany[0]] > 100) {
-		 dlog('Need' + needsOfTheMany[0] + ' with score ' +
-		 needsOfTheFew[needsOfTheMany[0]])
-		 dlog('Next' + needsOfTheMany[1] + ' with score ' +
-		 needsOfTheFew[needsOfTheMany[1]])
+        //dlog('Need' + needsOfTheMany[0] + ' with score ' +
+        // needsOfTheFew[needsOfTheMany[0]])
+        //dlog('Next' + needsOfTheMany[1] + ' with score ' +
+        //needsOfTheFew[needsOfTheMany[1]])
 		room.memory.strategy.nrgReserve = room.energyCapacityAvailable;
 		return needsOfTheMany[0];
 	}
@@ -204,31 +211,30 @@ function openShaft(room) {
 //	}
 //}
 
-function needMiner(room) {
-
-	// calculate current mining througput vs energy left and time til regen
-	var horsepower = 0;
-	// var softCount =0;
-
-	var miner = room.find(FIND_MY_CREEPS);
-	for ( var guy in miner) {
-		var workCount = miner[guy].getActiveBodyparts(WORK);
-		if (miner[guy].memory.role == 'miner') {
-			horsepower += workCount
-		}
-		// softCount +=workCount;
-	}
-	// WORK parts harvest 2 nrg per tick
-
-	if (horsepower < 30) {
-		return true
-	} else {
-		return false
-	}
-}
+//function needMiner(room) {
+//
+//	// calculate current mining througput vs energy left and time til regen
+//	var horsepower = 0;
+//	// var softCount =0;
+//
+//	var miner = room.find(FIND_MY_CREEPS);
+//	for ( var guy in miner) {
+//		var workCount = miner[guy].getActiveBodyparts(WORK);
+//		if (miner[guy].memory.role == 'miner') {
+//			horsepower += workCount
+//		}
+//		// softCount +=workCount;
+//	}
+//	// WORK parts harvest 2 nrg per tick
+//
+//	if (horsepower < 30) {
+//		return true
+//	} else {
+//		return false
+//	}
+//}
 
 var spawn = function(room) {
-	dlog('spawn logic')
 	room.memory.nextSpawn = Game.time + 5;
 
 	var goodCall = false;
@@ -241,8 +247,7 @@ var spawn = function(room) {
 		}
 		
 		if (util.def(babyMomma.spawning)) {
-			dlog('spawn busy...spawning!')
-dlog(babyMomma.spawning.remainingTime)
+            //			dlog('Time left spawning: ' + babyMomma.spawning.remainingTime)
 			if (Game.time + babyMomma.spawning.remainingTime < room.memory.nextSpawn) {
 				dlog('setting spawn timer')
 				room.memory.nextSpawn = Game.time
@@ -251,11 +256,9 @@ dlog(babyMomma.spawning.remainingTime)
 			}
 		} else {
 			goodCall = true
-			dlog('noice')
 		}
 	}
 	if (!goodCall) {
-		dlog('bad call dude')
 		return false
 	}
 
@@ -264,7 +267,7 @@ dlog(babyMomma.spawning.remainingTime)
 		// Nothing really important to spawn right now. Check back in 90
 		// seconds.
 		dlog('do not want!')
-		room.memory.nextSpawn = Game.time + 90;
+		room.memory.nextSpawn = Game.time + 30;
 		return false;
 	} // do not want
 
@@ -274,7 +277,7 @@ dlog(babyMomma.spawning.remainingTime)
 	if (util.def(room.memory.nrgReserve)) {
 		if (room.energyAvailable < room.memory.nrgReserve) {
 			dlog('ahm chargin\' mah lazerz!');
-			room.memory.nextSpawn = Game.time + 90;
+			room.memory.nextSpawn = Game.time + 30;
 			return;
 		} else {
 			cap = room.memory.nrgReserve;
@@ -300,8 +303,8 @@ dlog(babyMomma.spawning.remainingTime)
 	}
 	// last iteration put us over
 	body.pop()
-dlog ('im thinking i want a ' + body);
-	var result = babyMomma.spawnCreep(body, want + '-'
+    
+    var result = babyMomma.spawnCreep(body, want + '-'
 			+ (Math.floor((Math.random() * 10000))), {
 		memory : {
 			"role" : want,
@@ -320,7 +323,8 @@ dlog ('im thinking i want a ' + body);
 			dlog('rice and beans spawning ' + want);
 			break;
 		} else {
-			room.memory.nextSpawn = Game.time + (cap - room.energyAvailable)/50*10;
+            //room.memory.nextSpawn = Game.time + (cap - room.energyAvailable)/50*10;
+			room.memory.nextSpawn = Game.time + 30;
 			return;
 		} // Try again in 90 sec s
 		break;
@@ -337,7 +341,7 @@ dlog ('im thinking i want a ' + body);
 		room.memory.nextSpawn = Game.time + babyMomma.spawning.remainingTime;
 		return true
 	}
-	room.memory.nextSpawn = Game.time + 90; // Try again in 90 sec
+	room.memory.nextSpawn = Game.time + 30; // Try again in 90 sec
 	return true;
 }
 

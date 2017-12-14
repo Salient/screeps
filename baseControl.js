@@ -76,15 +76,14 @@ function repairRoads(support) {
 
 function towerControl(room) {
 	
-	for(var bldg in Game.structures) {
-		if (Game.structures[bldg].room != room || Game.structures[bldg].structureType != STRUCTURE_TOWER) {
-			continue;
-		}
-		attackHostiles(Game.structures[bldg]);
-		healTroops(Game.structures[bldg]);
+    var towers = room.find(FIND_MY_STRUCTURES, {filter: {structureType: STRUCTURE_TOWER}});
+
+	for(var gun  in towers) {
+        
+        if ( attackHostiles(towers[gun]) == OK) {continue;}
 		repairBase(Game.structures[bldg]);
 		repairRoads(Game.structures[bldg]);
-		
+		healTroops(Game.structures[bldg]);
 	}
 }
 module.exports.towerControl = towerControl;
