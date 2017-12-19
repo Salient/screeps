@@ -76,6 +76,12 @@ Room.prototype.needStructure = function(structure) {
 
 var buildRoads = function(room) {
 
+
+			if (have > room.memory.strategy.infrastructure.maxBuildSites) {
+    if (!util.def(room.memory.planned) || room.memory.planned == false) {
+        return;
+    }
+
 	var spwn = Game.getObjectById(room.memory.spawnId);
 	var have = room.find(FIND_MY_CONSTRUCTION_SITES, {
 		filter : {
@@ -87,7 +93,7 @@ var buildRoads = function(room) {
 	for ( var p in paths) {
 		var hwy = paths[p];
 		for ( var sq in hwy) {
-			if (have > room.memory.strategy.maxBuildSites) {
+			if (have > room.memory.strategy.infrastructure.maxBuildSites) {
 				return true;;
 			}
 			; // Let's not get carried away
@@ -100,6 +106,7 @@ var buildRoads = function(room) {
 	}
 
 	var heatm = room.memory.heatmap;
+	var infraVars  = room.memory.strategy.infrastructure;
 
 	if (!util.def(heatm)) {
 		return
@@ -107,7 +114,7 @@ var buildRoads = function(room) {
 	for (var x = 1; x < 49; x++) {
 		for (var y = 1; y < 49; y++) {
 			if (heatm[x][y] > 15) {
-				if (have > room.memory.strategy.maxBuildSites) {
+				if (have > infraVars.maxBuildSites * room.controller.level) {
 					return true;
 				}
 				var res = room.createConstructionSite(x, y, STRUCTURE_ROAD)

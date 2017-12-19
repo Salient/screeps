@@ -924,7 +924,7 @@ function refindSource(creep) {
         var disId = sources[disrc].id;
 
         for (var dude in manpower) {
-            if (!util.def(manpower[dude].memory.sTarget.srcId)){
+            if (!util.def(manpower[dude].memory.sTarget) || !util.def(manpower[dude].memory.sTarget.srcId)){
                 //maybe just spawned
                 continue;
             }

@@ -132,7 +132,10 @@ function bootstrap(room) {
             minerWeight: 55,
             medicWeight: 35 // Aim for one medic per three soldiers. TODO: code medic behavior
         },
-        maxBuildSites: 5
+        infrastructure: {
+        maxBuildSites: 5,
+            roadWeight: 10
+        }
     }
 room.memory.strategy = strategy;
     room.memory.nextSpawn = 1;
