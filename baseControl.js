@@ -20,15 +20,14 @@ function attackHostiles(support) {
     }); // Get most sensible
 
     var res = support.attack(hitList[0]);
-    if (res == OK) {
-        return true;
-    } else {
-        if (res != ERR_NOT_ENOUGH_ENERGY){
+	switch(res){
+		case OK: return true; break;
+		case ERR_NOT_ENOUGH_ENERGY:
+		case ERR_RCL_NOT_ENOUGH: return false; break;
+			default: 
         dlog('Attack Error -  ' + util.getError(res));
-        }
-        return false;
-    }
-
+			return false; break;
+	}
 }
 
 function healTroops(support) {
@@ -50,14 +49,14 @@ function healTroops(support) {
     }); // Get most sensible
 
     var res = support.heal(hitList[0]);
-    if (res == OK) {
-        return true;
-    } else {
-        if (res != ERR_NOT_ENOUGH_ENERGY){
-        dlog('Heal Error - ' + util.getError(res));
-        }
-        return false;
-    }
+	switch(res){
+		case OK: return true; break;
+		case ERR_NOT_ENOUGH_ENERGY:
+		return false; break;
+			default: 
+        dlog('Heal Error -  ' + util.getError(res));
+			return false; break;
+	}
 }
 
 function repairBase(support) {
@@ -80,14 +79,14 @@ function repairBase(support) {
     }); // Get most sensible
 
     var res = support.repair(hitList[0]);
-    if (res == OK) {
-        return true;
-    } else {
-        if (res != ERR_NOT_ENOUGH_ENERGY){
-        dlog('Base Repair Error - ' + util.getError(res));
-        }
-        return false;
-    }
+	switch(res){
+		case OK: return true; break;
+		case ERR_NOT_ENOUGH_ENERGY:
+		case ERR_RCL_NOT_ENOUGH: return false; break;
+			default: 
+        dlog('Repair Error -  ' + util.getError(res));
+			return false; break;
+	}
 }
 
 function repairRoads(support) {
@@ -110,14 +109,14 @@ function repairRoads(support) {
     }); // Get most sensible
 
     var res = support.repair(hitList[0]);
-    if (res == OK) {
-        return true;
-    } else {
-        if (res != ERR_NOT_ENOUGH_ENERGY){
-        dlog('Road Repair Error - ' + util.getError(res));
-        }
-        return false;
-    }
+	switch(res){
+		case OK: return true; break;
+		case ERR_NOT_ENOUGH_ENERGY:
+		case ERR_RCL_NOT_ENOUGH: return false; break;
+			default: 
+        dlog('Road Repair Error -  ' + util.getError(res));
+			return false; break;
+	}
 }
 
 function towerControl(room) {

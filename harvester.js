@@ -184,7 +184,7 @@ function mine(creep) {
                     if (!needMiner(creep.room)) { // source overmined
                         //                       creep.say('AHHHHH MO')
                         //dlog('AAAHMOTHERLAND')
-                            // creep.suicide();
+                        // creep.suicide();
                     }
                     // otherwise be patient. Or migrate? TODO scan for
                     // unoccupied shafts
@@ -217,7 +217,7 @@ function mine(creep) {
         var res = creep.moveTo(posting, {
             reusePath: 15,
             visualizePathStyle: {
-                        opacity: 0.9,
+                opacity: 0.9,
                 stroke: '#ff1100'
             }
         });
@@ -625,19 +625,21 @@ function gatherer(creep) {
 
         if (!util.def(mySink) || isFull(mySink)) {
             var test = findSink(creep);
-            if (!util.def(test)) {
+            if (!util.def(test) || !test ) {
                 // dlog('unable to acquire new sink.');
 
                 creep.memory.taskList.pop();
 
                 return false;
             } else {
+				dlog('said def')
                 mySink = Game.getObjectById(test);
             }
             // util.dumpObject(mySink)}
             // gatherer(creep);
         }
         var res = creep.transfer(mySink, RESOURCE_ENERGY);
+		return
         switch (res) {
             case OK:
                 return true;
@@ -763,11 +765,21 @@ function findBacon(creep) {
 
 function findSink(creep) {
 
-
-    var targets = creep.room.find(FIND_MY_STRUCTURES, {
-        filter: (i) => i.energy < i.energyCapacity
-    });
-    if (targets.length == 0) {
+	var targets = [];
+	
+    if (util.def(creep.room.memory.nrgReserve) && creep.room.memory.nrgReserve != false) {
+        targets = creep.room.find(FIND_MY_SPAWNS, {
+            filter: (i) => i.energy < i.energyCapacity
+        });
+	} 
+	
+ if (targets.length == 0) {
+        var targets = creep.room.find(FIND_MY_STRUCTURES, {
+            filter: (i) => i.energy < i.energyCapacity
+        });
+    }
+	
+	if (targets.length == 0) {
         return false;
     }
 
@@ -807,7 +819,7 @@ function findSink(creep) {
         var res = creep.moveTo(target, {
             reusePath: 15,
             visualizePathStyle: {
-                        opacity: 0.9,
+                opacity: 0.9,
                 stroke: '#ff1122'
             }
         });
@@ -924,7 +936,7 @@ function refindSource(creep) {
         var disId = sources[disrc].id;
 
         for (var dude in manpower) {
-            if (!util.def(manpower[dude].memory.sTarget) || !util.def(manpower[dude].memory.sTarget.srcId)){
+            if (!util.def(manpower[dude].memory.sTarget) || !util.def(manpower[dude].memory.sTarget.srcId)) {
                 //maybe just spawned
                 continue;
             }

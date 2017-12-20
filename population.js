@@ -7,12 +7,12 @@ var harvest = require('harvester');
 
 
 
-Room.prototype.popCount = function() {
-    return this.find(FIND_MY_CREEPS).length
-}
+//Room.prototype.popCount = function() {
+//    return this.find(FIND_MY_CREEPS).length
+//}
 
 // Takes in an array of body parts
-var getCost = function(body) {
+function getCost(body) {
     var cost = 0;
     for (var part in body) {
         var bodyPart = body[part];
@@ -25,7 +25,7 @@ var getCost = function(body) {
     return cost;
 }
 
-var census = function(room) {
+function census(room) {
     var roles = {
         worker: 0,
         soldier: 0,
@@ -109,7 +109,7 @@ function nextPriority(room) {
     //if (have.worker < popCon.minWorker || (have.miner > popCon.minWorker && have.worker < room.controller.level * 2)) { //arbitrary shenanigans here
     if (have.worker < popCon.minWorker || have.worker < room.controller.level * 1.5) { //arbitrary shenanigans here
         dlog('Bootstrapping worker population')
-        room.memory.nrgReserve = 300; // Guarantee we can still light this
+		room.memory.nrgReserve = (room.energyAvailable > 300) ? room.energyAvailable : 300; // Guarantee we can still light this
         // rocket
         return 'worker'
     }
@@ -237,7 +237,8 @@ var spawn = function(room) {
     // room.memory.nextSpawn = Game.time + 5;
 
     var reserve = room.memory.nrgReserve;
-    if (!util.def(reserve) || !util.def(room.memory.planned)) {
+   
+	if (!util.def(reserve) || !util.def(room.memory.planned)) {
         reserve = false;
         return false;
     }
@@ -247,8 +248,8 @@ var spawn = function(room) {
     }
 
     if (reserve != false && reserve > room.energyAvailable) {
-        dlog(room.name + ' has ' + room.energyAvailable + '/' + room.energyCapacityAvailable + ' energy, current goal is  ' + room.memory.nrgReserve + '. Checking again in 30.');
-        room.memory.nextSpawn = Game.time + 30;
+        dlog(room.name + ' has ' + room.energyAvailable + '/' + room.energyCapacityAvailable + ' energy, current goal is  ' + room.memory.nrgReserve + '. Delaying.');
+		room.memory.nextSpawn = Game.time + ((room.energyCapacityAvailable - room.energyAvailable > 30)? 30 : room.energyCapacityAvailable - room.energyAvailable);
         return false;
     }
 

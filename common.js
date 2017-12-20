@@ -55,10 +55,9 @@ module.exports.dumpObject = function(obj) {
 }
 
 module.exports.def = function(obj) {
-    return !!obj;
-    
-	if ((typeof obj !== undefined) || (obj === null)) {
-		return false;
-	}
-	return obj;
+    return (obj === false) ? true : !!obj;
+    //	if ((typeof obj !== undefined) || (obj === null)) {
+    //		return false;
+    //	}
+    //    return true 
 }
