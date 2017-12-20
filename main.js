@@ -6,14 +6,14 @@ var harvest = require('harvester');
 var taskMaster = require('tasker');
 var baseSupport = require('baseControl');
 var visuals = require('visuals')
-//const profiler = require('screeps-profiler');
-
-//Game.f = function() {
-//    for (var ff in Game.flags) {
-//        Game.flags[ff].remove();
-//    }
-//}
-//
+    //const profiler = require('screeps-profiler');
+dlog('Genesis count ' + Game.cpu.getUsed())
+    //Game.f = function() {
+    //    for (var ff in Game.flags) {
+    //        Game.flags[ff].remove();
+    //    }
+    //}
+    //
 Game.d = function() {
         for (var ff in Game.rooms) {
             var sits = Game.rooms[ff].find(FIND_CONSTRUCTION_SITES);
@@ -82,74 +82,73 @@ Game.x = function() {
 // Main.js logic should go here.
 
 // Handle upper level strategy for each room
+module.exports.loop = function() {
 
-for (var room in Game.rooms) {
-    var thisRoom = Game.rooms[room];
+        for (var room in Game.rooms) {
+            var thisRoom = Game.rooms[room];
 
-    // Pretty diagnostic information
-    visuals(thisRoom);
+            // Pretty diagnostic information
+            visuals(thisRoom);
+            construct.coolmap(thisRoom);
 
+            //    if (!(Math.floor(thisRoom.memory.nextSpawn - Game.time) % 10)) {
+            //        dlog('Next spawn in ' + thisRoom.name + ' in ' + Math.floor((thisRoom.memory.nextSpawn - Game.time)));
+            //}
 
+            //dlog('CPU ' + room.name + ': ' + Game.cpu.getUsed());
+            if (!(Game.time % 27)) {
+                roomstrat.strategery(thisRoom);
+                dlog('after strat CPU ' + thisRoom.name + ': ' + Game.cpu.getUsed());
+            }
 
+            taskMaster.taskMinions(thisRoom);
+            dlog('after tasking  CPU ' + thisRoom.name + ': ' + Game.cpu.getUsed());
+            //
+            // Manage building placement, build priorities, and roads
+            if (!(Game.time % 15) || !thisRoom.memory.planned) {
+                construct.planRoom(thisRoom);
+                dlog('after construct  CPU ' + thisRoom.name + ': ' + Game.cpu.getUsed());
+            }
 
+            if (Game.time > thisRoom.memory.nextSpawn) {
+                population.spawn(thisRoom);
+                dlog('after spawn  CPU ' + thisRoom.name + ': ' + Game.cpu.getUsed());
+            }
 
+            if (!(Game.time % 300)) {
+                construct.refInfra(thisRoom);
+                //dlog('after refine  CPU ' + thisRoom.name + ': ' + Game.cpu.getUsed());
 
-    //    if (!(Math.floor(thisRoom.memory.nextSpawn - Game.time) % 10)) {
-        //        dlog('Next spawn in ' + thisRoom.name + ' in ' + Math.floor((thisRoom.memory.nextSpawn - Game.time)));
+            }
+
+            baseSupport.towerControl(thisRoom);
+            //dlog('after base  CPU ' + thisRoom.name + ': ' + Game.cpu.getUsed());
+
+        }
+
+        // Need to figure out where the best place to put housekeeping stuff. 
+        if (!(Game.time % 11)) {
+
+            for (var q in Memory.creeps) {
+                if (!Game.creeps[q]) {
+                    delete Memory.creeps[q];
+                }
+            }
+        }
+
+        //// 
+        if (!(Game.time % 67)) {
+
+            for (var r in Memory.rooms) {
+                if (!Game.rooms[r]) {
+                    delete Memory.rooms[r];
+                }
+            }
+        }
+    }
+    //    });
     //}
-    
-    //dlog('CPU ' + room.name + ': ' + Game.cpu.getUsed());
-    if (!(Game.time % 27)) {
-        roomstrat.strategery(thisRoom);
-        //dlog('after strat CPU ' + thisRoom.name + ': ' + Game.cpu.getUsed());
-    }
-    taskMaster.taskMinions(thisRoom);
-    //dlog('after tasking  CPU ' + thisRoom.name + ': ' + Game.cpu.getUsed());
     //
-    // Manage building placement, build priorities, and roads
-    if (!(Game.time % 15) || !thisRoom.memory.planned) {
-        construct.planRoom(thisRoom);
-        //dlog('after construct  CPU ' + thisRoom.name + ': ' + Game.cpu.getUsed());
-    }
-
-    if (Game.time > thisRoom.memory.nextSpawn) {
-        population.spawn(thisRoom);
-        //dlog('after spawn  CPU ' + thisRoom.name + ': ' + Game.cpu.getUsed());
-    }
-
-    if (!(Game.time % 300)) {
-        construct.refInfra(thisRoom);
-        //dlog('after refine  CPU ' + thisRoom.name + ': ' + Game.cpu.getUsed());
-
-    }
-
-    baseSupport.towerControl(thisRoom);
-    //dlog('after base  CPU ' + thisRoom.name + ': ' + Game.cpu.getUsed());
-
-}
-
-// Need to figure out where the best place to put housekeeping stuff. 
-if (!(Game.time % 11)) {
-
-    for (var q in Memory.creeps) {
-        if (!Game.creeps[q]) {
-            delete Memory.creeps[q];
-        }
-    }
-}
-
-//// 
-if (!(Game.time % 67)) {
-
-    for (var r in Memory.rooms) {
-        if (!Game.rooms[r]) {
-            delete Memory.rooms[r];
-        }
-    }
-}
-//    });
-//}
-//
 function dlog(msg) {
     util.dlog('MAIN', msg);
 }

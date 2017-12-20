@@ -23,7 +23,9 @@ function attackHostiles(support) {
     if (res == OK) {
         return true;
     } else {
+        if (res != ERR_NOT_ENOUGH_ENERGY){
         dlog('Attack Error -  ' + util.getError(res));
+        }
         return false;
     }
 
@@ -51,7 +53,9 @@ function healTroops(support) {
     if (res == OK) {
         return true;
     } else {
+        if (res != ERR_NOT_ENOUGH_ENERGY){
         dlog('Heal Error - ' + util.getError(res));
+        }
         return false;
     }
 }
@@ -79,7 +83,9 @@ function repairBase(support) {
     if (res == OK) {
         return true;
     } else {
+        if (res != ERR_NOT_ENOUGH_ENERGY){
         dlog('Base Repair Error - ' + util.getError(res));
+        }
         return false;
     }
 }
@@ -107,7 +113,9 @@ function repairRoads(support) {
     if (res == OK) {
         return true;
     } else {
+        if (res != ERR_NOT_ENOUGH_ENERGY){
         dlog('Road Repair Error - ' + util.getError(res));
+        }
         return false;
     }
 }
@@ -123,9 +131,9 @@ function towerControl(room) {
     for (var gun in towers) {
 
         if (attackHostiles(towers[gun]) ||
-            repairBase(Game.structures[bldg]) ||
-            repairRoads(Game.structures[bldg]) ||
-            healTroops(Game.structures[bldg])) {
+            repairBase(towers[gun]) ||
+            repairRoads(towers[gun]) ||
+            healTroops(towers[gun])) {
             return true;
         } else {
             return false

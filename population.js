@@ -66,9 +66,6 @@ function nextPriority(room) {
     // Check if room setup
     if (!room.memory.planned) {
         return
-
-
-
     }
 
     // Four main castes
@@ -111,6 +108,7 @@ function nextPriority(room) {
     // Are we bootstrapping?
     //if (have.worker < popCon.minWorker || (have.miner > popCon.minWorker && have.worker < room.controller.level * 2)) { //arbitrary shenanigans here
     if (have.worker < popCon.minWorker || have.worker < room.controller.level * 1.5) { //arbitrary shenanigans here
+        dlog('Bootstrapping worker population')
         room.memory.nrgReserve = 300; // Guarantee we can still light this
         // rocket
         return 'worker'
@@ -239,20 +237,27 @@ var spawn = function(room) {
     // room.memory.nextSpawn = Game.time + 5;
 
     var reserve = room.memory.nrgReserve;
-    if (!util.def(reserve) || reserve > room.energyCapacityAvailable) {
-        room.memory.nrgReserve = false;
+    if (!util.def(reserve)) {
+       reserve = false; 
+        room.memory.nextSpawn = Game.time + 30;
+        return false;
+    }  
+        
+    if (reserve != false && reserve > room.energyCapacityAvailable) {
+        room.memory.nextSpawn = Game.time + 30;
         return false;
     }
 
     var cap = room.energyCapacityAvailable;
 
     // short cut if we are charging up
-    if (room.energyAvailable < room.memory.nrgReserve) {
+    if (reserve != false && room.energyAvailable < reserve) {
         dlog(room.name + ' has ' + room.energyAvailable +'/' +room.energyCapacityAvailable+ ' energy, current goal is  ' + room.memory.nrgReserve +'. Checking again in 30.');
         room.memory.nextSpawn = Game.time + 30;
         return;
     } else {
         cap = room.memory.nrgReserve;
+        dlog(room.name + ' has ' + room.energyAvailable +'/' +room.energyCapacityAvailable+ ' energy, current goal is  ' + room.memory.nrgReserve +'. Proceeding...');
     }
     var goodCall = false;
     var spawns = room.find(FIND_MY_SPAWNS);
@@ -275,6 +280,7 @@ var spawn = function(room) {
             goodCall = true
         }
     }
+
     if (!goodCall) {
         return false
     }
@@ -343,6 +349,8 @@ var spawn = function(room) {
             break;
         default:
             dlog('Error spawning - ' + util.getError(result))
+            dlog(body)
+            dlog(want)
     }
     if (babyMomma.spawning) {
         room.memory.nextSpawn = Game.time + babyMomma.spawning.remainingTime;

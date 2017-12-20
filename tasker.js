@@ -11,7 +11,10 @@ var military = require('tactics');
 var debug = true; // Debug code
 
 module.exports.taskMinions = function(room) {
+        dlog('before find tasking ' + Game.cpu.getUsed())
 	var minions = room.find(FIND_MY_CREEPS);
+        dlog('after find tasking ' + Game.cpu.getUsed())
+
 	for ( var dude in minions) {
 		var creep = minions[dude];
 		
@@ -22,11 +25,13 @@ module.exports.taskMinions = function(room) {
 					: creep.pos.x;
 			var y = (creep.pos.y < 1) ? 1 : (creep.pos.y > 48) ? 48
 					: creep.pos.y;
-			room.memory.heatmap[x][y] += 10;
+			room.memory.heatmap[x][y] += 5;
 		}
 
 		// minions[dude].say(minions[dude].memory.role);
+        dlog('before tasking ' + Game.cpu.getUsed())
 		performTask(minions[dude]);
+        dlog('after  tasking ' + Game.cpu.getUsed())
 	}
 }
 
