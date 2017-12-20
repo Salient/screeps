@@ -51,7 +51,7 @@ module.exports.x = placeExtensions;
 Room.prototype.needStructure = function(structure) {
 
     var origin = Game.getObjectById(this.memory.spawnId).pos;
-
+dlog('herpaderp')
     if (!util.def(origin)) {
         dlog('big bad voodoo');
         return false;

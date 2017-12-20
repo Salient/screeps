@@ -237,28 +237,24 @@ var spawn = function(room) {
     // room.memory.nextSpawn = Game.time + 5;
 
     var reserve = room.memory.nrgReserve;
-    if (!util.def(reserve)) {
-       reserve = false; 
-        room.memory.nextSpawn = Game.time + 30;
+    if (!util.def(reserve) || !util.def(room.memory.planned)) {
+        reserve = false;
         return false;
-    }  
-        
+    }
+
     if (reserve != false && reserve > room.energyCapacityAvailable) {
+        reserve = room.energyCapacityAvailable;
+    }
+
+    if (reserve != false && reserve > room.energyAvailable) {
+        dlog(room.name + ' has ' + room.energyAvailable + '/' + room.energyCapacityAvailable + ' energy, current goal is  ' + room.memory.nrgReserve + '. Checking again in 30.');
         room.memory.nextSpawn = Game.time + 30;
         return false;
     }
 
-    var cap = room.energyCapacityAvailable;
+    var cap = (reserve == false) ? room.energyCapacityAvailable : reserve;
 
     // short cut if we are charging up
-    if (reserve != false && room.energyAvailable < reserve) {
-        dlog(room.name + ' has ' + room.energyAvailable +'/' +room.energyCapacityAvailable+ ' energy, current goal is  ' + room.memory.nrgReserve +'. Checking again in 30.');
-        room.memory.nextSpawn = Game.time + 30;
-        return;
-    } else {
-        cap = room.memory.nrgReserve;
-        dlog(room.name + ' has ' + room.energyAvailable +'/' +room.energyCapacityAvailable+ ' energy, current goal is  ' + room.memory.nrgReserve +'. Proceeding...');
-    }
     var goodCall = false;
     var spawns = room.find(FIND_MY_SPAWNS);
     for (var uterus in spawns) {
