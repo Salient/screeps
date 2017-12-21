@@ -552,6 +552,7 @@ function scrounge(creep) {
 
 module.exports.scrounge = scrounge;
 
+
 function gatherer(creep) {
 
     // Priorities are:
@@ -625,23 +626,26 @@ function gatherer(creep) {
 
         if (!util.def(mySink) || isFull(mySink)) {
             var test = findSink(creep);
-            if (!util.def(test) || !test ) {
+            if (!util.def(test) || !test) {
                 // dlog('unable to acquire new sink.');
+                dlog('invalid sink target')
 
                 creep.memory.taskList.pop();
 
                 return false;
             } else {
-				dlog('said def')
                 mySink = Game.getObjectById(test);
             }
             // util.dumpObject(mySink)}
             // gatherer(creep);
         }
         var res = creep.transfer(mySink, RESOURCE_ENERGY);
-		return
+        //        return
         switch (res) {
             case OK:
+                if (mySink.structureType == STRUCTURE_SPAWN) {
+                    mySink.renewCreep(creep);
+                }
                 return true;
                 break;
             case ERR_NOT_IN_RANGE:
@@ -763,46 +767,58 @@ function findBacon(creep) {
     return best.id;
 }
 
+function findSite(creep) {
+
+    //	if (creep.getActiveBodyparts(WORK) == 0) {
+    //		creep.memory.taskList.pop(); //		return false;
+    //	}
+    //
+    if (!util.def(creep.memory.bTarget) ||
+        !util.def(Game.getObjectById(creep.memory.bTarget))) {
+        // If not listed then it's built by nearest after all these are done
+
+        var newTarget = creep.room.find(FIND_MY_CONSTRUCTION_SITES);
+
+        if (!util.def(newTarget)) {
+            dlog('no build targets. untasking')
+            creep.memory.taskList.pop();
+            return false;
+        }
+
+        // Prioritize
+        for (var need in buildPriority) {
+            var priority = buildPriority[need];
+            for (var site in newTarget) {
+                if (newTarget[site].structureType == priority) {
+
+                    creep.memory.bTarget = newTarget[site].id;
+                    dlog('assinging ' + creep.name + ' build target ' +
+                        priority);
+                    return newTarget[site].id;
+                }
+            }
+        }
+    }
+    return false;
+}
+
 function findSink(creep) {
 
-	var targets = [];
-	
-    if (util.def(creep.room.memory.nrgReserve) && creep.room.memory.nrgReserve != false) {
-        targets = creep.room.find(FIND_MY_SPAWNS, {
-            filter: (i) => i.energy < i.energyCapacity
-        });
-	} 
-	
- if (targets.length == 0) {
-        var targets = creep.room.find(FIND_MY_STRUCTURES, {
-            filter: (i) => i.energy < i.energyCapacity
-        });
-    }
-	
-	if (targets.length == 0) {
+    var sinkPriority = [STRUCTURE_LINK, STRUCTURE_SPAWN, STRUCTURE_EXTENSION, STRUCTURE_TOWER, STRUCTURE_POWER_SPAWN, STRUCTURE_STORAGE];
+
+    var targets = creep.room.find(FIND_MY_STRUCTURES);
+
+    if (targets.length == 0) {
+        dlog('no sink targets in this room');
         return false;
     }
-
-    // dlog('Finding sink for ' + creep.name);
-    // //
-    // var containersWithSpace = creep.room.find(FIND_STRUCTURES, {
-    // filter: (i) => i.structureType == STRUCTURE_CONTAINER &&
-    // i.store[RESOURCE_ENERGY] < i.storeCapacity[RESOURCE_ENERGY]
-    // });
-
-    // // support structures
-    // var towers = creep.room.find(FIND_STRUCTURES, {
-    // filter: (i) => i.structureType == STRUCTURE_TOWER &&
-    // i.energy < i.energyCapacity
-    // });
-
-    // var targets = containersWithSpace.concat(towers);
 
     for (var x in targets) {
         var object = targets[x];
         object.distance = creep.pos.getRangeTo(object);
     }
 
+    // Might as well find the closest priority 
     targets.sort(function(a, b) {
         if (a.distance > b.distance) {
             return 1;
@@ -813,95 +829,21 @@ function findSink(creep) {
         return 0;
     });
 
-    // Check pathing before we return
-    for (var y in targets) {
-        var target = targets[y];
-        var res = creep.moveTo(target, {
-            reusePath: 15,
-            visualizePathStyle: {
-                opacity: 0.9,
-                stroke: '#ff1122'
+    for (var need in sinkPriority) {
+        var priority = sinkPriority[need];
+        for (var sink in targets) {
+            var potential = targets[sink];
+            if (potential.structureType == priority && potential.energy < potential.energyCapacity) {
+                var pew = creep.moveTo(potential);
+                if (pew == OK || pew == ERR_TIRED) {
+                    return potential.id;
+                }
             }
-        });
-        if (res == OK || res == ERR_TIRED) {
-            return target.id;
         }
-
     }
-    //
-    //
-    // var distances = [];
-    //
-    // for (var i in structs) {
-    // var struct = structs[i];
-    // var structid = struct.id;
-    // // dlog('is ' + struct.structureType + ' full? ' + isFull(struct))
-    //
-    // if ((struct.structureType == STRUCTURE_STORAGE) || (struct.structureType ==
-    // STRUCTURE_EXTENSION) ||
-    // (struct.structureType == 'spawn')) {
-    //
-    // // check there is a path
-    // if ((creep.moveTo(struct) != ERR_NO_PATH) && (!isFull(struct))) {
-    // // calculate distance
-    // // dlog('adding candidate')
-    // distances.push({
-    // "structid": structid,
-    // "distance": creep.pos.getRangeTo(struct),
-    // });
-    // // dlog('ID ' + structid + ' distance is '
-    // // + distances[structid].toFixed(3));
-    //
-    // }
-    // }
-    // }
-    //
-    // // dlog('found ' + distances.length)
-    //
-    // if (!distances.length) {
-    // // dlog('seems all the nrg storage is full! I should build nore....');
-    // return
-    // }
-    //
-    // // Sort by distances
-    //
-    // distances.sort(function(a, b) {
-    // if (a.distance > b.distance) {
-    // return 1;
-    // }
-    // if (a.distance < b.distance) {
-    // return -1;
-    // }
-    // return 0;
-    // });
-    //
-    // // Use first not-full option
-    // for (var candidate in distances) {
-    // if (distances[candidate].isFull) {
-    // continue;
-    // } else {
-    // return distances[candidate].structid;
-    // }
-    // }
-
-    // if we are here, there are no non-full sinks. just move to the closest one
-    // and wait
-    return distances[0].structid;
-
-    // TODO: Add storage logic
-    // if ([ STRUCTURE_EXTENSION, 'storage' ].indexOf(struct.structureType)
-    // == -1) {
-    // continue;
-    // }
-
-    // All extensions and spawns are full. Hit up the controller then
-    // for ( var i in structs) {
-    // var struct = structs[i];
-    // if ((struct.structureType == STRUCTURE_CONTROLLER)) {
-    // return struct;
-    // }
-    // }
+    return false;
 }
+
 module.exports.gatherer = gatherer;
 
 function findOverhead(creep) {
