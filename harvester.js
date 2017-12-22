@@ -123,7 +123,7 @@ function needMiner(room) {
     }
     // WORK parts harvest 2 nrg per tick
 
-    if (horsepower < 30) { // max useful is 20. added some margin;
+    if (horsepower*2 < 30) { // max useful is 20. added some margin;
         return true
     } else {
         return false
@@ -628,9 +628,9 @@ function gatherer(creep) {
             var test = findSink(creep);
             if (!util.def(test) || !test) {
                 // dlog('unable to acquire new sink.');
-                dlog('invalid sink target')
+                // dlog('invalid sink target')
 
-                creep.memory.taskList.pop();
+                //        creep.memory.taskList.pop();
 
                 return false;
             } else {
@@ -639,13 +639,15 @@ function gatherer(creep) {
             // util.dumpObject(mySink)}
             // gatherer(creep);
         }
+
+        //if (mySink.structureType == STRUCTURE_SPAWN) {
+        //            mySink.renewCreep(creep);
+        //        }
+        // var quant = (mySink.energyCapacity - mySink.energy < creep.energy ) ? mySink.energyCapacity - mySink.energy : creep.energy;
         var res = creep.transfer(mySink, RESOURCE_ENERGY);
         //        return
         switch (res) {
             case OK:
-                if (mySink.structureType == STRUCTURE_SPAWN) {
-                    mySink.renewCreep(creep);
-                }
                 return true;
                 break;
             case ERR_NOT_IN_RANGE:
@@ -767,41 +769,6 @@ function findBacon(creep) {
     return best.id;
 }
 
-function findSite(creep) {
-
-    //	if (creep.getActiveBodyparts(WORK) == 0) {
-    //		creep.memory.taskList.pop(); //		return false;
-    //	}
-    //
-    if (!util.def(creep.memory.bTarget) ||
-        !util.def(Game.getObjectById(creep.memory.bTarget))) {
-        // If not listed then it's built by nearest after all these are done
-
-        var newTarget = creep.room.find(FIND_MY_CONSTRUCTION_SITES);
-
-        if (!util.def(newTarget)) {
-            dlog('no build targets. untasking')
-            creep.memory.taskList.pop();
-            return false;
-        }
-
-        // Prioritize
-        for (var need in buildPriority) {
-            var priority = buildPriority[need];
-            for (var site in newTarget) {
-                if (newTarget[site].structureType == priority) {
-
-                    creep.memory.bTarget = newTarget[site].id;
-                    dlog('assinging ' + creep.name + ' build target ' +
-                        priority);
-                    return newTarget[site].id;
-                }
-            }
-        }
-    }
-    return false;
-}
-
 function findSink(creep) {
 
     var sinkPriority = [STRUCTURE_LINK, STRUCTURE_SPAWN, STRUCTURE_EXTENSION, STRUCTURE_TOWER, STRUCTURE_POWER_SPAWN, STRUCTURE_STORAGE];
@@ -892,7 +859,11 @@ function refindSource(creep) {
 
     }
 }
+module.exports.forager = function (creep) {
 
+
+
+}
 function findSource(creep) {
 
     // TODO balance shaft assignment across sources

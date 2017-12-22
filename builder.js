@@ -58,8 +58,8 @@ creep.say('⚒')
 			|| !util.def(Game.getObjectById(creep.memory.bTarget))) {
 		var orders = findSite(creep) || repairDuty(creep);
 		if (!util.def(orders) || orders == false) {
-			dlog(creep.name
-					+ ' says nothing to build or repair, reverting to prior task')
+            //			dlog(creep.name
+            //		+ ' says nothing to build or repair, reverting to prior task')
 			creep.memory.taskList.pop();
 			return false;
 		} else {

@@ -315,9 +315,10 @@ var spawn = function(room) {
     var result = babyMomma.spawnCreep(body, want + '-' +
         (Math.floor((Math.random() * 10000))), {
             memory: {
-                "role": want,
-                "birthRoom": room.name,
-                "taskList": []
+                role: want,
+                birthRoom: room.name,
+                taskList: ['gatherer'],
+                taskStatus: 'SOURCE'
             }
         })
     switch (result) {

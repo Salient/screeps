@@ -46,38 +46,46 @@ var visuals = require('visuals')
     //}
     //
 function exterminate() {
-        for (var r in Game.rooms) {
-            var room = (Game.rooms[r]);
-            var roads = room.find(FIND_STRUCTURES, {filter: (i) => { i.structureType == STRUCTURE_ROAD}}); 
-            util.dumpObject(roads);
-            for (var it in roads) {
-                roads[it].destroy();
+    for (var r in Game.rooms) {
+        var room = (Game.rooms[r]);
+        var roads = room.find(FIND_STRUCTURES, {
+            filter: (i) => {
+                i.structureType == STRUCTURE_ROAD
             }
-            var roads = room.find(FIND_CONSTRUCTION_SITES, {filter: (i) =>  { i.structureType == STRUCTURE_ROAD}}); 
-            for (var it in roads) {
-                roads[it].destroy();
+        });
+        util.dumpObject(roads);
+        for (var it in roads) {
+            roads[it].destroy();
+        }
+        var roads = room.find(FIND_CONSTRUCTION_SITES, {
+            filter: (i) => {
+                i.structureType == STRUCTURE_ROAD
             }
+        });
+        for (var it in roads) {
+            roads[it].destroy();
         }
     }
-    Game.x = exterminate;
-    //
-    //Game.t = function() {
-    //    for (var r in Game.rooms) {
+}
+Game.x = exterminate;
+//
+//Game.t = function() {
+//    for (var r in Game.rooms) {
 //  population.nextPriority(Game.rooms[r]);
 //    }
 //}
-    //
-    //Room.prototype.getError = function(msg) {
-    //    return (util.getError(msg));
-    //}
-    //Creep.prototype.getError = function(msg) {
-    //    return (util.getError(msg));
-    //}
-    //
-    //// Returns a valid path to the structure, or null?
-    //Creep.prototype.checkPath = function(structure) {
-    //    return this.room.findPath(this.pos, structure);
-    //}
+//
+//Room.prototype.getError = function(msg) {
+//    return (util.getError(msg));
+//}
+//Creep.prototype.getError = function(msg) {
+//    return (util.getError(msg));
+//}
+//
+//// Returns a valid path to the structure, or null?
+//Creep.prototype.checkPath = function(structure) {
+//    return this.room.findPath(this.pos, structure);
+//}
 
 // Welcome to the HiveMind (v0.1)
 // Basic aim is to build up a room, fortify, and then spawn into adjacent rooms.
@@ -93,6 +101,12 @@ function exterminate() {
 module.exports.loop = function() {
         //    dlog('\n\n New Tick ---')
         //   profiler.wrap(function() {
+Game.pw = function (){
+    for (var r in Game.rooms) {
+        var room = Game.rooms[r];
+        construct.placeWalls(room);
+    }
+}
 
         for (var room in Game.rooms) {
             var thisRoom = Game.rooms[room];
@@ -112,13 +126,13 @@ module.exports.loop = function() {
             }
 
             //dlog('before tasking  CPU ' + thisRoom.name + ': ' + Game.cpu.getUsed());
-            taskMaster.taskMinions(thisRoom);
+            //            taskMaster.taskMinions(thisRoom);
             //dlog('after tasking  CPU ' + thisRoom.name + ': ' + Game.cpu.getUsed());
             //
             // Manage building placement, build priorities, and roads
             if (!(Game.time % 15) || !thisRoom.memory.planned) {
                 construct.planRoom(thisRoom);
-                //dlog('after construct  CPU ' + thisRoom.name + ': ' + Game.cpu.getUsed());
+                    //dlog('after construct  CPU ' + thisRoom.name + ': ' + Game.cpu.getUsed());
             }
 
             if (Game.time > thisRoom.memory.nextSpawn) {
@@ -126,15 +140,19 @@ module.exports.loop = function() {
                 //dlog('after spawn  CPU ' + thisRoom.name + ': ' + Game.cpu.getUsed());
             }
 
-            if (!(Game.time % 300)) {
-                construct.refInfra(thisRoom);
-                //dlog('after refine  CPU ' + thisRoom.name + ': ' + Game.cpu.getUsed());
-
-            }
-
+            //            if (!(Game.time % 300)) {
+            //                construct.refInfra(thisRoom);
+            //                //dlog('after refine  CPU ' + thisRoom.name + ': ' + Game.cpu.getUsed());
+            //
+            //            }
+            //
             baseSupport.towerControl(thisRoom);
             //dlog('after base  CPU ' + thisRoom.name + ': ' + Game.cpu.getUsed());
 
+        }
+
+        for (var dude in Game.creeps) {
+            taskMaster.performTask(Game.creeps[dude]);
         }
 
         // Need to figure out where the best place to put housekeeping stuff. 

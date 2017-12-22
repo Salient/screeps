@@ -76,7 +76,6 @@ Room.prototype.needStructure = function(structure) {
 var buildRoads = function(room) {
 
 
-    if (have > room.memory.strategy.infrastructure.maxBuildSites) {
         if (!util.def(room.memory.planned) || room.memory.planned == false) {
             return;
         }
@@ -123,16 +122,29 @@ var buildRoads = function(room) {
             }
         }
     }
-}
 
 module.exports.controlLevelChange = function(room) {
     placeExtensions(room);
-    placeDefences(room);
+    placeDefenses(room);
     placeContainers(room);
 }
 
-function placeWalls(room) {
+module.exports.placeWalls =  function (room) {
 
+    for (var x = 0; x < 50; x++) {
+        var tile = Game.map.getTerrainAt(x, 0, room.name);
+        if (tile != 'wall') {
+            var startExit = x++;
+            while (Game.map.getTerrainAt(x, 0, room.name) != 'wall') {
+                x++;
+            }
+            var endExit = --x;
+
+            dlog('exit from  ' + startExit +
+                ' to ' + endExit)
+        }
+    }
+    
     for (var x = 0; x < 50; x++) {
         var tile = Game.map.getTerrainAt(x, 0, room.name);
         if (tile != 'wall') {
@@ -158,9 +170,9 @@ function startWall(pos) {
     var site = new RoomPosition(x, y, pos.roomName);
     site.createConstructionSite(STRUCTURE_WALL);
 }
-module.exports.p = placeWalls;
+// module.exports.p = placeWalls;
 
-function placeDefences(room) {
+function placeDefenses(room) {
 
     placeWalls(room);
 
