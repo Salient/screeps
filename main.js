@@ -14,15 +14,7 @@ var visuals = require('visuals')
     //    }
     //}
     //
-    //Game.d = function() {
-    //        for (var ff in Game.rooms) {
-    //            var sits = Game.rooms[ff].find(FIND_CONSTRUCTION_SITES);
-    //            for (var dd in sits) {
-    //                sits[dd].remove()
-    //            }
-    //        }
-    //    }
-    //
+
     ////Game.fe = function() {
     ////    for (var ff in Game.rooms) {
     ////        var res = harvest.freeEnergy(Game.rooms[ff]);
@@ -68,6 +60,7 @@ function exterminate() {
     }
 }
 Game.x = exterminate;
+
 //
 //Game.t = function() {
 //    for (var r in Game.rooms) {
@@ -101,20 +94,33 @@ Game.x = exterminate;
 module.exports.loop = function() {
         //    dlog('\n\n New Tick ---')
         //   profiler.wrap(function() {
-Game.pw = function (){
-    for (var r in Game.rooms) {
-        var room = Game.rooms[r];
-        construct.placeWalls(room);
-    }
-}
+        Game.pw = function() {
+            for (var r in Game.rooms) {
+                var room = Game.rooms[r];
+                construct.bd(room);
+            }
+        }
 
+Game.destroyAll = function(structure) {
+        for (var ff in Game.rooms) {
+            var sits = Game.rooms[ff].find(FIND_STRUCTURES, {filter: (i)=> i.structureType == structure});
+            for (var dd in sits) {
+                sits[dd].destroy()
+            }
+        }
+    }
+        Game.pp = function() {
+            for (var room in Game.rooms) {
+                var thisRoom = Game.rooms[room];
+                construct.x(room);
+            }
+        }
         for (var room in Game.rooms) {
             var thisRoom = Game.rooms[room];
 
             // Pretty diagnostic information
             visuals(thisRoom);
             construct.coolmap(thisRoom);
-
             //    if (!(Math.floor(thisRoom.memory.nextSpawn - Game.time) % 10)) {
             //        dlog('Next spawn in ' + thisRoom.name + ' in ' + Math.floor((thisRoom.memory.nextSpawn - Game.time)));
             //}
@@ -132,7 +138,7 @@ Game.pw = function (){
             // Manage building placement, build priorities, and roads
             if (!(Game.time % 15) || !thisRoom.memory.planned) {
                 construct.planRoom(thisRoom);
-                    //dlog('after construct  CPU ' + thisRoom.name + ': ' + Game.cpu.getUsed());
+                //dlog('after construct  CPU ' + thisRoom.name + ': ' + Game.cpu.getUsed());
             }
 
             if (Game.time > thisRoom.memory.nextSpawn) {

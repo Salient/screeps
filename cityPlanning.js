@@ -5,48 +5,15 @@ var util = require('common');
 
 var debug = false
 
-module.exports.x = placeExtensions;
 
-// function (room) {
-//
-// var spawns = room.find(FIND_MY_SPAWNS);
-//   
-// var thisPath = room.findPath(spawns[0].pos,room.controller.pos);
-// for (var st in thisPath) {
-// var thisStep = thisPath[st];
-// // room.createConstructionSite(thisStep.x, thisStep.y, STRUCTURE_ROAD);
-// room.createFlag(thisStep.x, thisStep.y);
-// }
-// }
-// Automatically place buildings as they become available.
-// Run periodically to build stuff
-//
-//
-//
 // General structure placement strategy
 // Rooms are 50x50 tiles, numbered 0-49
 // Get map of room (store somewhere in memory?)
 // Get location of spawn and all sources in the room, and controller
 // find two independent paths to each and mark those tiles as roads
-// place extensions all along roadsides
 
 // FYI, max call stack size is 4500. ish. it seems to depend
 
-// function validRoadTile(pos) {
-// var map = room.memory.map;
-// var tile = [ pos.y ][pos.x];
-//
-// for ( var entry in tile) {
-// var data = tile[entry];
-//
-// } {return}
-// }
-
-// // Bootstrap check
-// if (!util.def(curRoom.memory.strategy)) {
-// roomstrat.strategery(curRoom);
-// population.census(curRoom)
-// }
 
 Room.prototype.needStructure = function(structure) {
 
@@ -73,55 +40,65 @@ Room.prototype.needStructure = function(structure) {
     }
 }
 
+function zeroHeatMap(room) {
+    var hm = room.memory.heatmap;
+    for (var x in hm) {
+        var y = hm[x];
+        for ( var sq in y){
+       y[sq] = 0; 
+        }
+    }
+}
+
 var buildRoads = function(room) {
 
+    if (!util.def(room.memory.planned) || room.memory.planned == false) {
+        return;
+    }
 
-        if (!util.def(room.memory.planned) || room.memory.planned == false) {
-            return;
+    var spwn = Game.getObjectById(room.memory.spawnId);
+    var have = room.find(FIND_MY_CONSTRUCTION_SITES, {
+        filter: {
+            structureType: STRUCTURE_ROAD
         }
+    }).length;
+    var paths = room.memory.infrastructure.paths;
 
-        var spwn = Game.getObjectById(room.memory.spawnId);
-        var have = room.find(FIND_MY_CONSTRUCTION_SITES, {
-            filter: {
-                structureType: STRUCTURE_ROAD
+    for (var p in paths) {
+        var hwy = paths[p];
+        for (var sq in hwy) {
+            if (have > room.memory.strategy.construction.maxBuildSites) {
+                zeroHeatMap(room);
+                return true;;
+            }; // Let's not get carried away
+            var st = hwy[sq];
+            var res = room.createConstructionSite(st.x, st.y, STRUCTURE_ROAD);
+            if (!res) {
+                have++;
             }
-        }).length;
-        var paths = room.memory.paths;
+        }
+    }
 
-        for (var p in paths) {
-            var hwy = paths[p];
-            for (var sq in hwy) {
-                if (have > room.memory.strategy.infrastructure.maxBuildSites) {
-                    return true;;
-                }; // Let's not get carried away
-                var st = hwy[sq];
-                var res = room.createConstructionSite(st.x, st.y, STRUCTURE_ROAD);
+    var heatm = room.memory.heatmap;
+    var infraVars = room.memory.strategy.construction;
+
+    if (!util.def(heatm)) {
+        return
+    }
+    for (var x = 1; x < 49; x++) {
+        for (var y = 1; y < 49; y++) {
+            if (heatm[x][y] > 25) {
+                if (have > infraVars.maxBuildSites * room.controller.level) {
+                    return true;
+                }
+                var res = room.createConstructionSite(x, y, STRUCTURE_ROAD)
                 if (!res) {
                     have++;
                 }
             }
         }
-
-        var heatm = room.memory.heatmap;
-        var infraVars = room.memory.strategy.infrastructure;
-
-        if (!util.def(heatm)) {
-            return
-        }
-        for (var x = 1; x < 49; x++) {
-            for (var y = 1; y < 49; y++) {
-                if (heatm[x][y] > 15) {
-                    if (have > infraVars.maxBuildSites * room.controller.level) {
-                        return true;
-                    }
-                    var res = room.createConstructionSite(x, y, STRUCTURE_ROAD)
-                    if (!res) {
-                        have++;
-                    }
-                }
-            }
-        }
     }
+}
 
 module.exports.controlLevelChange = function(room) {
     placeExtensions(room);
@@ -129,40 +106,101 @@ module.exports.controlLevelChange = function(room) {
     placeContainers(room);
 }
 
-module.exports.placeWalls =  function (room) {
+var markExitDoors = function(room) {
+    dlog('marking')
+    var top = [];
+    var bot = [];
+    var left = [];
+    var right = [];
 
     for (var x = 0; x < 50; x++) {
-        var tile = Game.map.getTerrainAt(x, 0, room.name);
-        if (tile != 'wall') {
-            var startExit = x++;
-            while (Game.map.getTerrainAt(x, 0, room.name) != 'wall') {
-                x++;
-            }
-            var endExit = --x;
-
-            dlog('exit from  ' + startExit +
-                ' to ' + endExit)
-        }
-    }
-    
-    for (var x = 0; x < 50; x++) {
-        var tile = Game.map.getTerrainAt(x, 0, room.name);
-        if (tile != 'wall') {
-            var startExit = x++;
-            while (Game.map.getTerrainAt(x, 0, room.name) != 'wall') {
-                x++;
-            }
-            var endExit = --x;
-
-            dlog('exit from  ' + startExit +
-                ' to ' + endExit)
-        }
+        var tileA = Game.map.getTerrainAt(x, 0, room.name);
+        var tileB = Game.map.getTerrainAt(x, 49, room.name);
+        top[x] = (tileA != 'wall') ? 1 : 0;
+        bot[x] = (tileB != 'wall') ? 1 : 0;
     }
 
+    for (var y = 0; y < 50; y++) {
+        var tileA = Game.map.getTerrainAt(0, y, room.name);
+        var tileB = Game.map.getTerrainAt(49, y, room.name);
+        left[y] = (tileA != 'wall') ? 1 : 0;
+        right[y] = (tileB != 'wall') ? 1 : 0;
+    }
+
+    if (!util.def(room.memory.infrastructure)) {
+        room.memory.infrastructure = {}
+    }
+
+    var exits = {
+        top: top,
+        bot: bot,
+        left: left,
+        right: right
+    }
+
+    dlog('marked')
+    util.dumpObject(exits)
+        // Spent the CPU, might as well save it
+    room.memory.infrastructure.exits = exits;
+    room.memory.infrastructure.exitDoors = {};
+
+    // mark one spot to be a rampart
+    for (var side in exits) {
+        var wall = exits[side];
+        dlog('looping ' + side)
+        util.dumpObject(wall)
+
+        var start = 0;
+        var end = 0;
+        var outer = 0;
+        while (!wall[outer] && outer < 50) {
+            outer++;
+            dlog('inner loop 1')
+        }
+        // if outer is 50, then there are no exits on this side
+        if (outer == 50) {
+            room.memory.infrastructure.exitDoors.side = 0;
+            continue;
+        }
+        start = outer;
+        while (wall[outer] && outer < 50) {
+            outer++;
+        }
+        end = outer;
+        util.dumpObject(exits)
+        util.dumpObject(room.memory.infrastructure.exitDoors);
+        room.memory.infrastructure.exitDoors.side = (Math.floor((end - start) / 2) + start);
+    }
+}
+
+
+
+module.exports.markWalls = markExitDoors;;
+
+function placeWalls(room) {
+    if (!util.def(room.memory.infrastructure.exitDoors)) {
+        markExitDoors(room);
+    }
+
+    var exits = room.memory.infrastructure.exitDoors;
+
+    if (exits.top > 0) {
+        room.createConstructionSite(exits.top, 2, STRUCTURE_RAMPART);
+
+    }
+    room.createConstructionSite(exits.bot, 47, STRUCTURE_RAMPART);
+    room.createConstructionSite(2, exits.left, STRUCTURE_RAMPART);
+    room.createConstructionSite(47, exits.right, STRUCTURE_RAMPART);
+
+    for (var x = 2; x < 48; x++) {
+        room.createConstructionSite(x, 2, STRUCTURE_WALL);
+        room.createConstructionSite(x, 47, STRUCTURE_WALL);
+        room.createConstructionSite(2, x, STRUCTURE_WALL);
+        room.createConstructionSite(47, x, STRUCTURE_WALL);
+    }
 }
 
 function startWall(pos) {
-
     var x = (pos.x < 1) ? 1 : (pos.x > 48) ? 48 :
         pos.x;
     var y = (pos.y < 1) ? 1 : (pos.y > 48) ? 48 :
@@ -173,9 +211,7 @@ function startWall(pos) {
 // module.exports.p = placeWalls;
 
 function placeDefenses(room) {
-
     placeWalls(room);
-
 }
 
 // Determines how many creep can mine each source at the same time
@@ -230,12 +266,12 @@ function createBasicPaths(room) {
 
     var spwn = Game.getObjectById(room.memory.spawnId);
     var shafts = room.memory.shafts;
-    room.memory.paths = {};
-    room.memory.paths.ctrl = room.controller.pos.findPathTo(spwn);
+    room.memory.infrastructure.paths = {};
+    room.memory.infrastructure.paths.ctrl = room.controller.pos.findPathTo(spwn);
 
     // Create roads to mineshafts
     for (var sh in shafts) {
-        room.memory.paths['shaft' + sh] = room.findPath(spwn.pos,
+        room.memory.infrastructure.paths['shaft' + sh] = room.findPath(spwn.pos,
                 shafts[sh].pos, {
                     ignoreRoads: true,
                     ignoreCreeps: true
@@ -246,6 +282,8 @@ function createBasicPaths(room) {
 }
 // Bootstrap code to initialize all expected data structures for the room
 function bootstrap(room) {
+
+    room.memory.infrastructure = {};
 
     // Designate mining posts
     // Stores in room.memory.shafts
@@ -272,12 +310,10 @@ function bootstrap(room) {
     // Create roads to controller
     // Later, storage, links, etc.
     createBasicPaths(room);
-    placeExtensions(room)
-    placeContainers(room)
-
-    buildRoads(room);
+    // markWalls(room);
 
     room.memory.planned = true;
+    return true;
 }
 
 module.exports.bootstrap = bootstrap;
@@ -287,8 +323,8 @@ function refreshRoom(room) {
 
 }
 
-function planRoom(room) {
 
+function planRoom(room) {
     // Take a look around, see what needs doing
 
     // Priorities
@@ -303,17 +339,23 @@ function planRoom(room) {
             return false; // bail for now
         }
     }
-
     placeExtensions(room);
+    placeContainers(room)
     placeTower(room);
 
+    //if (!(Game.time % 17)) {
+            buildRoads(room);
+    // }
     // Manage roads building
-    buildRoads(room);
-
 }
+
+
 module.exports.planRoom = planRoom;
-module.exports.coolmap = function (room) {
+module.exports.coolmap = function(room) {
     // Measure traffic around the room
+    if (!util.def(room.memory.heatmap)) {
+        return;
+    }
     var heatm = room.memory.heatmap;
 
     // Cool the heat map
@@ -328,6 +370,7 @@ module.exports.coolmap = function (room) {
         }
     }
 }
+
 function placeAdjacent(room, pos, structure) {
 
     var vicinity = room.lookAtArea((pos.y > 1) ? pos.y - 1 : 1,
@@ -390,33 +433,11 @@ var placeExtensions = function placeExtensions(room) {
 
     // Compare number allowed at this controller level vs. how many in room
     // Should only be called if room level has changed!
-
-    var cap = CONTROLLER_STRUCTURES["tower"][room.controller.level];
-    var have = room.find(FIND_MY_STRUCTURES, {
-        filter: {
-            structureType: STRUCTURE_TOWER
-        }
-    }).length + room.find(FIND_MY_CONSTRUCTION_SITES, {
-        filter: {
-            structureType: STRUCTURE_EXTENSION
-        }
-    }).length;
-    if (have >= cap) {
-        return
-
-
-
-
-
-
-
-    }
-
-    // I should build more
+    var placeNum = room.needStructure(STRUCTURE_EXTENSION);
+    var origin = Game.getObjectById(room.memory.spawnId).pos;
 
     // make in some checkered pattern around spawn
     //
-    var origin = Game.getObjectById(room.memory.spawnId).pos;
 
     if (!util.def(origin)) {
         dlog('big bad voodoo');
@@ -426,7 +447,7 @@ var placeExtensions = function placeExtensions(room) {
     var radius = 2;
     // start at spawn +/- 2 squares
     // spiral out
-    while (have < cap) {
+    while (placeNum > 0) {
         for (var xdelta = -radius + radius % 2; xdelta <= radius; xdelta += 2) {
             for (var ydelta = -radius + radius % 2; ydelta <= radius; ydelta += 2) {
                 var site = new RoomPosition(origin.x + xdelta, origin.y +
@@ -437,7 +458,7 @@ var placeExtensions = function placeExtensions(room) {
                 dlog('placing extension at ' + (origin.x + xdelta) + ',' +
                     (origin.y + ydelta) + ' resut: ' + util.getError(res));
                 if (res == OK) {
-                    have++;
+                    placeNum--;
                 }
             }
         }
@@ -475,7 +496,9 @@ var placeContainers = function placeContainers(room) {
 
 module.exports.placeExtensions = placeExtensions;
 module.exports.placeContainers = placeContainers;
+module.exports.bd = placeDefenses;
 
 function dlog(msg) {
     util.dlog('PLACEMENT', msg);
 }
+module.exports.x = placeExtensions;
