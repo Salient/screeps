@@ -120,7 +120,8 @@ function bootstrap(room) {
             'worker': [CARRY, WORK, MOVE, MOVE, MOVE],
             "miner": [MOVE, WORK, WORK, WORK, WORK],
             "soldier": [MOVE, ATTACK, TOUGH, ATTACK, TOUGH, MOVE, RANGED_ATTACK, RANGED_ATTACK, TOUGH, MOVE],
-            "medic": [MOVE, HEAL, TOUGH]
+            "medic": [MOVE, HEAL, TOUGH],
+            "scout": [MOVE,MOVE,CARRY,WORK,TOUGH]
         },
         curlvl: 0,
         rulesOfEngagement: 'guard',

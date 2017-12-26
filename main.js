@@ -109,6 +109,14 @@ Game.destroyAll = function(structure) {
             }
         }
     }
+Game.destroySites = function(structure) {
+        for (var ff in Game.rooms) {
+            var sits = Game.rooms[ff].find(FIND_CONSTRUCTION_SITES, {filter: (i)=> i.structureType == structure});
+            for (var dd in sits) {
+                sits[dd].remove()
+            }
+        }
+    }
         Game.pp = function() {
             for (var room in Game.rooms) {
                 var thisRoom = Game.rooms[room];

@@ -3,6 +3,7 @@
  */
 
 var util = require('common');
+var spore = require('spores');
 
 var harvest = require('harvester');
 var build = require('builder');
@@ -135,6 +136,9 @@ var performTask = function(creep) {
         case 'damageControl':
             jobResult = build.repair(creep);
             break;
+        case 'scout':
+            jobResult = spore.disperse(creep);
+            break;
         default:
             dlog('Unhandled creep task! (' + taskList[taskList.length - 1] + ')');
     }
@@ -194,12 +198,14 @@ function somethingNeedDoing(creep) {
     switch (creep.memory.role) {
         case 'worker':
             var result = Math.floor((Math.random() * 10));
-            if (result < 3) {
+            if (result < 2) {
                 return 'gatherer'
-            } else if (result < 6) {
+            } else if (result < 5) {
                 return 'technician'
-            } else {
+            } else if (result<8) {
                 return 'builder'
+            } else {
+                return 'scout'
             }
     }
 }
