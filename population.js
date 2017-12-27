@@ -126,7 +126,7 @@ function nextPriority(room) {
     }
 
     // Are we over mining the room?
-    var vetoMiner = (harvest.needMiner(room)) ? 1 : 0;
+    var vetoMiner = (room.needMiner()) ? 1 : 0;
 
     // Are we under attack?
     var enemies = room.find(FIND_HOSTILE_CREEPS).length;
@@ -320,7 +320,7 @@ var spawn = function(room) {
                 role: want,
                 birthRoom: room.name,
                 taskList: ['gatherer'],
-                taskStatus: 'SOURCE'
+                taskState: 'SOURCE'
             }
         })
     switch (result) {

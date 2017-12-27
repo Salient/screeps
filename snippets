@@ -1,0 +1,150 @@
+
+function scrounge(creep) {
+    // TODO every 5 ticks or so we should check there is still something at the
+    // stored tile
+    // Otherwise any time something is dropped you might pull a bunch of
+    // gatherers without need.
+    // See if we are already on the move
+    //
+    //
+    // var nrg = creep.pos.findClosestByPath(FIND_DROPPED_RESOURCES);
+    // if (creep.pos.isNearTo(nrg)){
+    // creep.pickup(nrg);
+    // } else {
+    // creep.moveTo(nrg)}
+    //    
+    // return
+    //    
+    if (!util.def(creep.memory.targetUpdated)) {
+        creep.memory.targetUpdated = 0;
+    } else if (!util.def(creep.memory.eTarget) && creep.memory.targetUpdated + 90 < Game.time) {
+        // We already checked not too long ago, there isn't anything here
+        return false;
+    }
+    //
+    if (!util.def(creep.memory.eTarget) ||
+        !util.def(Game.getObjectById(creep.memory.eTarget)) ||
+        (creep.memory.targetUpdated + 90) < Game.time) { // If I
+        // don't
+        // have
+        // a
+        // target,
+        // get
+        // one
+        var res = findEnergy(creep);
+
+        if (!util.def(res) || !res) {
+            // No energy. Mark it and remember
+            delete creep.memory.eTarget;
+            creep.memory.targetUpdated = Game.time;
+            return false
+        }
+        // dlog('assigning new free energy target: ' + creep.name);
+        creep.memory.eTarget = res;
+        creep.memory.targetUpdated = Game.time;
+    }
+
+
+    var target = Game.getObjectById(creep.memory.eTarget);
+    // util.dumpObject(target)
+    if (!util.def(target)) {
+        dlog('zomg')
+    }
+    dlog('scrounging')
+    var res = creep.hitUp(target);
+    // TODO: possibly reuse path found earlier for more efficiency
+    switch (res) {
+        case OK:
+        case ERR_FULL:
+            return true;
+            break;
+        case ERR_NOT_IN_RANGE:
+            var move = creep.moveTo(target, {
+                reusePath: 15,
+                visualizePathStyle: {
+                    fill: 'green',
+                    stroke: '#00ff00',
+                    strokeWidth: .3,
+                    opacity: .9,
+                    lineStyle: 'dashed'
+                }
+            });
+
+            // {
+            // fill: 'transparent',
+            // stroke: '#fff',
+            // lineStyle: 'dashed',
+            // strokeWidth: .15,
+            // opacity: .1
+            // }
+            // width number
+            // Line width, default is 0.1.
+            // color string
+            // Line color in any web format, default is #ffffff (white).
+            // opacity number
+            // Opacity value, default is 0.5.
+            // lineStyle string
+            // Either undefined (solid line), dashed, or dotted. Default is undefined.
+            // // if (move == ERR_NO_PATH) {
+            // delete creep.memory.eTarget;
+            // dlog('hmm');
+            // return false;
+            // }
+            return true;
+            break;
+        case ERR_NOT_ENOUGH_ENERGY:
+            delete creep.memory.eTarget;
+            return false;
+            break;
+        default:
+            // delete creep.memory.eTarget;
+            dlog("Error scrounging: " + util.getError(res) + ' ---- ' + res);
+    }
+
+    dlog('not quote sure how i got here but oh well')
+    delete creep.memory.eTarget;
+
+    return false
+}
+
+module.exports.scrounge = scrounge;
+
+
+// function retask(room, type, role) {
+// // special cases stuff. Maybe find a beter way to do this
+// if( role == 'builder')
+// { var targets = room.find(FIND_MY_CONSTRUCTION_SITES);
+// if (targets.length < 1) {return}}
+//
+// var roomCreeps = room.find(FIND_MY_CREEPS);
+// // dlog('was told to retask all ' + type + ' to do ' + role)
+// for ( var i in roomCreeps) {
+// var youThere = roomCreeps[i];
+// var yourJob = youThere.memory.role;
+// var taskList = youThere.memory.taskList;
+// if (util.def(yourJob) && (yourJob == type)
+// && (taskList[taskList.length - 1] != role)) {
+// // Check the latest task isn't already set to type
+// dlog('preempting creep ' + youThere.name + ' task list to ' + role);
+//
+// youThere.memory.taskList.push(role)
+// }
+// }
+// }
+// module.exports.retask = retask
+
+//
+// Room.prototype.getSpawning = function() {
+// var babbysForming = {};
+// var spawns = this.find(FIND_MY_SPAWNS);
+// for ( var n in spawns) {
+// var spawn = spawns[n];
+// if (util.def(spawn.spawning)) {
+// babbysForming[spawn.spawning.name] = true;
+// }
+// }
+//
+// return babbysForming;
+// }
+
+

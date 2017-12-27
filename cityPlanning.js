@@ -14,6 +14,25 @@ var debug = false
 
 // FYI, max call stack size is 4500. ish. it seems to depend
 
+Room.prototype.cool = function () {
+    // Measure traffic around the room
+    if (!util.def(this.memory.heatmap)) {
+        return;
+    }
+    var heatm = this.memory.heatmap;
+
+    // Cool the heat map
+    // Remember we can't build roads on the first or last tile (exits)
+    for (var x = 1; x < 49; x++) {
+        for (var y = 1; y < 49; y++) {
+            if (heatm[x][y] > 0) {
+                --heatm[x][y]
+            } else {
+                heatm[x][y] = 0
+            }
+        }
+    }
+}
 
 Room.prototype.needStructure = function(structure) {
 
@@ -40,8 +59,8 @@ Room.prototype.needStructure = function(structure) {
     }
 }
 
-function zeroHeatMap(room) {
-    var hm = room.memory.heatmap;
+Room.prototype.zeroHeatMap = function() {
+    var hm = this.memory.heatmap;
     for (var x in hm) {
         var y = hm[x];
         for ( var sq in y){
@@ -50,37 +69,37 @@ function zeroHeatMap(room) {
     }
 }
 
-var buildRoads = function(room) {
+Room.prototype.buildRoads = function() {
 
-    if (!util.def(room.memory.planned) || room.memory.planned == false) {
+    if (!util.def(this.memory.planned) || this.memory.planned == false) {
         return;
     }
 
-    var spwn = Game.getObjectById(room.memory.spawnId);
-    var have = room.find(FIND_MY_CONSTRUCTION_SITES, {
+    var spwn = Game.getObjectById(this.memory.spawnId);
+    var have = this.find(FIND_MY_CONSTRUCTION_SITES, {
         filter: {
             structureType: STRUCTURE_ROAD
         }
     }).length;
-    var paths = room.memory.infrastructure.paths;
+    var paths = this.memory.infrastructure.paths;
 
     for (var p in paths) {
         var hwy = paths[p];
         for (var sq in hwy) {
-            if (have > room.memory.strategy.construction.maxBuildSites) {
-                zeroHeatMap(room);
+            if (have > this.memory.strategy.construction.maxBuildSites) {
+                this.zeroHeatMap();
                 return true;;
             }; // Let's not get carried away
             var st = hwy[sq];
-            var res = room.createConstructionSite(st.x, st.y, STRUCTURE_ROAD);
+            var res = this.createConstructionSite(st.x, st.y, STRUCTURE_ROAD);
             if (!res) {
                 have++;
             }
         }
     }
 
-    var heatm = room.memory.heatmap;
-    var infraVars = room.memory.strategy.construction;
+    var heatm = this.memory.heatmap;
+    var infraVars = this.memory.strategy.construction;
 
     if (!util.def(heatm)) {
         return
@@ -88,10 +107,10 @@ var buildRoads = function(room) {
     for (var x = 1; x < 49; x++) {
         for (var y = 1; y < 49; y++) {
             if (heatm[x][y] > 25) {
-                if (have > infraVars.maxBuildSites * room.controller.level) {
+                if (have > infraVars.maxBuildSites * this.controller.level) {
                     return true;
                 }
-                var res = room.createConstructionSite(x, y, STRUCTURE_ROAD)
+                var res = this.createConstructionSite(x, y, STRUCTURE_ROAD)
                 if (!res) {
                     have++;
                 }
@@ -101,12 +120,12 @@ var buildRoads = function(room) {
 }
 
 module.exports.controlLevelChange = function(room) {
-    placeExtensions(room);
-    placeDefenses(room);
-    placeContainers(room);
+    room.placeExtensions();
+    room.placeDefenses();
+    room.placeContainers();
 }
 
-var markExitDoors = function(room) {
+Room.prototype.markExitDoors = function() {
     dlog('marking')
     var top = [];
     var bot = [];
@@ -114,21 +133,21 @@ var markExitDoors = function(room) {
     var right = [];
 
     for (var x = 0; x < 50; x++) {
-        var tileA = Game.map.getTerrainAt(x, 0, room.name);
-        var tileB = Game.map.getTerrainAt(x, 49, room.name);
+        var tileA = Game.map.getTerrainAt(x, 0, this.name);
+        var tileB = Game.map.getTerrainAt(x, 49, this.name);
         top[x] = (tileA != 'wall') ? 1 : 0;
         bot[x] = (tileB != 'wall') ? 1 : 0;
     }
 
     for (var y = 0; y < 50; y++) {
-        var tileA = Game.map.getTerrainAt(0, y, room.name);
-        var tileB = Game.map.getTerrainAt(49, y, room.name);
+        var tileA = Game.map.getTerrainAt(0, y, this.name);
+        var tileB = Game.map.getTerrainAt(49, y, this.name);
         left[y] = (tileA != 'wall') ? 1 : 0;
         right[y] = (tileB != 'wall') ? 1 : 0;
     }
 
-    if (!util.def(room.memory.infrastructure)) {
-        room.memory.infrastructure = {}
+    if (!util.def(this.memory.infrastructure)) {
+        this.memory.infrastructure = {}
     }
 
     var exits = {
@@ -141,8 +160,8 @@ var markExitDoors = function(room) {
     dlog('marked')
     util.dumpObject(exits)
         // Spent the CPU, might as well save it
-    room.memory.infrastructure.exits = exits;
-    room.memory.infrastructure.exitDoors = {};
+    this.memory.infrastructure.exits = exits;
+    this.memory.infrastructure.exitDoors = {};
 
     // mark one spot to be a rampart
     for (var side in exits) {
@@ -159,7 +178,7 @@ var markExitDoors = function(room) {
         }
         // if outer is 50, then there are no exits on this side
         if (outer == 50) {
-            room.memory.infrastructure.exitDoors.side = 0;
+            this.memory.infrastructure.exitDoors.side = 0;
             continue;
         }
         start = outer;
@@ -168,35 +187,33 @@ var markExitDoors = function(room) {
         }
         end = outer;
         util.dumpObject(exits)
-        util.dumpObject(room.memory.infrastructure.exitDoors);
-        room.memory.infrastructure.exitDoors.side = (Math.floor((end - start) / 2) + start);
+        util.dumpObject(this.memory.infrastructure.exitDoors);
+        this.memory.infrastructure.exitDoors.side = (Math.floor((end - start) / 2) + start);
     }
 }
 
 
 
-module.exports.markWalls = markExitDoors;;
-
-function placeWalls(room) {
-    if (!util.def(room.memory.infrastructure.exitDoors)) {
-        markExitDoors(room);
+Room.prototype.placeWalls = function() {
+    if (!util.def(this.memory.infrastructure.exitDoors)) {
+        this.markExitDoors();
     }
 
-    var exits = room.memory.infrastructure.exitDoors;
+    var exits = this.memory.infrastructure.exitDoors;
 
     if (exits.top > 0) {
-        room.createConstructionSite(exits.top, 2, STRUCTURE_RAMPART);
+        this.createConstructionSite(exits.top, 2, STRUCTURE_RAMPART);
 
     }
-    room.createConstructionSite(exits.bot, 47, STRUCTURE_RAMPART);
-    room.createConstructionSite(2, exits.left, STRUCTURE_RAMPART);
-    room.createConstructionSite(47, exits.right, STRUCTURE_RAMPART);
+    this.createConstructionSite(exits.bot, 47, STRUCTURE_RAMPART);
+    this.createConstructionSite(2, exits.left, STRUCTURE_RAMPART);
+    this.createConstructionSite(47, exits.right, STRUCTURE_RAMPART);
 
     for (var x = 2; x < 48; x++) {
-        room.createConstructionSite(x, 2, STRUCTURE_WALL);
-        room.createConstructionSite(x, 47, STRUCTURE_WALL);
-        room.createConstructionSite(2, x, STRUCTURE_WALL);
-        room.createConstructionSite(47, x, STRUCTURE_WALL);
+        this.createConstructionSite(x, 2, STRUCTURE_WALL);
+        this.createConstructionSite(x, 47, STRUCTURE_WALL);
+        this.createConstructionSite(2, x, STRUCTURE_WALL);
+        this.createConstructionSite(47, x, STRUCTURE_WALL);
     }
 }
 
@@ -211,7 +228,7 @@ function startWall(pos) {
 // module.exports.p = placeWalls;
 
 function placeDefenses(room) {
-    placeWalls(room);
+    room.placeWalls();
 }
 
 // Determines how many creep can mine each source at the same time
@@ -260,18 +277,18 @@ function refInfra(room) {
 }
 module.exports.refInfra = refInfra;
 
-function createBasicPaths(room) {
+Room.prototype.createBasicPaths = function () {
 
     // Go ahead and create roads to controller and sources from spawn
 
-    var spwn = Game.getObjectById(room.memory.spawnId);
-    var shafts = room.memory.shafts;
-    room.memory.infrastructure.paths = {};
-    room.memory.infrastructure.paths.ctrl = room.controller.pos.findPathTo(spwn);
+    var spwn = Game.getObjectById(this.memory.spawnId);
+    var shafts = this.memory.shafts;
+    this.memory.infrastructure.paths = {};
+    this.memory.infrastructure.paths.ctrl = this.controller.pos.findPathTo(spwn);
 
     // Create roads to mineshafts
     for (var sh in shafts) {
-        room.memory.infrastructure.paths['shaft' + sh] = room.findPath(spwn.pos,
+        this.memory.infrastructure.paths['shaft' + sh] = this.findPath(spwn.pos,
                 shafts[sh].pos, {
                     ignoreRoads: true,
                     ignoreCreeps: true
@@ -339,37 +356,20 @@ function planRoom(room) {
             return false; // bail for now
         }
     }
-    placeExtensions(room);
-    placeContainers(room)
-    placeTower(room);
+    room.placeExtensions();
+    room.placeContainers()
+    room.placeTower();
+    room.placeStorage();
+    room.buildRoads();
 
     //if (!(Game.time % 17)) {
-            buildRoads(room);
     // }
     // Manage roads building
 }
 
 
 module.exports.planRoom = planRoom;
-module.exports.coolmap = function(room) {
-    // Measure traffic around the room
-    if (!util.def(room.memory.heatmap)) {
-        return;
-    }
-    var heatm = room.memory.heatmap;
 
-    // Cool the heat map
-    // Remember we can't build roads on the first or last tile (exits)
-    for (var x = 1; x < 49; x++) {
-        for (var y = 1; y < 49; y++) {
-            if (heatm[x][y] > 0) {
-                --heatm[x][y]
-            } else {
-                heatm[x][y] = 0
-            }
-        }
-    }
-}
 
 function placeAdjacent(room, pos, structure) {
 
@@ -400,9 +400,10 @@ function placeAdjacent(room, pos, structure) {
     }
 }
 
-function placeTower(room) {
-    var placeNum = room.needStructure(STRUCTURE_TOWER);
-    var origin = Game.getObjectById(room.memory.spawnId).pos;
+Room.prototype.placeTower = function() {
+
+    var placeNum = this.needStructure(STRUCTURE_TOWER);
+    var origin = Game.getObjectById(this.memory.spawnId).pos;
 
     if (!util.def(origin)) {
         dlog('big bad voodoo');
@@ -412,14 +413,12 @@ function placeTower(room) {
     // Placement plan for towers - place close, but not too close, to the spawn
 
     var radius = 3;
-    // start at spawn +/- 2 squares
-    // spiral out
     while (placeNum > 0) {
         for (var xdelta = -radius + radius % 2 + 1; xdelta <= radius; xdelta += 2) {
             for (var ydelta = -radius + radius % 2 + 1; ydelta <= radius; ydelta += 2) {
                 var site = new RoomPosition(origin.x + xdelta, origin.y +
-                    ydelta, room.name);
-                var res = room.createConstructionSite(site, STRUCTURE_TOWER);
+                    ydelta, this.name);
+                var res = this.createConstructionSite(site, STRUCTURE_TOWER);
                 if (res == OK) {
                     placeNum--;;
                 }
@@ -429,12 +428,39 @@ function placeTower(room) {
     }
 }
 
-var placeExtensions = function placeExtensions(room) {
+Room.prototype.placeStorage= function() {
 
+    var placeNum = this.needStructure(STRUCTURE_STORAGE);
+    var origin = Game.getObjectById(this.memory.spawnId).pos;
+
+    if (!util.def(origin)) {
+        dlog('big bad voodoo');
+        return false;
+    }
+
+    // Placement plan for towers - place close, but not too close, to the spawn
+
+    var radius = 5;
+    while (placeNum > 0) {
+        for (var xdelta = -radius + radius % 2 + 1; xdelta <= radius; xdelta += 2) {
+            for (var ydelta = -radius + radius % 2 + 1; ydelta <= radius; ydelta += 2) {
+                var site = new RoomPosition(origin.x + xdelta, origin.y +
+                    ydelta, this.name);
+                var res = this.createConstructionSite(site, STRUCTURE_STORAGE);
+                if (res == OK) {
+                    placeNum--;;
+                }
+            }
+        }
+        radius++;
+    }
+}
+
+Room.prototype.placeExtensions = function() {
     // Compare number allowed at this controller level vs. how many in room
     // Should only be called if room level has changed!
-    var placeNum = room.needStructure(STRUCTURE_EXTENSION);
-    var origin = Game.getObjectById(room.memory.spawnId).pos;
+    var placeNum = this.needStructure(STRUCTURE_EXTENSION);
+    var origin = Game.getObjectById(this.memory.spawnId).pos;
 
     // make in some checkered pattern around spawn
     //
@@ -451,8 +477,8 @@ var placeExtensions = function placeExtensions(room) {
         for (var xdelta = -radius + radius % 2; xdelta <= radius; xdelta += 2) {
             for (var ydelta = -radius + radius % 2; ydelta <= radius; ydelta += 2) {
                 var site = new RoomPosition(origin.x + xdelta, origin.y +
-                    ydelta, room.name);
-                var res = room
+                    ydelta, this.name);
+                var res = this
                     .createConstructionSite(site, STRUCTURE_EXTENSION);
                 // if (res == ERR_RCL_NOT_ENOUGH){return}
                 dlog('placing extension at ' + (origin.x + xdelta) + ',' +
@@ -466,39 +492,31 @@ var placeExtensions = function placeExtensions(room) {
     }
 }
 
-var placeContainers = function placeContainers(room) {
+Room.prototype.placeContainers = function() {
 
-    var have = room.find(FIND_STRUCTURES, {
+    var have = this.find(FIND_STRUCTURES, {
         filter: {
             structureType: STRUCTURE_CONTAINER
         }
-    }).length + room.find(FIND_MY_CONSTRUCTION_SITES, {
+    }).length + this.find(FIND_MY_CONSTRUCTION_SITES, {
         filter: {
             structureType: STRUCTURE_CONTAINER
         }
     }).length;
-    if ((have == 5) || (have >= Object.keys(room.memory.shafts).length)) {
+    if ((have == 5) || (have >= Object.keys(this.memory.shafts).length)) {
         return
-
-
-
-
-
     } // stagger one per level to spread out construcution
 
-    for (var x in room.memory.shafts) {
-        var shaft = room.memory.shafts[x];
-        var site = new RoomPosition(shaft.pos.x, shaft.pos.y, room.name);
-        var res = room.createConstructionSite(site, STRUCTURE_CONTAINER);
+    for (var x in this.memory.shafts) {
+        var shaft = this.memory.shafts[x];
+        var site = new RoomPosition(shaft.pos.x, shaft.pos.y, this.name);
+        var res = this.createConstructionSite(site, STRUCTURE_CONTAINER);
         // dlog('added container: ' + util.getError(res));
     }
 }
 
-module.exports.placeExtensions = placeExtensions;
-module.exports.placeContainers = placeContainers;
 module.exports.bd = placeDefenses;
 
 function dlog(msg) {
     util.dlog('PLACEMENT', msg);
 }
-module.exports.x = placeExtensions;

@@ -18,7 +18,7 @@ function showFutureRoads(room) {
         for (var y = 1; y < 49; y++) {
             if (heatm[x][y] > 15) {
                 room.visual.circle(x, y, {
-                    fill: '#777700'
+                    fill: '#2277FF'
                 })
             }
         }

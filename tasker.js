@@ -1,7 +1,3 @@
-/**
- * 
- */
-
 var util = require('common');
 var spore = require('spores');
 
@@ -45,44 +41,6 @@ Creep.prototype.warmMap = function() {
         this.room.memory.heatmap[x][y] += 9;
     }
 }
-
-// function retask(room, type, role) {
-// // special cases stuff. Maybe find a beter way to do this
-// if( role == 'builder')
-// { var targets = room.find(FIND_MY_CONSTRUCTION_SITES);
-// if (targets.length < 1) {return}}
-//
-// var roomCreeps = room.find(FIND_MY_CREEPS);
-// // dlog('was told to retask all ' + type + ' to do ' + role)
-// for ( var i in roomCreeps) {
-// var youThere = roomCreeps[i];
-// var yourJob = youThere.memory.role;
-// var taskList = youThere.memory.taskList;
-// if (util.def(yourJob) && (yourJob == type)
-// && (taskList[taskList.length - 1] != role)) {
-// // Check the latest task isn't already set to type
-// dlog('preempting creep ' + youThere.name + ' task list to ' + role);
-//
-// youThere.memory.taskList.push(role)
-// }
-// }
-// }
-// module.exports.retask = retask
-
-//
-// Room.prototype.getSpawning = function() {
-// var babbysForming = {};
-// var spawns = this.find(FIND_MY_SPAWNS);
-// for ( var n in spawns) {
-// var spawn = spawns[n];
-// if (util.def(spawn.spawning)) {
-// babbysForming[spawn.spawning.name] = true;
-// }
-// }
-//
-// return babbysForming;
-// }
-
 var performTask = function(creep) {
 
     if (creep.spawning) {
@@ -102,8 +60,12 @@ var performTask = function(creep) {
     }
 
     if (taskList.length == 0) {
-        // dlog('Empty task list found: ' + creep.name);
-        taskList.push(somethingNeedDoing(creep));
+        dlog('Empty task list found: ' + creep.name);
+        creep.memory.taskList.push(somethingNeedDoing(creep));
+        creep.memory.taskList.push(somethingNeedDoing(creep));
+        creep.memory.taskList.push(somethingNeedDoing(creep));
+        creep.memory.taskList.push(somethingNeedDoing(creep));
+
     }
     // if ((taskList.length > 1) && !(Game.time % 10)) // Periodically refresh
     // // temporary tasksf
@@ -166,7 +128,8 @@ var getDefaultTask = function(creep) { // What to do if the creep has
         // dlog('assigning default task');
         switch (role) {
             case 'worker':
-                return somethingNeedDoing(creep);
+                //                return somethingNeedDoing(creep);
+                return 'gatherer';
                 break;
             case 'miner':
                 return 'miner'

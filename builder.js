@@ -45,9 +45,10 @@ creep.say('⚒')
 	}
 	if (creep.carry.energy == 0) {
 		creep.memory.taskState = 'SOURCE'
+        //dlog('hmmmm')
 		// fillTank(creep);
-		creep.memory.taskList.pop();
-		return true;
+        //		creep.memory.taskList.pop();
+        // return true;
 	}
 
 	if (creep.memory.taskState == 'SOURCE') {
@@ -59,7 +60,8 @@ creep.say('⚒')
 		var orders = findSite(creep) || repairDuty(creep);
 		if (!util.def(orders) || orders == false) {
             //			dlog(creep.name
-            //		+ ' says nothing to build or repair, reverting to prior task')
+            //		+ ' says nothin!g to build or repair, reverting to prior task')
+            dlog('what')
 			creep.memory.taskList.pop();
 			return false;
 		} else {
@@ -241,6 +243,7 @@ function upgradeRC(creep) {
 
 	if (creep.carry.energy == 0) {
 		creep.memory.taskState = 'SOURCE'
+        dlog('possible fubar here')
 		creep.memory.taskList.pop();
 		return false;
 	}

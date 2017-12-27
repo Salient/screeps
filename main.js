@@ -128,7 +128,7 @@ Game.destroySites = function(structure) {
 
             // Pretty diagnostic information
             visuals(thisRoom);
-            construct.coolmap(thisRoom);
+            thisRoom.cool(); 
             //    if (!(Math.floor(thisRoom.memory.nextSpawn - Game.time) % 10)) {
             //        dlog('Next spawn in ' + thisRoom.name + ' in ' + Math.floor((thisRoom.memory.nextSpawn - Game.time)));
             //}

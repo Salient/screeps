@@ -1,4 +1,5 @@
 var util = require('common');
+var harvest = require('harvester');
 
 module.exports.disperse = function(creep) {
     if (!util.def(creep.memory.wanderlust)) {
@@ -8,14 +9,13 @@ module.exports.disperse = function(creep) {
     creep.say('🔱 ')
 
 	if (creep.carry.energy != creep.carryCapacity) {
-		creep.memory.taskState = 'SINK'
-		// TEMP CODE vvv
-		// creep.memory.taskList.pop();
+        creep.memory.taskList.pop();
+		harvest.fillTank(creep);
+        return true;
 	}
 
 	if (creep.carry.energy == 0) {
 		creep.memory.taskState = 'SOURCE'
-		// fillTank(creep);
 		creep.memory.taskList.pop();
 		return true;
 	}
