@@ -61,10 +61,8 @@ var performTask = function(creep) {
 
     if (taskList.length == 0) {
         dlog('Empty task list found: ' + creep.name);
-        creep.memory.taskList.push(somethingNeedDoing(creep));
-        creep.memory.taskList.push(somethingNeedDoing(creep));
-        creep.memory.taskList.push(somethingNeedDoing(creep));
-        creep.memory.taskList.push(somethingNeedDoing(creep));
+       taskList[0] = somethingNeedDoing(creep);
+        dlog('assinged ' + taskList[0] + ' to ' + creep.name);
 
     }
     // if ((taskList.length > 1) && !(Game.time % 10)) // Periodically refresh
@@ -105,8 +103,11 @@ var performTask = function(creep) {
             dlog('Unhandled creep task! (' + taskList[taskList.length - 1] + ')');
     }
 
+    // dlog('jum result is ' + jobResult)
+
     //	dlog(creep.name + ' did ' + curJob + ' and his aim was ' + jobResult);
     if (!jobResult) {
+        dlog('job popped')
         creep.memory.taskList.pop();
     }
 }
@@ -157,6 +158,10 @@ function somethingNeedDoing(creep) {
     if (creep.memory.role == 'soldier') {
         return 'soldier	'
     };
+
+    if (creep.getActiveBodyparts(CARRY)> 0 && creep.carry == 0) {
+        harvest.fillTank(creep);
+    }
 
     switch (creep.memory.role) {
         case 'worker':

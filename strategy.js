@@ -100,9 +100,6 @@ module.exports.strategery = function(room) {
 
         // Contact the city council
         //planning.designRoom(room)
-
-        dlog('Room level has changed. Revising all strategery with level ' +
-            roomConfig.curlvl + ' badassery.');
     }
 
 

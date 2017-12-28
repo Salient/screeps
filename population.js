@@ -107,7 +107,7 @@ function nextPriority(room) {
 
     // Are we bootstrapping?
     //if (have.worker < popCon.minWorker || (have.miner > popCon.minWorker && have.worker < room.controller.level * 2)) { //arbitrary shenanigans here
-    if (have.worker < popCon.minWorker || have.worker < room.controller.level * 1.5) { //arbitrary shenanigans here
+    if (have.worker < popCon.minWorker) { //arbitrary shenanigans here
         dlog('Bootstrapping worker population')
 		room.memory.nrgReserve = (room.energyAvailable > 300) ? room.energyAvailable : 300; // Guarantee we can still light this
         // rocket

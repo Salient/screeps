@@ -14,7 +14,6 @@ Creep.prototype.hitUp = function(target) {
     if (util.def(target.resourceType)) {
         return this.pickup(target);
     } else if (util.def(target.structureType)) {
-        dlog('hitting up ' + target.structureType)
         return this.withdraw(target, RESOURCE_ENERGY);
     } else {
         dlog('what kind of twisted object is this?');
@@ -163,9 +162,8 @@ function mine(creep) {
                 // creep.suicide();
             dlog('AAAAH MOTHERLAND')
             return false;
-        } else {
-            return false
         }
+        return false
     }
 
     var posting = creep.memory.mTarget;
@@ -194,18 +192,10 @@ function mine(creep) {
                 if (creep.memory.role != 'miner') {
                     creep.memory.mTarget = null;
                 } else {
-                    if (refindSource(creep)) {
-                        return true;
-                    }
-                    if (!creep.room.needMiner()) { // source overmined
-                        //                       creep.say('AHHHHH MO')
-                        //dlog('AAAHMOTHERLAND')
-                        // creep.suicide();
-                    }
-                    // otherwise be patient. Or migrate? TODO scan for
-                    // unoccupied shafts
+                    refindSource(creep)
+                        // we don't want to return false when a miner does it's job too well
+                    return true;
                 }
-
                 return false;
                 break;
             case ERR_TIRED:
@@ -248,20 +238,19 @@ function mine(creep) {
 module.exports.mine = mine
 
 function fillTank(creep) {
-    dlog(creep.name + ' filling tank ' + ' as a ' + creep.memory.taskList[creep.memory.taskList.length - 1]);
-    creep.say('💰 - Filling Tank');
+    creep.say('🔌');
     var targ = Game.getObjectById(creep.memory.eTarget);
 
     if (!util.def(targ)) {
-        dlog('last target not valid')
-        // ?? var result =
         var res = findCashMoney(creep);
         if (!res) {
-            if (creep.getActiveBodyparts(WORK)>0) {
-               dlog('sent to mine, results was ' + mine(creep)) ;
+            if (creep.getActiveBodyparts(WORK) > 0) {
+                mine(creep);
             }
-            dlog('no target valid')
-            // dlog(creep.name + ' out shuttle');
+            dlog('no available energy')
+                // TODO - add storage check here?
+                // TODO - use this situation to modify some behavior coefficients
+                // dlog(creep.name + ' out shuttle');
             return false;
         }
         creep.memory.eTarget = res;
@@ -281,7 +270,7 @@ function fillTank(creep) {
                 visualizePathStyle: {
                     stroke: '1ffaa00',
                     opacity: 1,
-                    strokeWidth: 1
+                    //    strokeWidth: 1
                 }
             });
             if (pap == OK || pap == ERR_TIRED) {
@@ -503,7 +492,6 @@ function gatherer(creep) {
     }
 
     if (taskState == 'SOURCE') {
-
         var targ = Game.getObjectById(creep.memory.mTarget);
         if (util.def(targ)) {
             mine(creep);
@@ -514,42 +502,42 @@ function gatherer(creep) {
         if (!util.def(targ)) {
             var rst = findBacon(creep);
             if (!util.def(rst)) {
-                // dlog('mining')
-                return mine(creep);
+                    // dlog('mining')
+                var tres = mine(creep);
+                return tres;
             } else {
                 targ = Game.getObjectById(rst);
                 creep.memory.eTarget = rst;
             }
         }
-        if (!util.def(targ)) {
-            var res = creep.hitUp(targ);
-            // dlog("hitting up " + targ.pos.x + ',' + targ.pos.y + ' - ' +
-            // util.getError(res))
-            switch (res) {
-                case OK:
-                    return true;
-                    break;
-                case ERR_NOT_IN_RANGE:
-                    var pap = creep.moveTo(targ, {
-                        reusePath: 5,
-                        visualizePathStyle: {
-                            opacity: 0.9,
+        var res = creep.hitUp(targ);
+        // dlog("hitting up " + targ.pos.x + ',' + targ.pos.y + ' - ' +
+        // util.getError(res))
+        switch (res) {
+            case OK:
+                return true;
+                break;
+            case ERR_NOT_IN_RANGE:
+                var pap = creep.moveTo(targ, {
+                    reusePath: 5,
+                    visualizePathStyle: {
+                        opacity: 0.9,
 
-                            stroke: '00FF00'
-                        }
-                    });
-                    if (pap == OK || pap == ERR_TIRED) {
-                        return true
-                    } else {
-                        return false;
+                        stroke: '00FF00'
                     }
-                    break;
-                default:
-                    dlog('gatherer catch: ' + util.getError(res))
+                });
+                if (pap == OK || pap == ERR_TIRED) {
+                    return true
+                } else {
+                    dlog('debug info gatherer source move error: ' + util.getError(pap))
                     return false;
-            }
-
+                }
+                break;
+            default:
+                dlog('gatherer catch: ' + util.getError(res))
+                return false;
         }
+
     }
 
     // 💰
@@ -576,41 +564,45 @@ function gatherer(creep) {
             }
             // util.dumpObject(mySink)}
             // gatherer(creep);
-        }
 
-        //if (mySink.structureType == STRUCTURE_SPAWN) {
-        //            mySink.renewCreep(creep);
-        //        }
-        // var quant = (mySink.energyCapacity - mySink.energy < creep.energy ) ? mySink.energyCapacity - mySink.energy : creep.energy;
-        var res = creep.transfer(mySink, RESOURCE_ENERGY);
-        //        return
-        switch (res) {
-            case OK:
-                return true;
-                break;
-            case ERR_NOT_IN_RANGE:
-                var derp = creep.moveTo(mySink, {
-                    reusePath: 15,
-                    visualizePathStyle: {
-                        opacity: 0.9,
-                        stroke: '#ffaaff'
-                    }
-                });
-                if (derp == OK || derp == ERR_TIRED) {
+
+            //if (mySink.structureType == STRUCTURE_SPAWN) {
+            //            mySink.renewCreep(creep);
+            //        }
+            // var quant = (mySink.energyCapacity - mySink.energy < creep.energy ) ? mySink.energyCapacity - mySink.energy : creep.energy;
+            var res = creep.transfer(mySink, RESOURCE_ENERGY);
+            //        return
+            switch (res) {
+                case OK:
                     return true;
-                } else {
-                    return false
-                }
-                break;
-            case ERR_FULL:
-                delete creep.memory.sinkId;
-                return false;
-                break; // gatherer(creep); break;
-            default:
-                dlog('error sinking into ' + mySink.structureType + ': ' + util.getError(res));
-                return false;
+                    break;
+                case ERR_NOT_IN_RANGE:
+                    var derp = creep.moveTo(mySink, {
+                        reusePath: 15,
+                        visualizePathStyle: {
+                            opacity: 0.9,
+                            stroke: '#ffaaff'
+                        }
+                    });
+                    if (derp == OK || derp == ERR_TIRED) {
+                        return true;
+                    } else {
+                        dlog('debug info gatherer sink move error: ' + util.getError(derp))
+                        return false
+                    }
+                    break;
+                case ERR_FULL:
+                    delete creep.memory.sinkId;
+                    return false;
+                    break; // gatherer(creep); break;
+                default:
+                    dlog('error sinking into ' + mySink.structureType + ': ' + util.getError(res));
+                    return false;
+            }
         }
     }
+    dlog('gatherer fallthru ');
+    return false
 }
 
 function distance(p1, p2) {

@@ -8,6 +8,9 @@ module.exports.disperse = function(creep) {
     
     creep.say('🔱 ')
 
+        creep.memory.taskList.pop();
+    return false;
+
 	if (creep.carry.energy != creep.carryCapacity) {
         creep.memory.taskList.pop();
 		harvest.fillTank(creep);
