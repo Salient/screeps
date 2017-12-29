@@ -34,10 +34,17 @@ function census(room) {
         technician: 0
     };
 
+
     var roomCreeps = room.find(FIND_MY_CREEPS);
     for (var i in roomCreeps) {
         var youThere = roomCreeps[i];
+        dlog(youThere.name)
+
+        if (!util.def(Memory.creeps[youThere.name])) {
+            continue; // somehow not in memory?
+        }
         var yourJob = Memory.creeps[youThere.name].role;
+
         // Display the type of creep
         if (room.memory.showRole == 'yes') {
             youThere.say(yourJob);
@@ -93,6 +100,8 @@ function nextPriority(room) {
         return false
     } // Not done setting up
     // Verify room population
+
+
     var have = census(room);
     var totalPop = 0;
     for (var i in have) {
@@ -109,7 +118,7 @@ function nextPriority(room) {
     //if (have.worker < popCon.minWorker || (have.miner > popCon.minWorker && have.worker < room.controller.level * 2)) { //arbitrary shenanigans here
     if (have.worker < popCon.minWorker) { //arbitrary shenanigans here
         dlog('Bootstrapping worker population')
-		room.memory.nrgReserve = (room.energyAvailable > 300) ? room.energyAvailable : 300; // Guarantee we can still light this
+        room.memory.nrgReserve = (room.energyAvailable > 300) ? room.energyAvailable : 300; // Guarantee we can still light this
         // rocket
         return 'worker'
     }
@@ -143,7 +152,6 @@ function nextPriority(room) {
     var needsOfTheMany = Object.keys(needsOfTheFew).sort(function(keya, keyb) {
         return needsOfTheFew[keyb] - needsOfTheFew[keya];
     })
-    util.dumpObject(needsOfTheFew)
         // If the score is really high, the need is great. Have creep stop drawing
         // from spawn/extensions until spawn is complete
     if (needsOfTheFew[needsOfTheMany[0]] > 100) {
@@ -237,8 +245,8 @@ var spawn = function(room) {
     // room.memory.nextSpawn = Game.time + 5;
 
     var reserve = room.memory.nrgReserve;
-   
-	if (!util.def(reserve)){
+
+    if (!util.def(reserve)) {
         reserve = false;
     }
     if (!util.def(room.memory.planned)) {
@@ -251,7 +259,7 @@ var spawn = function(room) {
 
     if (reserve != false && reserve > room.energyAvailable) {
         dlog(room.name + ' has ' + room.energyAvailable + '/' + room.energyCapacityAvailable + ' energy, current goal is  ' + room.memory.nrgReserve + '. Delaying.');
-		room.memory.nextSpawn = Game.time + ((room.energyCapacityAvailable - room.energyAvailable > 30)? 30 : room.energyCapacityAvailable - room.energyAvailable);
+        room.memory.nextSpawn = Game.time + ((room.energyCapacityAvailable - room.energyAvailable > 30) ? 30 : room.energyCapacityAvailable - room.energyAvailable);
         return false;
     }
 
@@ -319,7 +327,7 @@ var spawn = function(room) {
             memory: {
                 role: want,
                 birthRoom: room.name,
-                taskList: ['gatherer'],
+                taskList: [],
                 taskState: 'SOURCE'
             }
         })

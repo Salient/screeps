@@ -192,7 +192,8 @@ function mine(creep) {
                 if (creep.memory.role != 'miner') {
                     creep.memory.mTarget = null;
                 } else {
-                    refindSource(creep)
+                    //Check if any other sources in the room do not have a miner already assigned.
+                    checkSourceMiners(creep)
                         // we don't want to return false when a miner does it's job too well
                     return true;
                 }
@@ -478,20 +479,23 @@ function gatherer(creep) {
     // but he was still hungry
 
     // return bringHomeBacon(creep);
-    var taskState = creep.memory.taskState;
+    if (creep.getActiveBodyparts(CARRY) == 0) {
+        // damaged worker or confused miner
+        creep.memory.taskList.push('miner');
+    }
 
     if (creep.carry.energy == creep.carryCapacity) {
-        taskState = 'SINK';
+        creep.memory.taskState = 'SINK';
         if (util.def(creep.memory.eTarget)) {
             delete creep.memory.eTarget;
         }
     }
 
     if (creep.carry.energy == 0) {
-        taskState = 'SOURCE';
+        creep.memory.taskState = 'SOURCE';
     }
 
-    if (taskState == 'SOURCE') {
+    if (creep.memory.taskState == 'SOURCE') {
         var targ = Game.getObjectById(creep.memory.mTarget);
         if (util.def(targ)) {
             mine(creep);
@@ -502,7 +506,7 @@ function gatherer(creep) {
         if (!util.def(targ)) {
             var rst = findBacon(creep);
             if (!util.def(rst)) {
-                    // dlog('mining')
+                // dlog('mining')
                 var tres = mine(creep);
                 return tres;
             } else {
@@ -516,6 +520,9 @@ function gatherer(creep) {
         switch (res) {
             case OK:
                 return true;
+                break;
+            case ERR_NOT_ENOUGH_RESOURCES:
+                creep.memory.eTarget = findBacon(creep);
                 break;
             case ERR_NOT_IN_RANGE:
                 var pap = creep.moveTo(targ, {
@@ -544,7 +551,7 @@ function gatherer(creep) {
     // ⚒️
     // 🔧
 
-    if (taskState == 'SINK') {
+    if (creep.memory.taskState == 'SINK') {
         creep.say('🛢️');
         // That night he had a stomach ache
         var mySink = Game.getObjectById(creep.memory.sinkId);
@@ -593,7 +600,7 @@ function gatherer(creep) {
                     break;
                 case ERR_FULL:
                     delete creep.memory.sinkId;
-                    return false;
+                    return true;
                     break; // gatherer(creep); break;
                 default:
                     dlog('error sinking into ' + mySink.structureType + ': ' + util.getError(res));
@@ -688,7 +695,8 @@ function findBacon(creep) {
 
 function findSink(creep) {
 
-    var sinkPriority = [STRUCTURE_LINK, STRUCTURE_SPAWN, STRUCTURE_EXTENSION, STRUCTURE_TOWER, STRUCTURE_POWER_SPAWN, STRUCTURE_STORAGE];
+    //var sinkPriority = [STRUCTURE_LINK, STRUCTURE_SPAWN, STRUCTURE_EXTENSION, STRUCTURE_TOWER, STRUCTURE_POWER_SPAWN, STRUCTURE_STORAGE];
+    var sinkPriority = [STRUCTURE_LINK, STRUCTURE_SPAWN, STRUCTURE_EXTENSION, STRUCTURE_TOWER, STRUCTURE_STORAGE];
 
     var targets = creep.room.find(FIND_MY_STRUCTURES);
 
@@ -717,10 +725,13 @@ function findSink(creep) {
         var priority = sinkPriority[need];
         for (var sink in targets) {
             var potential = targets[sink];
-            if (potential.structureType == priority && potential.energy < potential.energyCapacity) {
-                var pew = creep.moveTo(potential);
-                if (pew == OK || pew == ERR_TIRED) {
-                    return potential.id;
+            if (potential.structureType == priority) {
+                var space = (priority == STRUCTURE_STORAGE) ? (potential.store[RESOURCE_ENERGY] < potential.storeCapacity) : (potential.energy < potential.energyCapacity);
+                if (space) {
+                    var pew = creep.moveTo(potential);
+                    if (pew == OK || pew == ERR_TIRED) {
+                        return potential.id;
+                    }
                 }
             }
         }
@@ -739,43 +750,91 @@ function findOverhead(creep) {
 }
 module.exports.findOverhead = findOverhead;
 
-function refindSource(creep) {
+function checkSourceMiners(creep) {
     // Balance miners on sources in room, and then soemthing
 
     var sources = creep.room.memory.sources;
 
-    if (!util.def(sources)) {
+    if (!util.def(sources) || sources.length == 0) {
+        return false
+    }
+
+    var shafts = creep.room.memory.shafts;
+
+    if (!util.def(shafts) || shafts.length == 0) {
         return false
     }
 
 
-    var manpower = creep.room.find(FIND_MY_CREEPS, {
-        filter: (i) => i.memory.role == 'miner'
-    });
-
-    var counter = [];
-    for (var x = 0; x < sources.length; x++) {
-        counter[x] = 0;
-    }
-
-    for (var disrc in sources) {
-        var disId = sources[disrc].id;
-
-        for (var dude in manpower) {
-            if (!util.def(manpower[dude].memory.mTarget) || !util.def(manpower[dude].memory.mTarget.srcId)) {
-                //maybe just spawned
+    for (var thisSource in sources) {
+        var thisSrcId = sources[thisSource].id;
+        var found = false;
+        for (var thisShaft in shafts) {
+            var thisShaftId = shafts[thisShaft].srcId;
+            if (!Game.creeps[shafts[thisShaft].assignedTo]){
+            shafts[thisShaft].assignedTo = 'unassigned';
+            }
+            var assigneeRole = Game.creeps[shafts[thisShaft].assignedTo].memory.role;
+            if (!util.def(assigneeRole)) {
+                dlog('a strange and serious event');
                 continue;
             }
-            if (manpower[dude].memory.mTarget.srcId == disId) {
-                counter[disrc]++;
+
+            if (thisShaftId == thisSrcId && assigneeRole == 'miner') {
+                found = true;
+                break;
             }
         }
 
-        return false;
-
-
+        if (found) {
+            continue;
+        }
     }
+
+
+    //
+    //    var manpower = creep.room.find(FIND_MY_CREEPS, {
+    //        filter: (i) => i.memory.role == 'miner'
+    //    });
+    //
+    //    for (var man in manpower) {
+    //        if (util.def(manpower[man].memory.mTarget)) {
+    //            var assigned = manpower[man].memory.mTarget.srcId;
+    //        } else {
+    //            continue;
+    //        }
+    //        counter[assigned]++;
+    //    }
+    //
+    //    var src;
+    //    var count = 100;
+    //
+    //    for (var c in counter) {
+    //        if (counter[c] < count) {
+    //            src = c;
+    //            count = counter[c];
+    //        }
+    //    }
+    //
+
+    //    for (var disrc in sources) {
+    //        var disId = sources[disrc].id;
+    //
+    //        for (var dude in manpower) {
+    //            if (!util.def(manpower[dude].memory.mTarget) || !util.def(manpower[dude].memory.mTarget.srcId)) {
+    //                //maybe just spawned
+    //                continue;
+    //            }
+    //            if (manpower[dude].memory.mTarget.srcId == disId) {
+    //                counter[disrc]++;
+    //            }
+    //        }
+    //
+    //        return false;
+    //
+
 }
+
 module.exports.forager = function(creep) {
 
 
@@ -846,8 +905,8 @@ function isFull(sink) {
         // "/"+sink.energyCapacity);
         return sink.energy == sink.energyCapacity;
     } else if (sink.structureType == 'storage') {
-        // console.log(sink.structureType + ": " + sink.store +
-        // "/"+sink.storeCapacity);
+        console.log(sink.structureType + ": " + sink.store +
+            "/" + sink.storeCapacity);
         return sink.store == sink.storeCapacity;
     }
 }

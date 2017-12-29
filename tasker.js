@@ -28,10 +28,22 @@ module.exports.taskMinions = function(room) {
     }
 }
 
+//if (!util.def(this.memory) || this.memory == {}) {
+//    dlog('CREEP ' + this.name + ' HAS AMNESIA');
+//    this.memory = {
+//        role: 'worker',
+//        birthRoom: this.room,
+//        taskList: ['gatherer'],
+//        taskState: 'SOURCE'
+//    }
+//}
+
 Creep.prototype.warmMap = function() {
     if (!util.def(this.room.memory.heatmap)) {
         return
     }
+
+
     if (this.memory.taskList[this.memory.taskList.length - 1] != 'builder') {
         // warm up the heat map
         var x = (this.pos.x < 1) ? 1 : (this.pos.x > 48) ? 48 :
@@ -41,6 +53,7 @@ Creep.prototype.warmMap = function() {
         this.room.memory.heatmap[x][y] += 9;
     }
 }
+
 var performTask = function(creep) {
 
     if (creep.spawning) {
@@ -61,7 +74,7 @@ var performTask = function(creep) {
 
     if (taskList.length == 0) {
         dlog('Empty task list found: ' + creep.name);
-       taskList[0] = somethingNeedDoing(creep);
+        taskList[0] = somethingNeedDoing(creep);
         dlog('assinged ' + taskList[0] + ' to ' + creep.name);
 
     }
@@ -107,47 +120,51 @@ var performTask = function(creep) {
 
     //	dlog(creep.name + ' did ' + curJob + ' and his aim was ' + jobResult);
     if (!jobResult) {
-        dlog('job popped')
-        creep.memory.taskList.pop();
+        if (creep.memory.taskList.length > 1) {
+           dlog('job popped')
+            creep.memory.taskList.pop();
+        }
     }
 }
 module.exports.performTask = performTask;
 
-var getDefaultTask = function(creep) { // What to do if the creep has
-        // nothing to do
+//var getDefaultTask = function(creep) { // What to do if the creep has
+//        // nothing to do
+//
+//        var role = Memory.creeps[creep.name].role; // Access memory like this in
+//        // case creep is still spawning.
+//
+//        if (!util.def(role)) {
+//            role = 'worker'
+//        }
+//        dlog('found a ' + creep.memory.role + ' needing a job')
+//
+//
+//
+//        // dlog('assigning default task');
+//        switch (role) {
+//            case 'worker':
+//                //                return somethingNeedDoing(creep);
+//                return 'gatherer';
+//                break;
+//            case 'miner':
+//                return 'miner'
+//            case 'soldier':
+//            case 'medic':
+//                // case 'scout':
+//                // case 'pfc':
+//                // case 'footSoldier':
+//                // case 'cavalry':
+//                // case 'enforcer':
+//                return 'military';
+//            default:
+//                console.log('unmatched unit found!');
+//                return 'gatherer';
+//        }
+//    }
 
-        var role = Memory.creeps[creep.name].role; // Access memory like this in
-        // case creep is still spawning.
 
-        if (!util.def(role)) {
-            role = 'worker'
-        }
-        dlog('found a ' + creep.memory.role + ' needing a job')
-
-
-
-        // dlog('assigning default task');
-        switch (role) {
-            case 'worker':
-                //                return somethingNeedDoing(creep);
-                return 'gatherer';
-                break;
-            case 'miner':
-                return 'miner'
-            case 'soldier':
-            case 'medic':
-                // case 'scout':
-                // case 'pfc':
-                // case 'footSoldier':
-                // case 'cavalry':
-                // case 'enforcer':
-                return 'military';
-            default:
-                console.log('unmatched unit found!');
-                return 'gatherer';
-        }
-    }
-    // TODO - make the weights used below dynamic
+// TODO - make the weights used below dynamic
 
 function somethingNeedDoing(creep) {
 
@@ -159,10 +176,13 @@ function somethingNeedDoing(creep) {
         return 'soldier	'
     };
 
-    if (creep.getActiveBodyparts(CARRY)> 0 && creep.carry == 0) {
-        harvest.fillTank(creep);
+    if (creep.getActiveBodyparts(CARRY) > 0 && creep.carry == 0) {
+        var nrgAvail = harvest.fillTank(creep);
     }
 
+    if (!nrgAvail) {
+        return 'gatherer';
+    }
     switch (creep.memory.role) {
         case 'worker':
             var result = Math.floor((Math.random() * 10));
@@ -170,7 +190,7 @@ function somethingNeedDoing(creep) {
                 return 'gatherer'
             } else if (result < 5) {
                 return 'technician'
-            } else if (result<8) {
+            } else if (result < 8) {
                 return 'builder'
             } else {
                 return 'scout'
