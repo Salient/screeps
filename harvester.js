@@ -170,6 +170,10 @@ function mine(creep) {
     //dlog('should be an id' + posting)
     var srcObj = Game.getObjectById(posting.srcId);
 
+    if (!util.def(srcObj)) {
+        delete creep.memory.mTarget;
+        return false;
+    }
     // if (creep.pos.findPathTo(Game.getObjectById(posting.srcId)) ||
     // posting.assignedTo != creep.name && creep.memory.role != 'miner') {
 
@@ -498,7 +502,7 @@ function gatherer(creep) {
     if (creep.memory.taskState == 'SOURCE') {
         var targ = Game.getObjectById(creep.memory.mTarget);
         if (util.def(targ)) {
-            mine(creep);
+            return mine(creep);
         }
 
         creep.say('💰');
@@ -753,6 +757,11 @@ module.exports.findOverhead = findOverhead;
 function checkSourceMiners(creep) {
     // Balance miners on sources in room, and then soemthing
 
+    // For miners only
+    if (creep.memory.role != 'miner') {
+        return false;
+    }
+
     var sources = creep.room.memory.sources;
 
     if (!util.def(sources) || sources.length == 0) {
@@ -767,13 +776,19 @@ function checkSourceMiners(creep) {
 
 
     for (var thisSource in sources) {
+
         var thisSrcId = sources[thisSource].id;
         var found = false;
+
         for (var thisShaft in shafts) {
             var thisShaftId = shafts[thisShaft].srcId;
-            if (!Game.creeps[shafts[thisShaft].assignedTo]){
-            shafts[thisShaft].assignedTo = 'unassigned';
+
+            // Check if the assignment is still valid
+            if (!Game.creeps[shafts[thisShaft].assignedTo]) {
+                shafts[thisShaft].assignedTo = 'unassigned';
+                continue;
             }
+
             var assigneeRole = Game.creeps[shafts[thisShaft].assignedTo].memory.role;
             if (!util.def(assigneeRole)) {
                 dlog('a strange and serious event');
@@ -787,51 +802,27 @@ function checkSourceMiners(creep) {
         }
 
         if (found) {
+            // Check next source
             continue;
+        } else {
+            // doesn't seem to be a miner assigned to this source
+            // Remove existing shaft assignment
+            for (var old in shafts) {
+                if (shafts[old].assignedTo == creep.name) {
+                    shafts[old].assignedTo = 'unassigned';
+                }
+            }
+
+            for (var old in shafts) {
+                if ((shafts[old].srcId == thisSrcId) && (Game.creeps[shafts[old].assignedTo].memory.role != 'miner')) {
+                    shafts[old].assignedTo = creep.name;
+                    creep.memory.mTarget = shafts[old];
+                }
+            }
+
         }
+
     }
-
-
-    //
-    //    var manpower = creep.room.find(FIND_MY_CREEPS, {
-    //        filter: (i) => i.memory.role == 'miner'
-    //    });
-    //
-    //    for (var man in manpower) {
-    //        if (util.def(manpower[man].memory.mTarget)) {
-    //            var assigned = manpower[man].memory.mTarget.srcId;
-    //        } else {
-    //            continue;
-    //        }
-    //        counter[assigned]++;
-    //    }
-    //
-    //    var src;
-    //    var count = 100;
-    //
-    //    for (var c in counter) {
-    //        if (counter[c] < count) {
-    //            src = c;
-    //            count = counter[c];
-    //        }
-    //    }
-    //
-
-    //    for (var disrc in sources) {
-    //        var disId = sources[disrc].id;
-    //
-    //        for (var dude in manpower) {
-    //            if (!util.def(manpower[dude].memory.mTarget) || !util.def(manpower[dude].memory.mTarget.srcId)) {
-    //                //maybe just spawned
-    //                continue;
-    //            }
-    //            if (manpower[dude].memory.mTarget.srcId == disId) {
-    //                counter[disrc]++;
-    //            }
-    //        }
-    //
-    //        return false;
-    //
 
 }
 
