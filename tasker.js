@@ -112,6 +112,13 @@ var performTask = function(creep) {
         case 'scout':
             jobResult = spore.disperse(creep);
             break;
+        case 'busywork':
+            creep.memory.taskList.pop();
+            var busywork = somethingNeedDoing(creep);
+            creep.memory.taskList.push(busywork);
+            dlog('Assigning ' + creep.name + ' busy work...(' + busywork + ')');
+            jobResult = true;
+            break;
         default:
             dlog('Unhandled creep task! (' + taskList[taskList.length - 1] + ')');
     }
@@ -120,10 +127,10 @@ var performTask = function(creep) {
 
     //	dlog(creep.name + ' did ' + curJob + ' and his aim was ' + jobResult);
     if (!jobResult) {
-        if (creep.memory.taskList.length > 1) {
+        //        if (creep.memory.taskList.length > 1) {
            dlog('job popped')
             creep.memory.taskList.pop();
-        }
+        // }
     }
 }
 module.exports.performTask = performTask;
@@ -168,22 +175,12 @@ module.exports.performTask = performTask;
 
 function somethingNeedDoing(creep) {
 
-    // Some tasks are role bound by bodyparts
-    if (creep.memory.role == 'miner') {
-        return 'miner'
-    };
-    if (creep.memory.role == 'soldier') {
-        return 'soldier	'
-    };
+    var role = creep.memory.role;
 
-    if (creep.getActiveBodyparts(CARRY) > 0 && creep.carry == 0) {
-        var nrgAvail = harvest.fillTank(creep);
-    }
-
-    if (!nrgAvail) {
-        return 'gatherer';
-    }
-    switch (creep.memory.role) {
+    switch(role) {
+        case 'miner': 
+        case 'soldier':    
+            return role; break;
         case 'worker':
             var result = Math.floor((Math.random() * 10));
             if (result < 2) {

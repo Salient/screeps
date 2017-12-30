@@ -8,7 +8,9 @@ function dlog(msg) {
 
 Creep.prototype.hitUp = function(target) {
     if (!util.def(target)) {
-        dlog('not suing hitup right.')
+        dlog('not suing hitup right. Got: ' + target)
+        util.dumpObject(target);
+
         return false;
     }
     if (util.def(target.resourceType)) {
@@ -153,17 +155,14 @@ function mine(creep) {
     if (!util.def(creep.memory.mTarget)) {
         // Will return a mineshaft object or false if none available
         var posting = findSource(creep);
-        if (posting) {
-            creep.memory.mTarget = posting;
-        } else if (creep.memory.role == 'miner') {
-
-            // Prooobably should come up with a better solution here
-            creep.say('AAAH MOTHERLAND')
-                // creep.suicide();
-            dlog('AAAAH MOTHERLAND')
+        if (!util.def(posting)) {
             return false;
         }
-        return false
+        var newsrc = Game.getObjectById(posting.srcId);
+        if (creep.memory.role == 'worker' && newsrc.energy == 0 && newsrc.ticksToRegeneration > 40) {
+            return false;
+        }
+        creep.memory.mTarget = posting;
     }
 
     var posting = creep.memory.mTarget;
@@ -242,7 +241,12 @@ function mine(creep) {
 
 module.exports.mine = mine
 
-function fillTank(creep) {
+module.exports.fillTank = function (creep) {
+
+    if (creep.carry == creep.carryCapacity){
+        creep.memory.taskState = 'SINK';
+        return false;
+    }
     creep.say('🔌');
     var targ = Game.getObjectById(creep.memory.eTarget);
 
@@ -259,7 +263,7 @@ function fillTank(creep) {
             return false;
         }
         creep.memory.eTarget = res;
-        targ = Game.getObjectById(targ);
+        targ = Game.getObjectById(res);
     }
 
     var res = creep.hitUp(targ);
@@ -281,19 +285,17 @@ function fillTank(creep) {
             if (pap == OK || pap == ERR_TIRED) {
                 return true;
             } else {
-                return false
+            dlog('improve here');    return false
             }
             break;
         case ERR_NOT_ENOUGH_RESOURCES:
             delete creep.memory.eTarget;
-            return false;
             break;
         default:
-            dlog('fill tank catch: ' + util.getError(res))
+            dlog('fill tank catch: ' + util.getError(res) + '()' +  res)
             return false;
     }
 }
-module.exports.fillTank = fillTank;
 
 function findContainer(creep) {
     var newTargets = creep.room.find(FIND_STRUCTURES, {
@@ -512,6 +514,10 @@ function gatherer(creep) {
             if (!util.def(rst)) {
                 // dlog('mining')
                 var tres = mine(creep);
+                if (!tres) {
+                creep.memory.taskList.push('busywork');
+                    return true;
+                }
                 return tres;
             } else {
                 targ = Game.getObjectById(rst);
@@ -627,7 +633,7 @@ function findCashMoney(creep) {
             filter: (i) => i.amount > 50 && i.resourceType == RESOURCE_ENERGY
         }),
         creep.pos.findClosestByRange(FIND_STRUCTURES, {
-            filter: (i) => i.structureType == STRUCTURE_CONTAINER &&
+            filter: (i) => ((i.structureType == STRUCTURE_CONTAINER) || (i.structureType == STRUCTURE_STORAGE)) &&
                 i.store[RESOURCE_ENERGY] > 50
         }),
         creep.pos.findClosestByRange(FIND_STRUCTURES, {
@@ -814,9 +820,11 @@ function checkSourceMiners(creep) {
             }
 
             for (var old in shafts) {
-                if ((shafts[old].srcId == thisSrcId) && (Game.creeps[shafts[old].assignedTo].memory.role != 'miner')) {
-                    shafts[old].assignedTo = creep.name;
-                    creep.memory.mTarget = shafts[old];
+                if (shafts[old].srcId == thisSrcId) {
+                    if ((shafts[old].assignedTo == 'unassigned') || (Game.creeps[shafts[old].assignedTo].memory.role != 'miner')) {
+                        shafts[old].assignedTo = creep.name;
+                        creep.memory.mTarget = shafts[old];
+                    }
                 }
             }
 

@@ -8,8 +8,9 @@ module.exports.disperse = function(creep) {
     
     creep.say('🔱 ')
 
-        creep.memory.taskList.pop();
-    return false;
+    creep.memory.taskList.pop();
+    creep.memory.taskList.push('busywork');
+    return true;
 
 	if (creep.carry.energy != creep.carryCapacity) {
         creep.memory.taskList.pop();

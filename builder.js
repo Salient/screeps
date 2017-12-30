@@ -45,9 +45,6 @@ creep.say('⚒')
 	}
 	if (creep.carry.energy == 0) {
 		creep.memory.taskState = 'SOURCE'
-		// fillTank(creep);
-		creep.memory.taskList.pop();
-		return true;
 	}
 
 	if (creep.memory.taskState == 'SOURCE') {
@@ -58,10 +55,9 @@ creep.say('⚒')
 			|| !util.def(Game.getObjectById(creep.memory.bTarget))) {
 		var orders = findSite(creep) || repairDuty(creep);
 		if (!util.def(orders) || orders == false) {
-            //			dlog(creep.name
-            //		+ ' says nothing to build or repair, reverting to prior task')
-			creep.memory.taskList.pop();
-			return false;
+           dlog(creep.name + ' says nothing to build or repair, converting to technician')
+            creep.memory.taskList.push('technician');
+			return true;
 		} else {
 			creep.memory.bTarget = orders;
 		}
@@ -235,14 +231,12 @@ function upgradeRC(creep) {
 			&& (creep.memory.taskState != 'SINK')) { // Just filled up.
 		creep.memory.taskState = 'SINK'
 		// TEMP CODE vvv
-		return false;
-		creep.memory.taskList.pop();
 	}
 
 	if (creep.carry.energy == 0) {
 		creep.memory.taskState = 'SOURCE'
-		creep.memory.taskList.pop();
-		return false;
+        dlog('technician done?')
+        return false
 	}
 
 	if (creep.memory.taskState == 'SOURCE') {
@@ -269,6 +263,9 @@ function upgradeRC(creep) {
 		} else {
 			return true;
 		}
+    default:
+            dlog('technician default: ' + res)
+            return false;
 	}
 }
 

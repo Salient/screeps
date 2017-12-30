@@ -38,7 +38,6 @@ function census(room) {
     var roomCreeps = room.find(FIND_MY_CREEPS);
     for (var i in roomCreeps) {
         var youThere = roomCreeps[i];
-        dlog(youThere.name)
 
         if (!util.def(Memory.creeps[youThere.name])) {
             continue; // somehow not in memory?

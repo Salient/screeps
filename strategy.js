@@ -79,6 +79,24 @@ function dlog(msg) {
 // Come up with a base composition, and then scale to available energy capacity
 //
 
+Room.prototype.updateStrategy = function() {
+    var lvl = this.controller.level;
+    var strat = this.memory.strategy;
+
+    switch (lvl) {
+        case 1:
+        case 2:
+            strat.population.minWorker = 3;
+            break;
+        case 3:
+            strat.population.minWorker = 5;
+            break;
+        case 4:
+            strat.population.minWorker = 4;
+            break;
+    }
+}
+
 module.exports.strategery = function(room) {
 
     // //////////////
@@ -97,7 +115,7 @@ module.exports.strategery = function(room) {
         roomConfig.curlvl = room.controller.level;
 
         planning.controlLevelChange(room);
-
+        room.updateStrategy();
         // Contact the city council
         //planning.designRoom(room)
     }
@@ -118,7 +136,7 @@ function bootstrap(room) {
             "miner": [MOVE, WORK, WORK, WORK, WORK],
             "soldier": [MOVE, ATTACK, TOUGH, ATTACK, TOUGH, MOVE, RANGED_ATTACK, RANGED_ATTACK, TOUGH, MOVE],
             "medic": [MOVE, HEAL, TOUGH],
-            "scout": [MOVE,MOVE,CARRY,WORK,TOUGH]
+            "scout": [MOVE, MOVE, CARRY, WORK, TOUGH]
         },
         curlvl: 0,
         rulesOfEngagement: 'guard',
