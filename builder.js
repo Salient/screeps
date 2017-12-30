@@ -235,8 +235,6 @@ function upgradeRC(creep) {
 
 	if (creep.carry.energy == 0) {
 		creep.memory.taskState = 'SOURCE'
-        dlog('technician done?')
-        return false
 	}
 
 	if (creep.memory.taskState == 'SOURCE') {

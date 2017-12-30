@@ -1,6 +1,5 @@
 var util = require('common');
 var spore = require('spores');
-
 var harvest = require('harvester');
 var build = require('builder');
 var military = require('tactics');
@@ -73,9 +72,9 @@ var performTask = function(creep) {
     }
 
     if (taskList.length == 0) {
-        dlog('Empty task list found: ' + creep.name);
+        //dlog('Empty task list found: ' + creep.name);
         taskList[0] = somethingNeedDoing(creep);
-        dlog('assinged ' + taskList[0] + ' to ' + creep.name);
+        //dlog('assinged ' + taskList[0] + ' to ' + creep.name);
 
     }
     // if ((taskList.length > 1) && !(Game.time % 10)) // Periodically refresh
@@ -116,7 +115,7 @@ var performTask = function(creep) {
             creep.memory.taskList.pop();
             var busywork = somethingNeedDoing(creep);
             creep.memory.taskList.push(busywork);
-            dlog('Assigning ' + creep.name + ' busy work...(' + busywork + ')');
+            // dlog('Assigning ' + creep.name + ' busy work...(' + busywork + ')');
             jobResult = true;
             break;
         default:
@@ -128,8 +127,8 @@ var performTask = function(creep) {
     //	dlog(creep.name + ' did ' + curJob + ' and his aim was ' + jobResult);
     if (!jobResult) {
         //        if (creep.memory.taskList.length > 1) {
-           dlog('job popped')
-            creep.memory.taskList.pop();
+        //  dlog('job popped')
+        creep.memory.taskList.pop();
         // }
     }
 }
@@ -177,10 +176,11 @@ function somethingNeedDoing(creep) {
 
     var role = creep.memory.role;
 
-    switch(role) {
-        case 'miner': 
-        case 'soldier':    
-            return role; break;
+    switch (role) {
+        case 'miner':
+        case 'soldier':
+            return role;
+            break;
         case 'worker':
             var result = Math.floor((Math.random() * 10));
             if (result < 2) {
@@ -193,6 +193,30 @@ function somethingNeedDoing(creep) {
                 return 'scout'
             }
     }
+}
+
+function colonyOverseer(creep) {
+
+    // So far main worker functions are gatherer, builder, and tech
+    var strats = creep.room.memory.strategy;
+    if (!util.def(strats)) {
+        return somethingNeedDoing(creep);
+    }
+
+    if (util.def(creep.room.storage)) {
+        var nrgReserves = creep.room.storage.store[RESOURCE_ENERGY];
+    } else {
+        nrgReserves = false
+    }
+
+    // Want to keep some basic level of emergency energy
+    if (nrgReserves < 10000*creep.room.controller.level) {
+        return 'gatherer';
+    }
+
+    //    if (roo)
+
+
 }
 
 function dlog(msg) {

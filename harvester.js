@@ -128,13 +128,15 @@ Room.prototype.needMiner = function() {
     var horsepower = 0;
 
     var miner = this.find(FIND_MY_CREEPS, {
-        filter: (i) => i.memory.role == 'miner'
+        filter: (i) => i.memory.role == 'miner' && i.ticksToLive > 300
     });
 
     // Should at least have a miner for every source...
     if (miner.length < this.memory.sources.length) {
         return true;
     }
+
+
     // This code is mainly for optimizing early room build order
     for (var guy in miner) {
         horsepower += miner[guy].getActiveBodyparts(WORK);
@@ -241,9 +243,9 @@ function mine(creep) {
 
 module.exports.mine = mine
 
-module.exports.fillTank = function (creep) {
+module.exports.fillTank = function(creep) {
 
-    if (creep.carry == creep.carryCapacity){
+    if (creep.carry == creep.carryCapacity) {
         creep.memory.taskState = 'SINK';
         return false;
     }
@@ -256,10 +258,13 @@ module.exports.fillTank = function (creep) {
             if (creep.getActiveBodyparts(WORK) > 0) {
                 mine(creep);
             }
-            dlog('no available energy')
-                // TODO - add storage check here?
-                // TODO - use this situation to modify some behavior coefficients
-                // dlog(creep.name + ' out shuttle');
+
+            creep.room.tankMiss();
+
+            //            dlog('no available energy')
+            // TODO - add storage check here?
+            // TODO - use this situation to modify some behavior coefficients
+            // dlog(creep.name + ' out shuttle');
             return false;
         }
         creep.memory.eTarget = res;
@@ -285,14 +290,15 @@ module.exports.fillTank = function (creep) {
             if (pap == OK || pap == ERR_TIRED) {
                 return true;
             } else {
-            dlog('improve here');    return false
+                dlog('improve here');
+                return false
             }
             break;
         case ERR_NOT_ENOUGH_RESOURCES:
             delete creep.memory.eTarget;
             break;
         default:
-            dlog('fill tank catch: ' + util.getError(res) + '()' +  res)
+            dlog('fill tank catch: ' + util.getError(res) + '()' + res)
             return false;
     }
 }
@@ -515,7 +521,7 @@ function gatherer(creep) {
                 // dlog('mining')
                 var tres = mine(creep);
                 if (!tres) {
-                creep.memory.taskList.push('busywork');
+                    creep.memory.taskList.push('busywork');
                     return true;
                 }
                 return tres;
@@ -629,11 +635,13 @@ function distance(p1, p2) {
 
 function findCashMoney(creep) {
 
-    var cash = [creep.pos.findClosestByRange(FIND_DROPPED_RESOURCES, {
+    var cash = [
+
+        creep.pos.findClosestByRange(FIND_DROPPED_RESOURCES, {
             filter: (i) => i.amount > 50 && i.resourceType == RESOURCE_ENERGY
         }),
         creep.pos.findClosestByRange(FIND_STRUCTURES, {
-            filter: (i) => ((i.structureType == STRUCTURE_CONTAINER) || (i.structureType == STRUCTURE_STORAGE)) &&
+            filter: (i) => (i.structureType == STRUCTURE_CONTAINER) &&
                 i.store[RESOURCE_ENERGY] > 50
         }),
         creep.pos.findClosestByRange(FIND_STRUCTURES, {
@@ -641,6 +649,10 @@ function findCashMoney(creep) {
                 i.energy > 50
         })
     ];
+
+    if (util.def(creep.room.storage) && creep.room.storage.store[RESOURCE_ENERGY] > creep.room.controller.level*20000) {
+        cash.push(creep.room.storage)
+    }
 
     var score = 0;
     var best = null;

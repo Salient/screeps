@@ -13,6 +13,35 @@ Room.prototype.getLevel = function() {
     return this.controller.level;
 }
 
+Room.prototype.coolEconStats = function() {
+var econ = this.memory.strategy.economy;
+    if (!util.def(econ)){
+        bootstrap(this);
+    }
+
+    econ.gatherMiss = (econ.gatherMiss > 0 ) ? econ.gatherMiss -1 : 0;
+    econ.tankMiss = (econ.tankMiss > 0 ) ? econ.tankMiss -1 : 0;
+
+}
+
+Room.prototype.tankMiss = function() {
+var econ = this.memory.strategy.economy;
+    if (!util.def(econ)){
+        bootstrap(this);
+    }
+
+    econ.tankMiss++;
+}
+
+Room.prototype.gatherMiss = function() {
+var econ = this.memory.strategy.economy;
+    if (!util.def(econ)){
+        bootstrap(this);
+    }
+
+    econ.gatherMiss++;
+}
+
 // Basic strategy for building and fortifying a room
 // Controller lvl 1
 // --------------------
@@ -151,6 +180,10 @@ function bootstrap(room) {
         construction: {
             maxBuildSites: 5,
             roadWeight: 10
+        },
+        economy: {
+            gatherMiss: 0,
+            tankMiss: 0
         }
     }
     room.memory.strategy = strategy;

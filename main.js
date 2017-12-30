@@ -15,28 +15,28 @@ var visuals = require('visuals')
     //}
     //
 
-    ////Game.fe = function() {
-    ////    for (var ff in Game.rooms) {
-    ////        var res = harvest.freeEnergy(Game.rooms[ff]);
-    ////        dlog('Free energy in room ' + ff);
-    ////        for (var type in res) {
-    ////            dlog(type + ": " + res[type])
-    ////        }
-    ////    }
-    ////}
-    //
-    //Game.p = function() {
-    //        for (var r in Game.rooms) {
-    //            construct.p(Game.rooms[r]);
-    //        }
-    //    }
-    //    //
-    //    //Game.q = function() {
-    //    //    for (var r in Game.rooms) {
-    //        construct.controlLevelChange(Game.rooms[r]);
-    //    }
-    //}
-    //
+////Game.fe = function() {
+////    for (var ff in Game.rooms) {
+////        var res = harvest.freeEnergy(Game.rooms[ff]);
+////        dlog('Free energy in room ' + ff);
+////        for (var type in res) {
+////            dlog(type + ": " + res[type])
+////        }
+////    }
+////}
+//
+//Game.p = function() {
+//        for (var r in Game.rooms) {
+//            construct.p(Game.rooms[r]);
+//        }
+//    }
+//    //
+//    //Game.q = function() {
+//    //    for (var r in Game.rooms) {
+//        construct.controlLevelChange(Game.rooms[r]);
+//    }
+//}
+//
 function exterminate() {
     for (var r in Game.rooms) {
         var room = (Game.rooms[r]);
@@ -101,34 +101,40 @@ module.exports.loop = function() {
             }
         }
 
-Game.destroyAll = function(structure) {
-        for (var ff in Game.rooms) {
-            var sits = Game.rooms[ff].find(FIND_STRUCTURES, {filter: (i)=> i.structureType == structure});
-            for (var dd in sits) {
-                sits[dd].destroy()
+        Game.destroyAll = function(structure) {
+            for (var ff in Game.rooms) {
+                var sits = Game.rooms[ff].find(FIND_STRUCTURES, {
+                    filter: (i) => i.structureType == structure
+                });
+                for (var dd in sits) {
+                    sits[dd].destroy()
+                }
             }
         }
-    }
-Game.destroySites = function(structure) {
-        for (var ff in Game.rooms) {
-            var sits = Game.rooms[ff].find(FIND_CONSTRUCTION_SITES, {filter: (i)=> i.structureType == structure});
-            for (var dd in sits) {
-                sits[dd].remove()
+        Game.destroySites = function(structure) {
+            for (var ff in Game.rooms) {
+                var sits = Game.rooms[ff].find(FIND_CONSTRUCTION_SITES, {
+                    filter: (i) => i.structureType == structure
+                });
+                for (var dd in sits) {
+                    sits[dd].remove()
+                }
             }
         }
-    }
         Game.pp = function() {
             for (var room in Game.rooms) {
                 var thisRoom = Game.rooms[room];
                 construct.x(room);
             }
         }
+
         for (var room in Game.rooms) {
             var thisRoom = Game.rooms[room];
 
             // Pretty diagnostic information
             visuals(thisRoom);
-            thisRoom.cool(); 
+            thisRoom.coolHeatmap();
+            thisRoom.coolEconStats();
             //    if (!(Math.floor(thisRoom.memory.nextSpawn - Game.time) % 10)) {
             //        dlog('Next spawn in ' + thisRoom.name + ' in ' + Math.floor((thisRoom.memory.nextSpawn - Game.time)));
             //}

@@ -154,10 +154,10 @@ function nextPriority(room) {
         // If the score is really high, the need is great. Have creep stop drawing
         // from spawn/extensions until spawn is complete
     if (needsOfTheFew[needsOfTheMany[0]] > 100) {
-        //dlog('Need' + needsOfTheMany[0] + ' with score ' +
-        // needsOfTheFew[needsOfTheMany[0]])
-        //dlog('Next' + needsOfTheMany[1] + ' with score ' +
-        //needsOfTheFew[needsOfTheMany[1]])
+        dlog('Need' + needsOfTheMany[0] + ' with score ' +
+         needsOfTheFew[needsOfTheMany[0]])
+        dlog('Next' + needsOfTheMany[1] + ' with score ' +
+        needsOfTheFew[needsOfTheMany[1]])
         room.memory.strategy.nrgReserve = room.energyCapacityAvailable;
         return needsOfTheMany[0];
     }

@@ -14,7 +14,7 @@ var debug = false
 
 // FYI, max call stack size is 4500. ish. it seems to depend
 
-Room.prototype.cool = function () {
+Room.prototype.coolHeatmap = function () {
     // Measure traffic around the room
     if (!util.def(this.memory.heatmap)) {
         return;
@@ -31,6 +31,10 @@ Room.prototype.cool = function () {
                 heatm[x][y] = 0
             }
         }
+    }
+
+    if (!util.def(this.memory.strategy)) {
+        return;
     }
 }
 
@@ -121,7 +125,7 @@ Room.prototype.buildRoads = function() {
 
 module.exports.controlLevelChange = function(room) {
     room.placeExtensions();
-    room.placeDefenses();
+    // room.placeDefenses();
     room.placeContainers();
 }
 
