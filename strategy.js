@@ -16,7 +16,7 @@ Room.prototype.getLevel = function() {
 Room.prototype.coolEconStats = function() {
 var econ = this.memory.strategy.economy;
     if (!util.def(econ)){
-        bootstrap(this);
+        this.bootstrap();
     }
 
     econ.gatherMiss = (econ.gatherMiss > 0 ) ? econ.gatherMiss -1 : 0;
@@ -27,16 +27,15 @@ var econ = this.memory.strategy.economy;
 Room.prototype.tankMiss = function() {
 var econ = this.memory.strategy.economy;
     if (!util.def(econ)){
-        bootstrap(this);
+    this.bootstrap();
     }
-
     econ.tankMiss++;
 }
 
 Room.prototype.gatherMiss = function() {
 var econ = this.memory.strategy.economy;
     if (!util.def(econ)){
-        bootstrap(this);
+        this.bootstrap();
     }
 
     econ.gatherMiss++;
@@ -133,7 +132,7 @@ module.exports.strategery = function(room) {
 
     if (!util.def(room.memory.strategy)) {
         dlog('Bootstrapping!')
-        bootstrap(room);
+        room.bootstrap();
     }
     var roomConfig = room.memory.strategy;
 
@@ -150,15 +149,14 @@ module.exports.strategery = function(room) {
     }
 
 
-    var selectStrat = [bootstrap, lvl1room, lvl2room, lvl3room, lvl4room,
+    var selectStrat = [lvl0room, lvl1room, lvl2room, lvl3room, lvl4room,
         lvl5room, lvl6room, lvl7room
     ];
 
     //	selectStrat[roomConfig.curlvl](room);
 }
 
-
-function bootstrap(room) {
+Room.prototype.bootstrap = function() {
     var strategy = {
         castes: {
             'worker': [CARRY, WORK, MOVE, MOVE, MOVE],
@@ -183,19 +181,19 @@ function bootstrap(room) {
         },
         economy: {
             gatherMiss: 0,
-            tankMiss: 0
+            tankMiss: 0,
+            storageReserves: 20000 // Rainy Day Fund
         }
     }
-    room.memory.strategy = strategy;
-    room.memory.nextSpawn = 1;
+    this.memory.strategy = strategy;
+    this.memory.nextSpawn = 1;
 }
 
-module.exports.bootstrap = bootstrap;
-module.exports.getCastes = function(room) {
-    if (!util.def(room.memory.strategy)) {
-        bootstrap(room);
+Room.prototype.getCastes = function () {
+    if (!util.def(this.memory.strategy)) {
+        this.bootstrap();
     }
-    return room.memory.strategy.castes;
+    return this.memory.strategy.castes;
 }
 
 var lvl1room = function(room) {
@@ -203,51 +201,13 @@ var lvl1room = function(room) {
     if (!util.def(roomConfig)) {
         return false
     }
-    // Just checking if we can get off the ground properly
-    if (room.popCount() < 6) {
-        return bootstrap(room);
+}
+
+var lvl0room = function(room) {
+    var roomConfig = room.memory.strategy;
+    if (!util.def(roomConfig)) {
+        return false
     }
-
-    if (util.def(roomConfig.currentPopulation.workerBee) &&
-        (roomConfig.currentPopulation.workerBee >= 2)) {
-        tasker.retask(room, 'gatherer', 'technician')
-    } else {
-        //		tasker.retask(room, 'gatherer', 'gatherer') // has no effect if
-        // already set
-
-    }
-    // dlog('lvl1 proper, pop counted ' + room.popCount());
-    // Setup population goals
-    roomConfig.latestModels = {
-        "miner": [WORK, WORK, MOVE],
-        "workerBee": [CARRY, CARRY, CARRY, MOVE, MOVE, MOVE],
-        "private": [TOUGH, TOUGH, TOUGH, TOUGH, ATTACK, ATTACK, MOVE, MOVE],
-        "technician": [MOVE, MOVE, WORK, CARRY, CARRY]
-    };
-
-    // demographics effect build order
-    roomConfig.goalDemographics = {
-        "miner": 0.2,
-        "workerBee": 0.2,
-        "private": 0.5,
-        "technician": 0.6,
-        "gatherer": 0.05
-    };
-
-    roomConfig.minDemographics = {
-        "workerBee": 3,
-    }
-    roomConfig.maxDemographics = {
-        "gatherer": 2,
-        "miner": 3,
-        "workerBee": 3,
-        "private": 1, // scouts should chill out until an enemy enters the
-        // room.
-        "technician": 5
-            // Technicians should default to upgrading the
-            // controller
-    }
-
 }
 
 var lvl2room = function(room) {

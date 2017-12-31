@@ -171,6 +171,24 @@ module.exports.loop = function() {
 
         }
 
+        // Experimental Code
+        ////////////
+
+        // Information stored in Game object does not persist across ticks
+        Game.dibsList = [];
+        for (var dude in Game.creeps) {
+            var mem = Game.creeps[dude].memory;
+
+            if (util.def(mem.eTarget)) {
+                Game.dibsList.push(mem.eTarget);
+            }
+            if (util.def(mem.sinkId)) {
+                Game.dibsList.push(mem.sinkId);
+            }
+        }
+        ////////////
+
+
         for (var dude in Game.creeps) {
             taskMaster.performTask(Game.creeps[dude]);
         }

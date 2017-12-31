@@ -245,7 +245,7 @@ module.exports.mine = mine
 
 module.exports.fillTank = function(creep) {
 
-    if (creep.carry == creep.carryCapacity) {
+    if (creep.carry.energy == creep.carryCapacity) {
         creep.memory.taskState = 'SINK';
         return false;
     }
@@ -521,6 +521,7 @@ function gatherer(creep) {
                 // dlog('mining')
                 var tres = mine(creep);
                 if (!tres) {
+                    creep.memory.taskList.pop();
                     creep.memory.taskList.push('busywork');
                     return true;
                 }
@@ -650,7 +651,14 @@ function findCashMoney(creep) {
         })
     ];
 
-    if (util.def(creep.room.storage) && creep.room.storage.store[RESOURCE_ENERGY] > creep.room.controller.level*20000) {
+    // Sane defaults
+    if (!util.def(creep.room.memory.strategy.economy.energyReservePerLevel)) {
+        var nrgReserve = 20000;
+    } else {
+        nrgReserve = creep.room.memory.strategy.economy.energyReservePerLevel;
+    }
+
+    if (util.def(creep.room.storage) && creep.room.storage.store[RESOURCE_ENERGY] > creep.room.controller.level * 20000) {
         cash.push(creep.room.storage)
     }
 
@@ -743,20 +751,38 @@ function findSink(creep) {
         return 0;
     });
 
+
+
+    var backup = false;
+
     for (var need in sinkPriority) {
         var priority = sinkPriority[need];
-        for (var sink in targets) {
-            var potential = targets[sink];
-            if (potential.structureType == priority) {
-                var space = (priority == STRUCTURE_STORAGE) ? (potential.store[RESOURCE_ENERGY] < potential.storeCapacity) : (potential.energy < potential.energyCapacity);
-                if (space) {
-                    var pew = creep.moveTo(potential);
-                    if (pew == OK || pew == ERR_TIRED) {
-                        return potential.id;
+        dance:
+            for (var sink in targets) {
+                var potential = targets[sink];
+                if (potential.structureType == priority) {
+                    var space = (priority == STRUCTURE_STORAGE) ? (potential.store[RESOURCE_ENERGY] < potential.storeCapacity) : (potential.energy < potential.energyCapacity);
+                    if (space) {
+                        if (backup === false) {
+                            backup = potential.id;
+                        }
+                        for (var dibs in Game.dibsList) {
+                            if (potential.id == Game.dibsList[dibs]) {
+                                continue dance;
+                            }
+                        }
+                        var pew = creep.moveTo(potential);
+                        if (pew == OK || pew == ERR_TIRED) {
+                            return potential.id;
+                        }
                     }
                 }
             }
-        }
+    }
+
+    // don't want to error completely just because somebody else is headed to the same place
+    if (backup != false) {
+        return backup;
     }
     return false;
 }

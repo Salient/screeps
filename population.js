@@ -158,7 +158,7 @@ function nextPriority(room) {
          needsOfTheFew[needsOfTheMany[0]])
         dlog('Next' + needsOfTheMany[1] + ' with score ' +
         needsOfTheFew[needsOfTheMany[1]])
-        room.memory.strategy.nrgReserve = room.energyCapacityAvailable;
+        room.memory.nrgReserve = room.energyCapacityAvailable;
         return needsOfTheMany[0];
     }
     return false;
@@ -300,7 +300,7 @@ var spawn = function(room) {
         return false;
     } // do not want
 
-    var castes = strat.getCastes(room);
+    var castes = room.getCastes();
 
     if (!util.def(castes[want])) {
         dlog('wtf');

@@ -38,18 +38,26 @@ module.exports.taskMinions = function(room) {
 //}
 
 Creep.prototype.warmMap = function() {
-    if (!util.def(this.room.memory.heatmap)) {
+    if (!util.def(this.room.memory.heatmap) || !util.def(this.memory.taskList)) {
         return
     }
 
-
-    if (this.memory.taskList[this.memory.taskList.length - 1] != 'builder') {
+    if (this.memory.taskList.length >0 && this.memory.taskList[this.memory.taskList.length - 1] != 'builder') {
         // warm up the heat map
         var x = (this.pos.x < 1) ? 1 : (this.pos.x > 48) ? 48 :
             this.pos.x;
         var y = (this.pos.y < 1) ? 1 : (this.pos.y > 48) ? 48 :
             this.pos.y;
         this.room.memory.heatmap[x][y] += 9;
+    }
+}
+
+Creep.prototype.changeTask = function (newtask) {
+    if (util.def(this.memory.taskList) && this.memory.taskList.length > 0) {
+        this.memory.taskList.pop();
+        this.memory.taskList.push(newtask);
+    } else {
+        this.memory.taskList = [newtask];   
     }
 }
 
@@ -111,6 +119,8 @@ var performTask = function(creep) {
         case 'scout':
             jobResult = spore.disperse(creep);
             break;
+        case 'filltank':
+            jobResult = harvest.fillTank(creep);
         case 'busywork':
             creep.memory.taskList.pop();
             var busywork = somethingNeedDoing(creep);
@@ -183,11 +193,11 @@ function somethingNeedDoing(creep) {
             break;
         case 'worker':
             var result = Math.floor((Math.random() * 10));
-            if (result < 2) {
+            if (result < 5) {
                 return 'gatherer'
-            } else if (result < 5) {
+            } else if (result < 7) {
                 return 'technician'
-            } else if (result < 8) {
+            } else if (result <= 9) {
                 return 'builder'
             } else {
                 return 'scout'
