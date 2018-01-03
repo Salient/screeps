@@ -14,27 +14,33 @@ Room.prototype.getLevel = function() {
 }
 
 Room.prototype.coolEconStats = function() {
-var econ = this.memory.strategy.economy;
-    if (!util.def(econ)){
+    if (!util.def(this.memory.strategy)) {
+        this.bootstrap();
+    }
+    var econ = this.memory.strategy.economy;
+    if (!util.def(econ)) {
         this.bootstrap();
     }
 
-    econ.gatherMiss = (econ.gatherMiss > 0 ) ? econ.gatherMiss -1 : 0;
-    econ.tankMiss = (econ.tankMiss > 0 ) ? econ.tankMiss -1 : 0;
+    econ.gatherMiss = (econ.gatherMiss > 0) ? econ.gatherMiss - 1 : 0;
+    econ.tankMiss = (econ.tankMiss > 0) ? econ.tankMiss - 1 : 0;
 
 }
 
 Room.prototype.tankMiss = function() {
-var econ = this.memory.strategy.economy;
-    if (!util.def(econ)){
-    this.bootstrap();
+    if (!util.def(this.memory.strategy)) {
+        this.bootstrap();
+    }
+    var econ = this.memory.strategy.economy;
+    if (!util.def(econ)) {
+        this.bootstrap();
     }
     econ.tankMiss++;
 }
 
 Room.prototype.gatherMiss = function() {
-var econ = this.memory.strategy.economy;
-    if (!util.def(econ)){
+    var econ = this.memory.strategy.economy;
+    if (!util.def(econ)) {
         this.bootstrap();
     }
 
@@ -139,6 +145,10 @@ module.exports.strategery = function(room) {
     // /////////////
     // State check
 
+    if (!util.def(room.controller)){
+        // room not owned yet. bail for now
+        return
+    }
     if (roomConfig.curlvl != room.controller.level) {
         roomConfig.curlvl = room.controller.level;
 
@@ -189,7 +199,7 @@ Room.prototype.bootstrap = function() {
     this.memory.nextSpawn = 1;
 }
 
-Room.prototype.getCastes = function () {
+Room.prototype.getCastes = function() {
     if (!util.def(this.memory.strategy)) {
         this.bootstrap();
     }

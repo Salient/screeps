@@ -582,50 +582,45 @@ function gatherer(creep) {
 
                 //        creep.memory.taskList.pop();
 
+                dlog(creep.name + ': no sink')
                 return false;
             } else {
+                creep.memory.sinkId = test;
                 mySink = Game.getObjectById(test);
             }
-            // util.dumpObject(mySink)}
-            // gatherer(creep);
-
-
-            //if (mySink.structureType == STRUCTURE_SPAWN) {
-            //            mySink.renewCreep(creep);
-            //        }
-            // var quant = (mySink.energyCapacity - mySink.energy < creep.energy ) ? mySink.energyCapacity - mySink.energy : creep.energy;
-            var res = creep.transfer(mySink, RESOURCE_ENERGY);
-            //        return
-            switch (res) {
-                case OK:
-                    return true;
-                    break;
-                case ERR_NOT_IN_RANGE:
-                    var derp = creep.moveTo(mySink, {
-                        reusePath: 15,
-                        visualizePathStyle: {
-                            opacity: 0.9,
-                            stroke: '#ffaaff'
-                        }
-                    });
-                    if (derp == OK || derp == ERR_TIRED) {
-                        return true;
-                    } else {
-                        dlog('debug info gatherer sink move error: ' + util.getError(derp))
-                        return false
-                    }
-                    break;
-                case ERR_FULL:
-                    delete creep.memory.sinkId;
-                    return true;
-                    break; // gatherer(creep); break;
-                default:
-                    dlog('error sinking into ' + mySink.structureType + ': ' + util.getError(res));
-                    return false;
-            }
         }
+        var res = creep.transfer(mySink, RESOURCE_ENERGY);
+        //        return
+        switch (res) {
+            case OK:
+                return true;
+                break;
+            case ERR_NOT_IN_RANGE:
+                var derp = creep.moveTo(mySink, {
+                    reusePath: 15,
+                    visualizePathStyle: {
+                        opacity: 0.9,
+                        stroke: '#ffaaff'
+                    }
+                });
+                if (derp == OK || derp == ERR_TIRED) {
+                    return true;
+                } else {
+                    dlog('debug info gatherer sink move error: ' + util.getError(derp))
+                    return false
+                }
+                break;
+            case ERR_FULL:
+                delete creep.memory.sinkId;
+                return true;
+                break; // gatherer(creep); break;
+            default:
+                dlog('error sinking into ' + mySink.structureType + ': ' + util.getError(res));
+                return false;
+        }
+
     }
-    dlog('gatherer fallthru ');
+    dlog('gatherer fallthru, task state: ' + creep.taskState);
     return false
 }
 
@@ -652,13 +647,16 @@ function findCashMoney(creep) {
     ];
 
     // Sane defaults
+    if (!util.def(creep.room.memory.strategy)) {
+        return false;
+    }
     if (!util.def(creep.room.memory.strategy.economy.energyReservePerLevel)) {
-        var nrgReserve = 20000;
+        var storageReserves = 20000;
     } else {
-        nrgReserve = creep.room.memory.strategy.economy.energyReservePerLevel;
+        storageReserves = creep.room.memory.strategy.economy.energyReservePerLevel;
     }
 
-    if (util.def(creep.room.storage) && creep.room.storage.store[RESOURCE_ENERGY] > creep.room.controller.level * 20000) {
+    if (util.def(creep.room.storage) && creep.room.storage.store[RESOURCE_ENERGY] > creep.room.controller.level * storageReserves) {
         cash.push(creep.room.storage)
     }
 
@@ -731,8 +729,9 @@ function findSink(creep) {
     var targets = creep.room.find(FIND_MY_STRUCTURES);
 
     if (targets.length == 0) {
-        dlog('no sink targets in this room');
-        return false;
+        dlog(creep.name + ': no sink targets in this room, trying origin');
+        return Memory.rooms[creep.memory.birthRoom].spawnId;
+        //        return false;
     }
 
     for (var x in targets) {
@@ -942,8 +941,8 @@ function isFull(sink) {
         // "/"+sink.energyCapacity);
         return sink.energy == sink.energyCapacity;
     } else if (sink.structureType == 'storage') {
-        console.log(sink.structureType + ": " + sink.store +
-            "/" + sink.storeCapacity);
+        //        console.log(sink.structureType + ": " + sink.store +
+        //   "/" + sink.storeCapacity);
         return sink.store == sink.storeCapacity;
     }
 }

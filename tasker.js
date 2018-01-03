@@ -52,6 +52,15 @@ Creep.prototype.warmMap = function() {
     }
 }
 
+Object.defineProperty(Creep.prototype, "taskState", {
+  get() {
+    return this.memory.taskState;
+  },
+  set(x) {
+    this.memory.taskState = x;
+  }
+});
+
 Creep.prototype.changeTask = function (newtask) {
     if (util.def(this.memory.taskList) && this.memory.taskList.length > 0) {
         this.memory.taskList.pop();
@@ -59,6 +68,11 @@ Creep.prototype.changeTask = function (newtask) {
     } else {
         this.memory.taskList = [newtask];   
     }
+}
+Creep.prototype.addTask = function (newtask) {
+    if (util.def(this.memory.taskList)) {
+        this.memory.taskList.push(newtask);
+    } 
 }
 
 var performTask = function(creep) {
@@ -196,9 +210,9 @@ function somethingNeedDoing(creep) {
             if (result < 5) {
                 return 'gatherer'
             } else if (result < 7) {
-                return 'technician'
-            } else if (result <= 9) {
                 return 'builder'
+            } else if (result <= 9) {
+                return 'scout'
             } else {
                 return 'scout'
             }

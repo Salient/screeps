@@ -55,7 +55,7 @@ function builder(creep) {
         var orders = findSite(creep) || repairDuty(creep);
         if (!util.def(orders) || orders == false) {
             dlog(creep.name + ' says nothing to build or repair, converting to technician')
-            creep.memory.taskList.push('technician');
+    creep.changeTask('technician');
             return true;
         } else {
             creep.memory.bTarget = orders;
@@ -244,7 +244,11 @@ function upgradeRC(creep) {
     //       return harvest.fillTank(creep);
     //}
 
-    var res = creep.upgradeController(rc);
+    if (rc.my) {
+        var res = creep.upgradeController(rc);
+    } else {
+        var res = creep.claimController(rc);
+    }
 
     switch (res) {
         case OK:
@@ -270,8 +274,12 @@ function upgradeRC(creep) {
             creep.changeTask('filltank');
             return true;
             break;
+        case ERR_NO_BODYPART:
+            return false;
+
         default:
             dlog(creep.name + '- technician default error: ' + util.getError(res) + ' (' + res + ')');
+            dlog('owner is ' + rc.owner)
             return false;
     }
 }
