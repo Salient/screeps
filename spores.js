@@ -13,10 +13,10 @@ module.exports.disperse = function(creep) {
     var wander = creep.memory.wanderlust;
 
     // Determine initial state
-    //    if (creep.room.name == wander.sporeFrom && creep.carry.energy < creep.energyCapacity) { // Still in origin room. Fill up and head out. 
-    //        creep.addTask('fillup');
-    //        return true;
-    //    }
+        if (creep.room.name == wander.sporeFrom && creep.carry.energy < creep.energyCapacity) { // Still in origin room. Fill up and head out. 
+            creep.addTask('fillup');
+            return true;
+        }
 
     if (creep.room.name == wander.sporeFrom) { //Still in origin room. Head out.
         if (util.def(wander.nextPortal)) {
@@ -49,20 +49,20 @@ module.exports.disperse = function(creep) {
     } else {
         creep.moveTo(creep.room.controller);
     }
-    //	if (creep.carry.energy != creep.carryCapacity && creep.taskState != 'IN_WORK') {
-    //        creep.addTask('filltank'); // We want to load up for the long journey ahead
-    //        return true;
-    //	}
-    //
-    //	if (creep.carry.energy == 0) {
-    //		creep.memory.taskState = 'SOURCE'
-    //		creep.memory.taskList.pop();
-    //		return true;
-    //	}
-    //
-    //	if (creep.memory.taskState == 'SOURCE') {
-    //		return harvest.fillTank(creep);
-    //	}
+  	if (creep.carry.energy != creep.carryCapacity && creep.taskState != 'IN_WORK') {
+          creep.addTask('filltank'); // We want to load up for the long journey ahead
+          return true;
+  	}
+  
+  	if (creep.carry.energy == 0) {
+  		creep.memory.taskState = 'SOURCE'
+  		creep.memory.taskList.pop();
+  		return true;
+  	}
+  
+  	if (creep.memory.taskState == 'SOURCE') {
+  		return harvest.fillTank(creep);
+  	}
 
 }
 

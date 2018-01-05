@@ -95,6 +95,8 @@ function nextPriority(room) {
     //
 
     var popCon = room.memory.strategy.population;
+    var econCon = room.memory.strategy.economy;
+
     if (!util.def(popCon)) {
         return false
     } // Not done setting up
@@ -146,18 +148,19 @@ function nextPriority(room) {
         'miner': ((Object.keys(room.memory.shafts).length - have.miner) * have.worker) *
             popCon.minerWeight * vetoMiner,
         'soldier': 15 + ((6 - room.memory.strategy.defcon) * 20),
-        'medic': ((have.soldier - have.medic) * popCon.medicWeight)
+        'medic': ((have.soldier - have.medic) * popCon.medicWeight),
+        'scout': (econCon.tankMiss + econCon.gatherMiss) * 10 
     }
     var needsOfTheMany = Object.keys(needsOfTheFew).sort(function(keya, keyb) {
-        return needsOfTheFew[keyb] - needsOfTheFew[keya];
-    })
+            return needsOfTheFew[keyb] - needsOfTheFew[keya];
+        })
         // If the score is really high, the need is great. Have creep stop drawing
         // from spawn/extensions until spawn is complete
     if (needsOfTheFew[needsOfTheMany[0]] > 100) {
         dlog('Need' + needsOfTheMany[0] + ' with score ' +
-         needsOfTheFew[needsOfTheMany[0]])
+            needsOfTheFew[needsOfTheMany[0]])
         dlog('Next' + needsOfTheMany[1] + ' with score ' +
-        needsOfTheFew[needsOfTheMany[1]])
+            needsOfTheFew[needsOfTheMany[1]])
         room.memory.nrgReserve = room.energyCapacityAvailable;
         return needsOfTheMany[0];
     }
@@ -257,9 +260,14 @@ var spawn = function(room) {
     }
 
     if (reserve != false && reserve > room.energyAvailable) {
-        dlog(room.name + ' has ' + room.energyAvailable + '/' + room.energyCapacityAvailable + ' energy, current goal is  ' + room.memory.nrgReserve + '. Delaying.');
-        room.memory.nextSpawn = Game.time + ((room.energyCapacityAvailable - room.energyAvailable > 30) ? 30 : room.energyCapacityAvailable - room.energyAvailable);
-        return false;
+        var justInCase = census(room);
+        if (justInCase.worker < 3) {
+            room.memory.nrgReserve = 300;
+        } else {
+            dlog(room.name + ' has ' + room.energyAvailable + '/' + room.energyCapacityAvailable + ' energy, current goal is  ' + room.memory.nrgReserve + '. Delaying.');
+            room.memory.nextSpawn = Game.time + ((room.energyCapacityAvailable - room.energyAvailable > 30) ? 30 : room.energyCapacityAvailable - room.energyAvailable);
+            return false;
+        }
     }
 
     var cap = (reserve == false) ? room.energyCapacityAvailable : reserve;

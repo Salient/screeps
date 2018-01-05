@@ -151,7 +151,6 @@ var performTask = function(creep) {
     //	dlog(creep.name + ' did ' + curJob + ' and his aim was ' + jobResult);
     if (!jobResult) {
         //        if (creep.memory.taskList.length > 1) {
-        //  dlog('job popped')
         creep.memory.taskList.pop();
         // }
     }
@@ -201,21 +200,20 @@ function somethingNeedDoing(creep) {
     var role = creep.memory.role;
 
     switch (role) {
-        case 'miner':
-        case 'soldier':
-            return role;
-            break;
         case 'worker':
             var result = Math.floor((Math.random() * 10));
             if (result < 5) {
                 return 'gatherer'
-            } else if (result < 7) {
+            } else if (result < 8) {
                 return 'builder'
             } else if (result <= 9) {
-                return 'scout'
+                return 'technician'
             } else {
-                return 'scout'
+                //                return 'scout'
             }
+            break;
+
+        default: return role; 
     }
 }
 

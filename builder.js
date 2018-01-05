@@ -288,7 +288,7 @@ function upgradeRC(creep) {
 function sayProgress(target) {
 
     if (util.def(target.progress)) {
-        return parseInt((target.progress / target.progressTotal) * 100);
+        return (target.progressTotal >0) ? parseInt((target.progress / target.progressTotal) * 100) : 0;
     } else if (target.hits !== null) {
         return parseInt((target.hits / target.hitsMax) * 100);
     } else {

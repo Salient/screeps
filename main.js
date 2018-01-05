@@ -135,6 +135,8 @@ module.exports.loop = function() {
             visuals(thisRoom);
             thisRoom.coolHeatmap();
             thisRoom.coolEconStats();
+           dlog(thisRoom.name + ' source miss: ' + thisRoom.memory.strategy.economy.gatherMiss + ', tankMiss: ' +thisRoom.memory.strategy.economy.tankMiss); 
+            
             //    if (!(Math.floor(thisRoom.memory.nextSpawn - Game.time) % 10)) {
             //        dlog('Next spawn in ' + thisRoom.name + ' in ' + Math.floor((thisRoom.memory.nextSpawn - Game.time)));
             //}
@@ -171,8 +173,6 @@ module.exports.loop = function() {
 
         }
 
-        // Experimental Code
-        ////////////
 
         // Information stored in Game object does not persist across ticks
         Game.dibsList = [];
@@ -186,7 +186,6 @@ module.exports.loop = function() {
                 Game.dibsList.push(mem.sinkId);
             }
         }
-        ////////////
 
 
         for (var dude in Game.creeps) {

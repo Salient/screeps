@@ -481,6 +481,8 @@ module.exports.findEnergy = findEnergy;
 
 function gatherer(creep) {
 
+    // TODO - add a mode where they search for energy outside the room. like a scout, but without claim part
+
     // Priorities are:
     // 1. Pickup any free energy laying on the ground.
     // 2. Move energy from a container to extension/spawn if needed.
@@ -505,6 +507,9 @@ function gatherer(creep) {
 
     if (creep.carry.energy == 0) {
         creep.memory.taskState = 'SOURCE';
+        if (util.def(creep.memory.sinkId)) {
+            delete creep.memory.sinkId;
+        }
     }
 
     if (creep.memory.taskState == 'SOURCE') {
@@ -516,6 +521,7 @@ function gatherer(creep) {
         creep.say('💰');
         targ = Game.getObjectById(creep.memory.eTarget);
         if (!util.def(targ)) {
+            delete creep.memory.eTarget;
             var rst = findBacon(creep);
             if (!util.def(rst)) {
                 // dlog('mining')
@@ -554,6 +560,7 @@ function gatherer(creep) {
                     return true
                 } else {
                     dlog('debug info gatherer source move error: ' + util.getError(pap))
+                    delete creep.memory.eTarget;
                     return false;
                 }
                 break;
@@ -575,6 +582,7 @@ function gatherer(creep) {
         // util.dumpObject(mySink)
 
         if (!util.def(mySink) || isFull(mySink)) {
+            delete creep.memory.sinkId;
             var test = findSink(creep);
             if (!util.def(test) || !test) {
                 // dlog('unable to acquire new sink.');
@@ -582,7 +590,6 @@ function gatherer(creep) {
 
                 //        creep.memory.taskList.pop();
 
-                dlog(creep.name + ': no sink')
                 return false;
             } else {
                 creep.memory.sinkId = test;
@@ -616,11 +623,13 @@ function gatherer(creep) {
                 break; // gatherer(creep); break;
             default:
                 dlog('error sinking into ' + mySink.structureType + ': ' + util.getError(res));
+                delete creep.memory.sinkId;
                 return false;
         }
 
     }
     dlog('gatherer fallthru, task state: ' + creep.taskState);
+    creep.room.memory.strategy.economy.gatherMiss++;
     return false
 }
 
@@ -697,6 +706,17 @@ function findBacon(creep) {
         })
     ];
 
+    // Special case
+    if (creep.room.memory.nrgReserve) {
+        var storage = creep.pos.findClosestByRange(FIND_STRUCTURES, {
+            filter: (i) => i.structureType == STRUCTURE_STORAGE &&
+                i.store[RESOURCE_ENERGY] > 20000
+        });
+        if (util.def(storage)) {
+            cash.push(storage);
+        }
+    }
+    
     var score = 0;
     var best = null;
 
@@ -716,6 +736,8 @@ function findBacon(creep) {
     }
 
     if (score == 0 || !util.def(best)) {
+        creep.room.memory.strategy.economy.gatherMiss++;
+
         return null;
     }
     return best.id;
@@ -725,6 +747,10 @@ function findSink(creep) {
 
     //var sinkPriority = [STRUCTURE_LINK, STRUCTURE_SPAWN, STRUCTURE_EXTENSION, STRUCTURE_TOWER, STRUCTURE_POWER_SPAWN, STRUCTURE_STORAGE];
     var sinkPriority = [STRUCTURE_LINK, STRUCTURE_SPAWN, STRUCTURE_EXTENSION, STRUCTURE_TOWER, STRUCTURE_STORAGE];
+
+    if (creep.room.memory.nrgReserve) {
+        sinkPriority.pop(); // Pop off storage, lest we get into a loop sourcing and sinking back to storage
+    }
 
     var targets = creep.room.find(FIND_MY_STRUCTURES);
 
@@ -759,7 +785,7 @@ function findSink(creep) {
         dance:
             for (var sink in targets) {
                 var potential = targets[sink];
-                if (potential.structureType == priority) {
+                if (potential.structureType == priority && potential.isActive()) {
                     var space = (priority == STRUCTURE_STORAGE) ? (potential.store[RESOURCE_ENERGY] < potential.storeCapacity) : (potential.energy < potential.energyCapacity);
                     if (space) {
                         if (backup === false) {

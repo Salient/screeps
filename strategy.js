@@ -147,8 +147,9 @@ module.exports.strategery = function(room) {
 
     if (!util.def(room.controller)){
         // room not owned yet. bail for now
-        return
+        return;
     }
+
     if (roomConfig.curlvl != room.controller.level) {
         roomConfig.curlvl = room.controller.level;
 
@@ -173,7 +174,7 @@ Room.prototype.bootstrap = function() {
             "miner": [MOVE, WORK, WORK, WORK, WORK],
             "soldier": [MOVE, ATTACK, TOUGH, ATTACK, TOUGH, MOVE, RANGED_ATTACK, RANGED_ATTACK, TOUGH, MOVE],
             "medic": [MOVE, HEAL, TOUGH],
-            "scout": [MOVE, MOVE, CARRY, WORK, TOUGH]
+            "scout": [MOVE, MOVE, CARRY, WORK, CLAIM, TOUGH]
         },
         curlvl: 0,
         rulesOfEngagement: 'guard',
