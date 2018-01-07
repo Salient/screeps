@@ -135,7 +135,7 @@ module.exports.loop = function() {
             visuals(thisRoom);
             thisRoom.coolHeatmap();
             thisRoom.coolEconStats();
-           dlog(thisRoom.name + ' source miss: ' + thisRoom.memory.strategy.economy.gatherMiss + ', tankMiss: ' +thisRoom.memory.strategy.economy.tankMiss); 
+            // dlog(thisRoom.name + ' source miss: ' + thisRoom.memory.strategy.economy.gatherMiss + ', tankMiss: ' +thisRoom.memory.strategy.economy.tankMiss); 
             
             //    if (!(Math.floor(thisRoom.memory.nextSpawn - Game.time) % 10)) {
             //        dlog('Next spawn in ' + thisRoom.name + ' in ' + Math.floor((thisRoom.memory.nextSpawn - Game.time)));

@@ -147,7 +147,7 @@ function nextPriority(room) {
             (Object.keys(room.memory.shafts).length - have.miner),
         'miner': ((Object.keys(room.memory.shafts).length - have.miner) * have.worker) *
             popCon.minerWeight * vetoMiner,
-        'soldier': 15 + ((6 - room.memory.strategy.defcon) * 20),
+        //'soldier': 15 + ((6 - room.memory.strategy.defcon) * 20),
         'medic': ((have.soldier - have.medic) * popCon.medicWeight),
         'scout': (econCon.tankMiss + econCon.gatherMiss) * 10 
     }

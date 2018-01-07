@@ -22,6 +22,13 @@ Creep.prototype.hitUp = function(target) {
     }
 }
 
+
+// Drop what I'm doing and top off
+Creep.prototype.fillTank = function() {
+    this.changeTask('filltank');
+    fillTank(this);
+}
+
 // / Utiilty functions
 //
 //
@@ -199,10 +206,10 @@ function mine(creep) {
                 } else {
                     //Check if any other sources in the room do not have a miner already assigned.
                     checkSourceMiners(creep)
-                        // we don't want to return false when a miner does it's job too well
-                    return true;
                 }
-                return false;
+                // we don't want to return false when a miner does it's job too well
+                return true;
+                //                return false;
                 break;
             case ERR_TIRED:
                 return true;
@@ -459,7 +466,7 @@ function findEnergy(creep) {
     if (totalE < 300) {
         if (creep.memory.taskList[creep.memory.taskList.length - 1] != 'gatherer') {
             dlog('Energy crisis! Retasking to gatherer')
-            creep.memory.taskList.push('gatherer');
+            creep.addTask('gatherer');
         }
     }
     if (!util.def(targets) || targets.length == 0) {
@@ -492,19 +499,14 @@ function gatherer(creep) {
     // On the first day, he ate one apple
     // but he was still hungry
 
+
     // return bringHomeBacon(creep);
     if (creep.getActiveBodyparts(CARRY) == 0) {
         // damaged worker or confused miner
-        creep.memory.taskList.push('miner');
+        creep.addTask('miner');
     }
 
-    if (creep.carry.energy == creep.carryCapacity) {
-        creep.memory.taskState = 'SINK';
-        if (util.def(creep.memory.eTarget)) {
-            delete creep.memory.eTarget;
-        }
-    }
-
+    // Done dropping off
     if (creep.carry.energy == 0) {
         creep.memory.taskState = 'SOURCE';
         if (util.def(creep.memory.sinkId)) {
@@ -512,13 +514,38 @@ function gatherer(creep) {
         }
     }
 
-    if (creep.memory.taskState == 'SOURCE') {
+    // Done filling up
+    if (creep.carry.energy == creep.carryCapacity) {
+        creep.taskState = 'SINK';
+        if (util.def(creep.memory.eTarget)) {
+            delete creep.memory.eTarget;
+        }
+    }
+
+    switch (creep.taskState) {
+        case 'SINK':
+            creep.say('🛢️');
+            return sink();
+            break;
+        case 'SOURCE':
+            creep.say('💰');
+            return source();
+            break;
+        case 'LEAVING':
+            creep.say('💢');
+            return creep.leaveRoom();
+            break;
+        default:
+            dlog('Gather logic fallthru: ' + creep.taskState);
+            return false;
+    }
+
+    function source() {
         var targ = Game.getObjectById(creep.memory.mTarget);
         if (util.def(targ)) {
             return mine(creep);
         }
 
-        creep.say('💰');
         targ = Game.getObjectById(creep.memory.eTarget);
         if (!util.def(targ)) {
             delete creep.memory.eTarget;
@@ -527,8 +554,7 @@ function gatherer(creep) {
                 // dlog('mining')
                 var tres = mine(creep);
                 if (!tres) {
-                    creep.memory.taskList.pop();
-                    creep.memory.taskList.push('busywork');
+                    creep.leaveRoom();
                     return true;
                 }
                 return tres;
@@ -568,15 +594,12 @@ function gatherer(creep) {
                 dlog('gatherer catch: ' + util.getError(res))
                 return false;
         }
-
     }
 
     // 💰
     // ⚒️
     // 🔧
-
-    if (creep.memory.taskState == 'SINK') {
-        creep.say('🛢️');
+    function sink() {
         // That night he had a stomach ache
         var mySink = Game.getObjectById(creep.memory.sinkId);
         // util.dumpObject(mySink)
@@ -640,33 +663,36 @@ function distance(p1, p2) {
 
 function findCashMoney(creep) {
 
+    // Shouldn't be any workers sniffing around if we don't have a controller in this room yet
+    if (!util.def(creep.room.controller)) {
+        return false;
+    }
+    
+    // Sane defaults
+    if (!util.def(creep.room.memory.strategy)) {
+        return false;
+    }
+    
     var cash = [
-
         creep.pos.findClosestByRange(FIND_DROPPED_RESOURCES, {
             filter: (i) => i.amount > 50 && i.resourceType == RESOURCE_ENERGY
         }),
         creep.pos.findClosestByRange(FIND_STRUCTURES, {
             filter: (i) => (i.structureType == STRUCTURE_CONTAINER) &&
                 i.store[RESOURCE_ENERGY] > 50
-        }),
-        creep.pos.findClosestByRange(FIND_STRUCTURES, {
-            filter: (i) => i.structureType == STRUCTURE_EXTENSION &&
-                i.energy > 50
         })
     ];
 
-    // Sane defaults
-    if (!util.def(creep.room.memory.strategy)) {
-        return false;
-    }
-    if (!util.def(creep.room.memory.strategy.economy.energyReservePerLevel)) {
-        var storageReserves = 20000;
-    } else {
-        storageReserves = creep.room.memory.strategy.economy.energyReservePerLevel;
-    }
+    if (util.def(creep.room.storage)) {
+        if (!util.def(creep.room.memory.strategy.economy.energyReservePerLevel)) {
+            var storageReserves = 20000 * creep.room.controller.level;
+        } else {
+            storageReserves = creep.room.memory.strategy.economy.energyReservePerLevel * creep.room.controller.level;
+        }
 
-    if (util.def(creep.room.storage) && creep.room.storage.store[RESOURCE_ENERGY] > creep.room.controller.level * storageReserves) {
-        cash.push(creep.room.storage)
+        if (util.def(creep.room.storage) && creep.room.storage.store[RESOURCE_ENERGY] > storageReserves) {
+            cash.push(creep.room.storage);
+        }
     }
 
     var score = 0;
@@ -688,7 +714,7 @@ function findCashMoney(creep) {
     }
 
     if (score == 0 || !util.def(best)) {
-        return false;
+        return false
     }
     return best.id;
 }
@@ -706,17 +732,23 @@ function findBacon(creep) {
         })
     ];
 
+    if (!util.def(creep.room.memory.strategy.economy.energyReservePerLevel) || !util.def(creep.room.controller)) {
+        var storageReserves = 20000;
+    } else {
+        storageReserves = creep.room.memory.strategy.economy.energyReservePerLevel * creep.room.controller.level;
+    }
+
     // Special case
     if (creep.room.memory.nrgReserve) {
         var storage = creep.pos.findClosestByRange(FIND_STRUCTURES, {
             filter: (i) => i.structureType == STRUCTURE_STORAGE &&
-                i.store[RESOURCE_ENERGY] > 20000
+                i.store[RESOURCE_ENERGY] > storageReserves
         });
         if (util.def(storage)) {
             cash.push(storage);
         }
     }
-    
+
     var score = 0;
     var best = null;
 
@@ -936,6 +968,10 @@ function findSource(creep) {
 
         // If it's abandoned, or if a miner needs priority over a worker
         if (!Game.creeps[mineHole.assignedTo] || (creep.memory.role == 'miner' && (Game.creeps[mineHole.assignedTo].memory.role == 'worker'))) {
+            if (mineHole.energy == 0) {
+                continue;
+            }
+
             if (shafts[post].srcId == recall.lastAssignedSrc) {
                 var backupShaft = mineHole;
             } else {

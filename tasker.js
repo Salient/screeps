@@ -42,7 +42,7 @@ Creep.prototype.warmMap = function() {
         return
     }
 
-    if (this.memory.taskList.length >0 && this.memory.taskList[this.memory.taskList.length - 1] != 'builder') {
+    if (this.memory.taskList.length > 0 && this.memory.taskList[this.memory.taskList.length - 1] != 'builder') {
         // warm up the heat map
         var x = (this.pos.x < 1) ? 1 : (this.pos.x > 48) ? 48 :
             this.pos.x;
@@ -53,26 +53,26 @@ Creep.prototype.warmMap = function() {
 }
 
 Object.defineProperty(Creep.prototype, "taskState", {
-  get() {
-    return this.memory.taskState;
-  },
-  set(x) {
-    this.memory.taskState = x;
-  }
+    get() {
+        return this.memory.taskState;
+    },
+    set(x) {
+        this.memory.taskState = x;
+    }
 });
 
-Creep.prototype.changeTask = function (newtask) {
+Creep.prototype.changeTask = function(newtask) {
     if (util.def(this.memory.taskList) && this.memory.taskList.length > 0) {
         this.memory.taskList.pop();
         this.memory.taskList.push(newtask);
     } else {
-        this.memory.taskList = [newtask];   
+        this.memory.taskList = [newtask];
     }
 }
-Creep.prototype.addTask = function (newtask) {
+Creep.prototype.addTask = function(newtask) {
     if (util.def(this.memory.taskList)) {
         this.memory.taskList.push(newtask);
-    } 
+    }
 }
 
 var performTask = function(creep) {
@@ -94,9 +94,9 @@ var performTask = function(creep) {
     }
 
     if (taskList.length == 0) {
-        //dlog('Empty task list found: ' + creep.name);
+        dlog('Empty task list found: ' + creep.name);
         taskList[0] = somethingNeedDoing(creep);
-        //dlog('assinged ' + taskList[0] + ' to ' + creep.name);
+        dlog('assinged ' + taskList[0] + ' to ' + creep.name);
 
     }
     // if ((taskList.length > 1) && !(Game.time % 10)) // Periodically refresh
@@ -135,6 +135,10 @@ var performTask = function(creep) {
             break;
         case 'filltank':
             jobResult = harvest.fillTank(creep);
+            break;
+        case 'leaveroom':
+            creep.leaveRoom();
+            break;
         case 'busywork':
             creep.memory.taskList.pop();
             var busywork = somethingNeedDoing(creep);
@@ -151,6 +155,7 @@ var performTask = function(creep) {
     //	dlog(creep.name + ' did ' + curJob + ' and his aim was ' + jobResult);
     if (!jobResult) {
         //        if (creep.memory.taskList.length > 1) {
+        // dlog(creep.name + " popped job, was: " + creep.memory.taskList[creep.memory.taskList.length - 1] + ', task queue length: ' + creep.memory.taskList.length);
         creep.memory.taskList.pop();
         // }
     }
@@ -213,7 +218,8 @@ function somethingNeedDoing(creep) {
             }
             break;
 
-        default: return role; 
+        default:
+            return role;
     }
 }
 
@@ -232,7 +238,7 @@ function colonyOverseer(creep) {
     }
 
     // Want to keep some basic level of emergency energy
-    if (nrgReserves < 10000*creep.room.controller.level) {
+    if (nrgReserves < 10000 * creep.room.controller.level) {
         return 'gatherer';
     }
 

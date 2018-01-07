@@ -238,6 +238,7 @@ function upgradeRC(creep) {
     if (creep.carry.energy == 0) {
         creep.memory.taskState = 'DONE';
         creep.changeTask('filltank');
+        return true;
     }
 
     //    if (creep.memory.taskState == 'SOURCE') {
@@ -288,7 +289,7 @@ function upgradeRC(creep) {
 function sayProgress(target) {
 
     if (util.def(target.progress)) {
-        return (target.progressTotal >0) ? parseInt((target.progress / target.progressTotal) * 100) : 0;
+        return parseInt((target.progress / target.progressTotal) * 100);
     } else if (target.hits !== null) {
         return parseInt((target.hits / target.hitsMax) * 100);
     } else {
