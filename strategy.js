@@ -35,7 +35,9 @@ Room.prototype.tankMiss = function() {
     if (!util.def(econ)) {
         this.bootstrap();
     }
-    econ.tankMiss++;
+    if (econ.tankMiss < 2000) {
+        econ.tankMiss++;
+    }
 }
 
 Room.prototype.gatherMiss = function() {
@@ -145,7 +147,7 @@ module.exports.strategery = function(room) {
     // /////////////
     // State check
 
-    if (!util.def(room.controller)){
+    if (!util.def(room.controller)) {
         // room not owned yet. bail for now
         return;
     }
@@ -193,7 +195,7 @@ Room.prototype.bootstrap = function() {
         economy: {
             gatherMiss: 0,
             tankMiss: 0,
-            storageReserves: 20000 // Rainy Day Fund
+            energyReservePerLevel: 20000 // Rainy Day Fund
         }
     }
     this.memory.strategy = strategy;

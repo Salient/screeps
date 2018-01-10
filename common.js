@@ -103,7 +103,7 @@ Creep.prototype.leaveRoom = function(dest = "") {
                 return true;
                 break;
             default:
-                dlog(this.name + ' Error leaving room: ' + getError)
+                dlog(this.name + ' Error leaving room: ' + getError(res))
                 return false;
         }
     } else {

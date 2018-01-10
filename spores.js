@@ -16,6 +16,11 @@ module.exports.disperse = function(creep) {
         return false;
     }
 
+    if (util.def(creep.room.nrgReserve) && creep.room.nrgReserve != false){
+        creep.changeTask('gatherer');
+        return true;
+    }
+
     var wander = creep.memory.wanderlust;
 
     // Determine initial state
@@ -29,15 +34,14 @@ module.exports.disperse = function(creep) {
         if (util.def(wander.nextPortal)) {
             var portal = new RoomPosition(wander.nextPortal.x, wander.nextPortal.y, wander.nextPortal.roomName);
             var res = creep.moveTo(portal);
-            if (res != OK) {
+            switch (res) {
+                case OK: 
+                case ERR_TIRED: 
+                    return true; break;
+                    default: 
                 dlog('error moving to exit: ' + util.getError(res));
-                util.dumpObject({
-                    pos: wander.nextPortal
-                })
                 delete wander.nextPortal;
                 return false;
-            } else {
-                return true
             }
         } else {
             creep.say("that's it, i'm outta here");
@@ -55,14 +59,17 @@ module.exports.disperse = function(creep) {
 
     }
 
+    if (!util.def(creep.room.controller)) {
+        creep.leaveRoom();
+        return true;
+    }
 
     // So I've made it to  another room. 
     if (util.def(creep.room.controller && creep.room.controller.level != 0)) {
         // this room is already claimed. mosey on.
-        wanderlust.sporeFrom = creep.room; // reset origin, go off and explore once more
+        dlog('moving on')
+        creep.changeTask('technician')
         return true;
-    } else { creep.leaveRoom();
-    
     }
 
 
@@ -108,6 +115,9 @@ module.exports.disperse = function(creep) {
 
     }
 
+dlog('spore catch')
+    creep.taskState ='SINK';
+    return false;
 }
 
 function dlog(msg) {

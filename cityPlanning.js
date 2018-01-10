@@ -14,7 +14,7 @@ var debug = false
 
 // FYI, max call stack size is 4500. ish. it seems to depend
 
-Room.prototype.coolHeatmap = function () {
+Room.prototype.coolHeatmap = function() {
     // Measure traffic around the room
     if (!util.def(this.memory.heatmap)) {
         return;
@@ -67,8 +67,8 @@ Room.prototype.zeroHeatMap = function() {
     var hm = this.memory.heatmap;
     for (var x in hm) {
         var y = hm[x];
-        for ( var sq in y){
-       y[sq] = 0; 
+        for (var sq in y) {
+            y[sq] = 0;
         }
     }
 }
@@ -281,27 +281,27 @@ function refInfra(room) {
 }
 module.exports.refInfra = refInfra;
 
-Room.prototype.createBasicPaths = function () {
+Room.prototype.createBasicPaths = function() {
 
-    // Go ahead and create roads to controller and sources from spawn
+        // Go ahead and create roads to controller and sources from spawn
 
-    var spwn = Game.getObjectById(this.memory.spawnId);
-    var shafts = this.memory.shafts;
-    this.memory.infrastructure.paths = {};
-    this.memory.infrastructure.paths.ctrl = this.controller.pos.findPathTo(spwn);
+        var spwn = Game.getObjectById(this.memory.spawnId);
+        var shafts = this.memory.shafts;
+        this.memory.infrastructure.paths = {};
+        this.memory.infrastructure.paths.ctrl = this.controller.pos.findPathTo(spwn);
 
-    // Create roads to mineshafts
-    for (var sh in shafts) {
-        this.memory.infrastructure.paths['shaft' + sh] = this.findPath(spwn.pos,
-                shafts[sh].pos, {
-                    ignoreRoads: true,
-                    ignoreCreeps: true
-                }) // May need to ignore roads
-            // var thisPath = room.findPath(shafts[sh].pos,spwn.pos);
-            // Since we've spent the CPU, might as well save it for later
+        // Create roads to mineshafts
+        for (var sh in shafts) {
+            this.memory.infrastructure.paths['shaft' + sh] = this.findPath(spwn.pos,
+                    shafts[sh].pos, {
+                        ignoreRoads: true,
+                        ignoreCreeps: true
+                    }) // May need to ignore roads
+                // var thisPath = room.findPath(shafts[sh].pos,spwn.pos);
+                // Since we've spent the CPU, might as well save it for later
+        }
     }
-}
-// Bootstrap code to initialize all expected data structures for the room
+    // Bootstrap code to initialize all expected data structures for the room
 function bootstrap(room) {
 
     room.memory.infrastructure = {};
@@ -330,7 +330,8 @@ function bootstrap(room) {
 
     // Create roads to controller
     // Later, storage, links, etc.
-    createBasicPaths(room);
+    room.createBasicPaths();
+    
     // markWalls(room);
 
     room.memory.planned = true;
@@ -432,7 +433,7 @@ Room.prototype.placeTower = function() {
     }
 }
 
-Room.prototype.placeStorage= function() {
+Room.prototype.placeStorage = function() {
 
     var placeNum = this.needStructure(STRUCTURE_STORAGE);
     var origin = Game.getObjectById(this.memory.spawnId).pos;
@@ -517,6 +518,65 @@ Room.prototype.placeContainers = function() {
         var res = this.createConstructionSite(site, STRUCTURE_CONTAINER);
         // dlog('added container: ' + util.getError(res));
     }
+}
+
+Room.prototype.placeSpawn = function() {
+    if (!this.controller || !this.controller.level) {
+        return false;
+    }
+
+    // if (util.def(this.memory.spawnId) && Game.getObjectById(this.memory.spawnId)) {
+    // 
+    // }
+    dlog('called');
+
+    var ctrlPos = this.controller.pos;
+    var clstSrc = ctrlPos.findClosestByRange(FIND_SOURCES);
+    var kingsRoad = ctrlPos.findPathTo(clstSrc);
+    var midpoint = kingsRoad[Math.floor(kingsRoad.length / 2)];
+
+    var start = 5;
+    while (start < kingsRoad.length - 5) {
+        var testSq = new RoomPosition(kingsRoad[start].x, kingsRoad[start].y, this.name);
+        if (this.isAdjacentClear(testSq)) {
+            testSq.createConstructionSite(STRUCTURE_SPAWN);
+            return true;
+        }
+        start++;
+    }
+    return false;
+}
+
+Room.prototype.isAdjacentClear = function(pos) {
+
+    dlog('calledadj')
+    var x = (pos.x < 2) ? 2 : (pos.x > 47) ? 47 :
+        pos.x;
+    var y = (pos.y < 2) ? 2 : (pos.y > 47) ? 47 :
+        pos.y;
+
+    var surroundings = [
+        Game.map.getTerrainAt(x - 1, y - 1, this.name),
+        Game.map.getTerrainAt(x, y - 1, this.name),
+        Game.map.getTerrainAt(x + 1, y - 1, this.name),
+
+        Game.map.getTerrainAt(x - 1, y, this.name),
+        Game.map.getTerrainAt(x, y, this.name),
+        Game.map.getTerrainAt(x + 1, y, this.name),
+
+        Game.map.getTerrainAt(x - 1, y + 1, this.name),
+        Game.map.getTerrainAt(x, y + 1, this.name),
+        Game.map.getTerrainAt(x + 1, y + 1, this.name)
+    ];
+
+    for (var sq in surroundings) {
+        if (surroundings[sq] == 'wall') {
+            dlog('bah');
+            return false
+        }
+    }
+    dlog('ohgood')
+    return true;
 }
 
 module.exports.bd = placeDefenses;

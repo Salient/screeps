@@ -203,7 +203,7 @@ module.exports.loop = function() {
         }
 
         //// 
-        if (!(Game.time % 67)) {
+        if (!(Game.time % 300)) {
 
             for (var r in Memory.rooms) {
                 if (!Game.rooms[r]) {

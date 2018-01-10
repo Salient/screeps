@@ -2,8 +2,12 @@ var util = require('common');
 var _ = require('lodash');
 var DEBUG_HARVEST = true;
 
-function dlog(msg) {
-    util.dlog('HARVEST', msg);
+function dlog(msg, creep) {
+    if (creep) {
+    util.dlog('HARVEST/' + creep.name + ': ', msg);
+    } else {
+    util.dlog('HARVEST: ', msg);
+    }
 }
 
 Creep.prototype.hitUp = function(target) {
@@ -263,9 +267,9 @@ module.exports.fillTank = function(creep) {
         var res = findCashMoney(creep);
         if (!res) {
             if (creep.getActiveBodyparts(WORK) > 0) {
-                mine(creep);
+                return mine(creep);
             }
-
+dlog('tank miss', creep)
             creep.room.tankMiss();
 
             //            dlog('no available energy')
@@ -370,67 +374,67 @@ function findContainer(creep) {
 
 module.exports.findContainer = findContainer;
 
-function shuttle(creep) {
-    // Get energy from containers and move it to spawn
-    // dlog(creep.name + ' in shuttle')
-
-    if (!util.def(creep.memory.sinkId) ||
-        !util.def(Game.getObjectById(creep.memory.sinkId))) { // in case it's
-        // been
-        // destroyed
-        creep.memory.sinkId = findSink(creep);
-    }
-
-    var mySink = Game.getObjectById(creep.memory.sinkId);
-
-    if (!util.def(creep.memory.eTarget)) {
-        // ?? var result =
-        var res = findCashMoney(creep);
-        if (!res) {
-            // dlog(creep.name + ' out shuttle');
-            return false;
-        }
-        creep.memory.eTarget = res;
-    }
-    dlog('shuttle')
-    var target = Game.getObjectById(creep.memory.eTarget);
-    // util.dumpObject(target)
-    if (!util.def(target)) {
-        dlog('zomg')
-
-        delete creep.memory.eTarget;
-        return false;
-    }
-
-    var res = creep.hitUp(target);
-    // TODO: possibly reuse path found earlier for more efficiency
-    switch (res) {
-        case OK:
-        case ERR_FULL:
-            return true;
-            break;
-        case ERR_NOT_ENOUGH_RESOURCES:
-            delete creep.memory.eTarget;
-            return false;
-            break;
-        case ERR_NOT_IN_RANGE:
-            var move = creep.moveTo(target, {
-                reusePath: 15,
-                visualizePathStyle: {
-                    stroke: 'fffaaf0'
-                }
-            });
-            if (move == ERR_NO_PATH) {
-                delete creep.memory.cTarget;
-                dlog('hmm');
-                return false;
-            }
-            return true;
-            break;
-    }
-}
-
-module.exports.shuttle = shuttle;
+//function shuttle(creep) {
+//    // Get energy from containers and move it to spawn
+//    // dlog(creep.name + ' in shuttle')
+//
+//    if (!util.def(creep.memory.sinkId) ||
+//        !util.def(Game.getObjectById(creep.memory.sinkId))) { // in case it's
+//        // been
+//        // destroyed
+//        creep.memory.sinkId = findSink(creep);
+//    }
+//
+//    var mySink = Game.getObjectById(creep.memory.sinkId);
+//
+//    if (!util.def(creep.memory.eTarget)) {
+//        // ?? var result =
+//        var res = findCashMoney(creep);
+//        if (!res) {
+//            // dlog(creep.name + ' out shuttle');
+//            return false;
+//        }
+//        creep.memory.eTarget = res;
+//    }
+//    dlog('shuttle')
+//    var target = Game.getObjectById(creep.memory.eTarget);
+//    // util.dumpObject(target)
+//    if (!util.def(target)) {
+//        dlog('zomg')
+//
+//        delete creep.memory.eTarget;
+//        return false;
+//    }
+//
+//    var res = creep.hitUp(target);
+//    // TODO: possibly reuse path found earlier for more efficiency
+//    switch (res) {
+//        case OK:
+//        case ERR_FULL:
+//            return true;
+//            break;
+//        case ERR_NOT_ENOUGH_RESOURCES:
+//            delete creep.memory.eTarget;
+//            return false;
+//            break;
+//        case ERR_NOT_IN_RANGE:
+//            var move = creep.moveTo(target, {
+//                reusePath: 15,
+//                visualizePathStyle: {
+//                    stroke: 'fffaaf0'
+//                }
+//            });
+//            if (move == ERR_NO_PATH) {
+//                delete creep.memory.cTarget;
+//                dlog('hmm');
+//                return false;
+//            }
+//            return true;
+//            break;
+//    }
+//}
+//
+//module.exports.shuttle = shuttle;
 
 function findEnergy(creep) {
 
@@ -536,7 +540,7 @@ function gatherer(creep) {
             return creep.leaveRoom();
             break;
         default:
-            dlog('Gather logic fallthru: ' + creep.taskState);
+            dlog('Gather logic fallthru: ' + creep.taskState, creep);
             return false;
     }
 
@@ -609,7 +613,7 @@ function gatherer(creep) {
             var test = findSink(creep);
             if (!util.def(test) || !test) {
                 // dlog('unable to acquire new sink.');
-                // dlog('invalid sink target')
+                 dlog('invalid sink target')
 
                 //        creep.memory.taskList.pop();
 
@@ -788,6 +792,7 @@ function findSink(creep) {
 
     if (targets.length == 0) {
         dlog(creep.name + ': no sink targets in this room, trying origin');
+		dlog(Memory.rooms[creep.memory.birthRoom].spawnId)
         return Memory.rooms[creep.memory.birthRoom].spawnId;
         //        return false;
     }
@@ -818,7 +823,7 @@ function findSink(creep) {
             for (var sink in targets) {
                 var potential = targets[sink];
                 if (potential.structureType == priority && potential.isActive()) {
-                    var space = (priority == STRUCTURE_STORAGE) ? (potential.store[RESOURCE_ENERGY] < potential.storeCapacity) : (potential.energy < potential.energyCapacity);
+                    var space = (priority.structureType == STRUCTURE_STORAGE) ? (potential.store[RESOURCE_ENERGY] < potential.storeCapacity) : (potential.energy < potential.energyCapacity);
                     if (space) {
                         if (backup === false) {
                             backup = potential.id;
