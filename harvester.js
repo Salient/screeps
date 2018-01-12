@@ -613,7 +613,7 @@ function gatherer(creep) {
             var test = findSink(creep);
             if (!util.def(test) || !test) {
                 // dlog('unable to acquire new sink.');
-                 dlog('invalid sink target')
+                 dlog(creep.name + ' invalid sink target')
 
                 //        creep.memory.taskList.pop();
 
@@ -819,11 +819,13 @@ function findSink(creep) {
 
     for (var need in sinkPriority) {
         var priority = sinkPriority[need];
+        if (priority == STRUCTURE_STORAGE) {
+        dlog('TESTING STORAGE')}
         dance:
             for (var sink in targets) {
                 var potential = targets[sink];
                 if (potential.structureType == priority && potential.isActive()) {
-                    var space = (priority.structureType == STRUCTURE_STORAGE) ? (potential.store[RESOURCE_ENERGY] < potential.storeCapacity) : (potential.energy < potential.energyCapacity);
+                    var space = (potential.structureType == STRUCTURE_STORAGE) ? (potential.store[RESOURCE_ENERGY] < potential.storeCapacity) : (potential.energy < potential.energyCapacity);
                     if (space) {
                         if (backup === false) {
                             backup = potential.id;

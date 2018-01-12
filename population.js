@@ -149,7 +149,7 @@ function nextPriority(room) {
             popCon.minerWeight * vetoMiner,
         //'soldier': 15 + ((6 - room.memory.strategy.defcon) * 20),
         'medic': ((have.soldier - have.medic) * popCon.medicWeight),
-        'scout': (econCon.tankMiss + econCon.gatherMiss) * (totalPop/popCon.maxPop) // only want to create spores when i'm near full production
+        'scout': (econCon.tankMiss + econCon.gatherMiss) * (totalPop / popCon.maxPop) * 10 // only want to create spores when i'm near full production
     }
     var needsOfTheMany = Object.keys(needsOfTheFew).sort(function(keya, keyb) {
             return needsOfTheFew[keyb] - needsOfTheFew[keya];
@@ -157,9 +157,9 @@ function nextPriority(room) {
         // If the score is really high, the need is great. Have creep stop drawing
         // from spawn/extensions until spawn is complete
     if (needsOfTheFew[needsOfTheMany[0]] > 100) {
-        dlog('Need' + needsOfTheMany[0] + ' with score ' +
+        dlog(room.name + ' Need ' + needsOfTheMany[0] + ' with score ' +
             needsOfTheFew[needsOfTheMany[0]])
-        dlog('Next' + needsOfTheMany[1] + ' with score ' +
+        dlog(room.name + ' Next ' + needsOfTheMany[1] + ' with score ' +
             needsOfTheFew[needsOfTheMany[1]])
         room.memory.nrgReserve = room.energyCapacityAvailable;
         return needsOfTheMany[0];
@@ -340,6 +340,12 @@ var spawn = function(room) {
         })
     switch (result) {
         case OK:
+            if (want == 'scout') {
+                if (util.def(room.memory.strategy) && util.def(room.memory.strategy.economy)) {
+                    room.memory.strategy.economy.gatherMiss = 0;
+                    room.memory.strategy.economy.tankMiss = 0;
+                }
+            }
             dlog('Spawned ' + want);
             room.memory.nextSpawn = Game.time + body.length * CREEP_SPAWN_TIME;
             room.memory.nrgReserve = false;
@@ -347,7 +353,7 @@ var spawn = function(room) {
         case ERR_NOT_ENOUGH_ENERGY: // Pick a body that will fit under 300 to make
             // sure it procs
             if (room.memory.nrgReserve) {
-                dlog('rice and beans spawning ' + want);
+                dlog(room.name + ' rice and beans spawning ' + want);
                 break;
             } else {
                 //room.memory.nextSpawn = Game.time + (cap - room.energyAvailable)/50*10;

@@ -210,8 +210,8 @@ function findSite(creep) {
                 if (newTarget[site].structureType == priority) {
 
                     creep.memory.bTarget = newTarget[site].id;
-                    dlog('assinging ' + creep.name + ' build target ' +
-                        priority);
+                    //                    dlog('assinging ' + creep.name + ' build target ' +
+                    //    priority);
                     return newTarget[site].id;
                 }
             }
