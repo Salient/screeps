@@ -613,7 +613,7 @@ function gatherer(creep) {
             var test = findSink(creep);
             if (!util.def(test) || !test) {
                 // dlog('unable to acquire new sink.');
-                 dlog(creep.name + ' invalid sink target')
+                 dlog(creep.name + ' invalid sink target, returned ' + test);
 
                 //        creep.memory.taskList.pop();
 

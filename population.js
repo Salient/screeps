@@ -157,11 +157,11 @@ function nextPriority(room) {
         // If the score is really high, the need is great. Have creep stop drawing
         // from spawn/extensions until spawn is complete
     if (needsOfTheFew[needsOfTheMany[0]] > 100) {
-        dlog(room.name + ' Need ' + needsOfTheMany[0] + ' with score ' +
-            needsOfTheFew[needsOfTheMany[0]])
-        dlog(room.name + ' Next ' + needsOfTheMany[1] + ' with score ' +
-            needsOfTheFew[needsOfTheMany[1]])
-        room.memory.nrgReserve = room.energyCapacityAvailable;
+        //        dlog(room.name + ' Need ' + needsOfTheMany[0] + ' with score ' +
+        //            needsOfTheFew[needsOfTheMany[0]])
+        //        dlog(room.name + ' Next ' + needsOfTheMany[1] + ' with score ' +
+        //            needsOfTheFew[needsOfTheMany[1]])
+                room.memory.nrgReserve = room.energyCapacityAvailable;
         return needsOfTheMany[0];
     }
     return false;
@@ -264,7 +264,7 @@ var spawn = function(room) {
         if (justInCase.worker < 3) {
             room.memory.nrgReserve = 300;
         } else {
-            dlog(room.name + ' has ' + room.energyAvailable + '/' + room.energyCapacityAvailable + ' energy, current goal is  ' + room.memory.nrgReserve + '. Delaying.');
+            // dlog(room.name + ' has ' + room.energyAvailable + '/' + room.energyCapacityAvailable + ' energy, current goal is  ' + room.memory.nrgReserve + '. Delaying.');
             room.memory.nextSpawn = Game.time + ((room.energyCapacityAvailable - room.energyAvailable > 30) ? 30 : room.energyCapacityAvailable - room.energyAvailable);
             return false;
         }
@@ -346,19 +346,19 @@ var spawn = function(room) {
                     room.memory.strategy.economy.tankMiss = 0;
                 }
             }
-            dlog('Spawned ' + want);
+            //   dlog('Spawned ' + want);
             room.memory.nextSpawn = Game.time + body.length * CREEP_SPAWN_TIME;
             room.memory.nrgReserve = false;
             break;
         case ERR_NOT_ENOUGH_ENERGY: // Pick a body that will fit under 300 to make
             // sure it procs
             if (room.memory.nrgReserve) {
-                dlog(room.name + ' rice and beans spawning ' + want);
+                //dlog(room.name + ' rice and beans spawning ' + want);
                 break;
             } else {
                 //room.memory.nextSpawn = Game.time + (cap - room.energyAvailable)/50*10;
                 room.memory.nextSpawn = Game.time + 30;
-                dlog('planning to spawn ' + want + ' but not enough energy yet')
+                //dlog('planning to spawn ' + want + ' but not enough energy yet')
                 return;
             } // Try again in 90 sec s
             break;

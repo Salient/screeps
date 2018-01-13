@@ -16,7 +16,7 @@ module.exports.disperse = function(creep) {
         return false;
     }
 
-    if (util.def(creep.room.nrgReserve) && creep.room.nrgReserve != false){
+    if (util.def(creep.room.nrgReserve) && creep.room.nrgReserve != false) {
         creep.changeTask('gatherer');
         return true;
     }
@@ -35,13 +35,14 @@ module.exports.disperse = function(creep) {
             var portal = new RoomPosition(wander.nextPortal.x, wander.nextPortal.y, wander.nextPortal.roomName);
             var res = creep.moveTo(portal);
             switch (res) {
-                case OK: 
-                case ERR_TIRED: 
-                    return true; break;
-                    default: 
-                dlog('error moving to exit: ' + util.getError(res));
-                delete wander.nextPortal;
-                return false;
+                case OK:
+                case ERR_TIRED:
+                    return true;
+                    break;
+                default:
+                    dlog('error moving to exit: ' + util.getError(res));
+                    delete wander.nextPortal;
+                    return false;
             }
         } else {
             creep.say("that's it, i'm outta here");
@@ -96,13 +97,15 @@ module.exports.disperse = function(creep) {
                 creep.moveTo(ctrl);
                 break;
             case ERR_GCL_NOT_ENOUGH:
+                dlog('cant claim, going for reserve')
                 var res = creep.reserveController(ctrl);
                 switch (res) {
                     case OK:
                         return true;
-                        brea;
+                        break;
                     case ERR_NOT_IN_RANGE:
-                        creep.moveTo(ctrl);
+                        var res = creep.moveTo(ctrl);
+                        dlog('err: ' + util.getError(res));
                         break;
                     default:
                         dlog(creep.name + ' error reserving ' + util.getError(res));
@@ -115,8 +118,8 @@ module.exports.disperse = function(creep) {
 
     }
 
-dlog('spore catch')
-    creep.taskState ='SINK';
+    dlog('spore catch')
+    creep.taskState = 'SINK';
     return false;
 }
 

@@ -20,8 +20,9 @@ module.exports.taskMinions = function(room) {
             var y = (creep.pos.y < 1) ? 1 : (creep.pos.y > 48) ? 48 :
                 creep.pos.y;
             room.memory.heatmap[x][y] += 5;
-            if (creep.memory.taskList[creep.memory.taskList.length - 1] == 'leaveroom') {
-                room.memory.heatmap[x][y] += 25; // interroom paths are traveled less often but just as important
+            
+            if (creep.taskState = 'RETURNING' || creep.taskState == 'LEAVING') {
+                room.memory.heatmap[x][y] += 50; // interroom paths are traveled less often but just as important
             }
 
             // minions[dude].say(minions[dude].memory.role);
