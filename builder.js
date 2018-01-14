@@ -55,7 +55,7 @@ function builder(creep) {
         var orders = findSite(creep) || repairDuty(creep);
         if (!util.def(orders) || orders == false) {
             dlog(creep.name + ' says nothing to build or repair, converting to technician')
-    creep.changeTask('technician');
+            creep.changeTask('technician');
             return true;
         } else {
             creep.memory.bTarget = orders;
@@ -249,6 +249,9 @@ function upgradeRC(creep) {
         var res = creep.upgradeController(rc);
     } else {
         var res = creep.claimController(rc);
+        if (res == ERR_GCL_NOT_ENOUGH) {
+            var res = creep.reserveController(rc);
+        }
     }
 
     switch (res) {

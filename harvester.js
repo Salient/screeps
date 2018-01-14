@@ -791,8 +791,9 @@ function findSink(creep) {
     var targets = creep.room.find(FIND_MY_STRUCTURES);
 
     if (targets.length == 0) {
-        dlog(creep.name + ': no sink targets in this room, trying origin');
-		dlog(Memory.rooms[creep.memory.birthRoom].spawnId)
+        //        dlog(creep.name + ': no sink targets in this room, trying origin');
+        // dlog(Memory.rooms[creep.memory.birthRoom].spawnId)
+        dlog(creep.name + '/' + creep.room.name + ': fix me sink')
         return Memory.rooms[creep.memory.birthRoom].spawnId;
         //        return false;
     }
@@ -819,11 +820,13 @@ function findSink(creep) {
 
     for (var need in sinkPriority) {
         var priority = sinkPriority[need];
-        if (priority == STRUCTURE_STORAGE) {
-        dlog('TESTING STORAGE')}
+        ////if (priority == STRUCTURE_STORAGE) {
+        ////dlog('TESTING STORAGE')}
         dance:
             for (var sink in targets) {
                 var potential = targets[sink];
+                if (potential == STRUCTURE_STORAGE) {
+                dlog('testing storage sink')}
                 if (potential.structureType == priority && potential.isActive()) {
                     var space = (potential.structureType == STRUCTURE_STORAGE) ? (potential.store[RESOURCE_ENERGY] < potential.storeCapacity) : (potential.energy < potential.energyCapacity);
                     if (space) {

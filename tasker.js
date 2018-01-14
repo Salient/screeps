@@ -20,8 +20,9 @@ module.exports.taskMinions = function(room) {
             var y = (creep.pos.y < 1) ? 1 : (creep.pos.y > 48) ? 48 :
                 creep.pos.y;
             room.memory.heatmap[x][y] += 5;
-            
+
             if (creep.taskState = 'RETURNING' || creep.taskState == 'LEAVING') {
+                dlog('boosting')
                 room.memory.heatmap[x][y] += 50; // interroom paths are traveled less often but just as important
             }
 
@@ -98,8 +99,11 @@ var performTask = function(creep) {
     }
 
     if (taskList.length == 0) {
+        // Add default task, and then busy work
         //        dlog('Empty task list found: ' + creep.name);
-        taskList[0] = somethingNeedDoing(creep);
+        taskList.push(somethingNeedDoing(creep));
+        taskList.push(getDefaultTask(creep));
+
         //dlog('assinged ' + taskList[0] + ' to ' + creep.name);
 
     }
@@ -120,6 +124,7 @@ var performTask = function(creep) {
             jobResult = harvest.shuttle(creep);
             break;
         case 'gatherer':
+        case 'worker':
             jobResult = harvest.gatherer(creep);
             break;
         case 'military':
@@ -166,40 +171,35 @@ var performTask = function(creep) {
 }
 module.exports.performTask = performTask;
 
-//var getDefaultTask = function(creep) { // What to do if the creep has
-//        // nothing to do
-//
-//        var role = Memory.creeps[creep.name].role; // Access memory like this in
-//        // case creep is still spawning.
-//
-//        if (!util.def(role)) {
-//            role = 'worker'
-//        }
-//        dlog('found a ' + creep.memory.role + ' needing a job')
-//
-//
-//
-//        // dlog('assigning default task');
-//        switch (role) {
-//            case 'worker':
-//                //                return somethingNeedDoing(creep);
-//                return 'gatherer';
-//                break;
-//            case 'miner':
-//                return 'miner'
-//            case 'soldier':
-//            case 'medic':
-//                // case 'scout':
-//                // case 'pfc':
-//                // case 'footSoldier':
-//                // case 'cavalry':
-//                // case 'enforcer':
-//                return 'military';
-//            default:
-//                console.log('unmatched unit found!');
-//                return 'gatherer';
-//        }
-//    }
+var getDefaultTask = function(creep) { // What to do if the creep has
+    // nothing to do
+
+    var role = Memory.creeps[creep.name].role; // Access memory like this in
+    // case creep is still spawning.
+
+    if (!util.def(role)) {
+        role = 'worker'
+    }
+    // dlog('found a ' + creep.memory.role + ' needing a job')
+
+
+
+    // dlog('assigning default task');
+    switch (role) {
+        case 'worker':
+        case 'scout':
+        case 'miner':
+            return role;
+            break;
+        case 'soldier':
+        case 'medic':
+            return 'military';
+            break;
+        default:
+            console.log('unmatched unit found!');
+            return role;
+    }
+}
 
 
 // TODO - make the weights used below dynamic
