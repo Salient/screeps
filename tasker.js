@@ -21,7 +21,12 @@ module.exports.taskMinions = function(room) {
                 creep.pos.y;
             room.memory.heatmap[x][y] += 5;
 
-            if (creep.taskState = 'RETURNING' || creep.taskState == 'LEAVING') {
+            //            if (creep.taskState = 'RETURNING' || creep.taskState == 'LEAVING') {
+            var test = Game.getObjectById(creep.memory.eTarget);
+            if (!test){
+            test = Game.getObjectById(creep.memory.sinkId);
+            }
+            if (util.def(test) && test.room.name != creep.room.name) {
                 dlog('boosting')
                 room.memory.heatmap[x][y] += 50; // interroom paths are traveled less often but just as important
             }
@@ -178,6 +183,7 @@ var getDefaultTask = function(creep) { // What to do if the creep has
     // case creep is still spawning.
 
     if (!util.def(role)) {
+        dlog('some serious shisnit here')
         role = 'worker'
     }
     // dlog('found a ' + creep.memory.role + ' needing a job')

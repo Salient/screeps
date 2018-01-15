@@ -1,5 +1,6 @@
 var util = require('common');
 var harvest = require('harvester');
+var ovrmnd = require('overmind');
 
 module.exports.disperse = function(creep) {
     creep.say('🔱');
@@ -9,12 +10,12 @@ module.exports.disperse = function(creep) {
         };
     }
 
-    if (creep.getActiveBodyparts(CLAIM) == 0) {
-        //        creep.memory.role = 'worker'; return false;
-        dlog(creep.name + ' scout identity crisis')
-        creep.memory.role = 'worker';
-        return false;
-    }
+    //    if (creep.getActiveBodyparts(CLAIM) == 0) {
+    //        //        creep.memory.role = 'worker'; return false;
+    //        dlog(creep.name + ' scout identity crisis')
+    //        creep.memory.role = 'worker';
+    //        return false;
+    //    }
 
     if (util.def(creep.room.nrgReserve) && creep.room.nrgReserve != false) {
         creep.changeTask('gatherer');
@@ -68,8 +69,9 @@ module.exports.disperse = function(creep) {
     // So I've made it to  another room. 
     if (util.def(creep.room.controller && creep.room.controller.level != 0)) {
         // this room is already claimed. mosey on.
-        dlog('moving on')
-        creep.changeTask('technician')
+        dlog(creep.name + ' in ' + creep.room.name + ' moving on')
+        creep.leaveRoom();
+        // creep.changeTask('technician')
         return true;
     }
 
@@ -80,7 +82,7 @@ module.exports.disperse = function(creep) {
     //	}
     //
     if (creep.carry.energy == 0) {
-        creep.memory.taskState = 'SOURCE'
+        creep.taskState = 'SOURCE'
         creep.addTask('filltank');
         return true;
     }
@@ -91,21 +93,32 @@ module.exports.disperse = function(creep) {
         var res = creep.claimController(ctrl);
         switch (res) {
             case OK:
+            case ERR_TIRED:
+                dlog('derrp')
                 return true;
                 break;
             case ERR_NOT_IN_RANGE:
                 creep.moveTo(ctrl);
                 break;
             case ERR_GCL_NOT_ENOUGH:
-                dlog('cant claim, going for reserve')
                 var res = creep.reserveController(ctrl);
                 switch (res) {
                     case OK:
+                    case ERR_TIRED:
                         return true;
                         break;
                     case ERR_NOT_IN_RANGE:
                         var res = creep.moveTo(ctrl);
-                        dlog('err: ' + util.getError(res));
+                        switch(res) {
+                            case OK:
+                            case ERR_TIRED:
+                                return true;
+                                break;
+                            default: 
+                        dlog('error reserving instead of claiming because GCL ' + util.getError(res));
+                                return false;
+                        }
+
                         break;
                     default:
                         dlog(creep.name + ' error reserving ' + util.getError(res));

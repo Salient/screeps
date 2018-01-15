@@ -4,9 +4,9 @@ var DEBUG_HARVEST = true;
 
 function dlog(msg, creep) {
     if (creep) {
-    util.dlog('HARVEST/' + creep.name + ': ', msg);
+        util.dlog('HARVEST/' + creep.name + ': ', msg);
     } else {
-    util.dlog('HARVEST: ', msg);
+        util.dlog('HARVEST: ', msg);
     }
 }
 
@@ -269,7 +269,7 @@ module.exports.fillTank = function(creep) {
             if (creep.getActiveBodyparts(WORK) > 0) {
                 return mine(creep);
             }
-dlog('tank miss', creep)
+            dlog('tank miss', creep)
             creep.room.tankMiss();
 
             //            dlog('no available energy')
@@ -605,16 +605,20 @@ function gatherer(creep) {
     // 🔧
     function sink() {
         // That night he had a stomach ache
-        var mySink = Game.getObjectById(creep.memory.sinkId);
-        // util.dumpObject(mySink)
 
-        if (!util.def(mySink) || isFull(mySink)) {
+        var mySink = Game.getObjectById(creep.memory.sinkId);
+
+
+        if (!util.def(mySink) || (isFull(mySink) && (mySink.room.name == creep.room.name))) {
+
             delete creep.memory.sinkId;
             var test = findSink(creep);
+
             if (!util.def(test) || !test) {
                 // dlog('unable to acquire new sink.');
-                 dlog(creep.name + ' invalid sink target, returned ' + test);
-
+                if (!creep.room.memory.nrgReserve){
+                dlog(creep.name + ' invalid sink target, returned ' + test);
+                }
                 //        creep.memory.taskList.pop();
 
                 return false;
@@ -671,12 +675,12 @@ function findCashMoney(creep) {
     if (!util.def(creep.room.controller)) {
         return false;
     }
-    
+
     // Sane defaults
     if (!util.def(creep.room.memory.strategy)) {
         return false;
     }
-    
+
     var cash = [
         creep.pos.findClosestByRange(FIND_DROPPED_RESOURCES, {
             filter: (i) => i.amount > 50 && i.resourceType == RESOURCE_ENERGY
@@ -814,25 +818,22 @@ function findSink(creep) {
         return 0;
     });
 
-
+    // dlog('finding sink in ' + creep.room.name + ', targets: ' + targets)
 
     var backup = false;
 
     for (var need in sinkPriority) {
         var priority = sinkPriority[need];
-        ////if (priority == STRUCTURE_STORAGE) {
-        ////dlog('TESTING STORAGE')}
         dance:
             for (var sink in targets) {
                 var potential = targets[sink];
-                if (potential == STRUCTURE_STORAGE) {
-                dlog('testing storage sink')}
                 if (potential.structureType == priority && potential.isActive()) {
                     var space = (potential.structureType == STRUCTURE_STORAGE) ? (potential.store[RESOURCE_ENERGY] < potential.storeCapacity) : (potential.energy < potential.energyCapacity);
                     if (space) {
-                        if (backup === false) {
+                        if (!backup) {
                             backup = potential.id;
                         }
+
                         for (var dibs in Game.dibsList) {
                             if (potential.id == Game.dibsList[dibs]) {
                                 continue dance;
@@ -841,6 +842,8 @@ function findSink(creep) {
                         var pew = creep.moveTo(potential);
                         if (pew == OK || pew == ERR_TIRED) {
                             return potential.id;
+                        } else {
+                            dlog('found something good but path blocked or something: ' + util.getError(pew))
                         }
                     }
                 }
@@ -851,6 +854,8 @@ function findSink(creep) {
     if (backup != false) {
         return backup;
     }
+
+    //    dlog('no sinks in ' + creep.room.name + ', backup is ' + backup + ', priority is ' + priority + ', and reserve is ' + creep.room.memory.nrgReserve);
     return false;
 }
 
@@ -1015,6 +1020,6 @@ function isFull(sink) {
     } else if (sink.structureType == 'storage') {
         //        console.log(sink.structureType + ": " + sink.store +
         //   "/" + sink.storeCapacity);
-        return sink.store == sink.storeCapacity;
+        return sink.store[RESOURCE_ENERGY] == sink.storeCapacity;
     }
 }

@@ -149,7 +149,7 @@ function nextPriority(room) {
             popCon.minerWeight * vetoMiner,
         //'soldier': 15 + ((6 - room.memory.strategy.defcon) * 20),
         'medic': ((have.soldier - have.medic) * popCon.medicWeight),
-        'scout': (econCon.tankMiss + econCon.gatherMiss) * (totalPop / popCon.maxPop) * 10 // only want to create spores when i'm near full production
+        'scout': (econCon.tankMiss + econCon.gatherMiss) * 10 // only want to create spores when i'm near full production
     }
     var needsOfTheMany = Object.keys(needsOfTheFew).sort(function(keya, keyb) {
             return needsOfTheFew[keyb] - needsOfTheFew[keya];

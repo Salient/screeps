@@ -41,7 +41,6 @@ function builder(creep) {
     }
 
     if (creep.carry.energy == 0) {
-        creep.memory.taskState = 'DONE';
         creep.changeTask('filltank');
         return true;
     }
@@ -98,7 +97,6 @@ function builder(creep) {
                 }
                 break;
             case ERR_NOT_ENOUGH_RESOURCES:
-                creep.memory.taskState = 'DONE';
                 creep.changeTask('filltank');
                 return true;
                 break;
@@ -236,7 +234,6 @@ function upgradeRC(creep) {
     }
 
     if (creep.carry.energy == 0) {
-        creep.memory.taskState = 'DONE';
         creep.changeTask('filltank');
         return true;
     }
@@ -245,6 +242,10 @@ function upgradeRC(creep) {
     //       return harvest.fillTank(creep);
     //}
 
+    if (!util.def(rc)) {
+        // no controller in this room
+         return false;
+         }
     if (rc.my) {
         var res = creep.upgradeController(rc);
     } else {
@@ -274,7 +275,6 @@ function upgradeRC(creep) {
             }
             break;
         case ERR_NOT_ENOUGH_RESOURCES:
-            creep.memory.taskState = 'DONE';
             creep.changeTask('filltank');
             return true;
             break;
