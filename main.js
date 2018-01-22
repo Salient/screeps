@@ -97,7 +97,7 @@ module.exports.loop = function() {
         Game.pw = function() {
             for (var r in Game.rooms) {
                 var room = Game.rooms[r];
-                construct.bd(room);
+                construct.planRoom(room);
             }
         }
 
@@ -152,7 +152,7 @@ module.exports.loop = function() {
             //dlog('after tasking  CPU ' + thisRoom.name + ': ' + Game.cpu.getUsed());
             //
             // Manage building placement, build priorities, and roads
-            if (!(Game.time % 15) || !thisRoom.memory.planned) {
+            if (!(Game.time % 45) || !thisRoom.memory.planned) {
                 construct.planRoom(thisRoom);
                 //dlog('after construct  CPU ' + thisRoom.name + ': ' + Game.cpu.getUsed());
             }

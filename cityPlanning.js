@@ -331,7 +331,7 @@ function bootstrap(room) {
     // Create roads to controller
     // Later, storage, links, etc.
     room.createBasicPaths();
-    
+
     // markWalls(room);
 
     room.memory.planned = true;
@@ -366,6 +366,7 @@ function planRoom(room) {
     room.placeTower();
     room.placeStorage();
     room.buildRoads();
+    room.placeLinks();
 
     //if (!(Game.time % 17)) {
     // }
@@ -520,6 +521,135 @@ Room.prototype.placeContainers = function() {
     }
 }
 
+Room.prototype.placeLinks = function() {
+
+    var placeNum = this.needStructure(STRUCTURE_LINK);
+    var origin = Game.getObjectById(this.memory.spawnId).pos;
+
+    if (!util.def(origin)) {
+        dlog('big bad voodoo');
+        return false;
+    }
+
+    if (placeNum == 0) {
+        dlog('decided that I dont want to place anything')
+        return false;
+    }
+
+    var primeLink = null;
+
+    this.placePrimeLink = function() {
+        var radius = 5;
+        dance:
+            for (var xdelta = -radius + radius % 2 + 1; xdelta <= radius; xdelta += 2) {
+                for (var ydelta = -radius + radius % 2 + 1; ydelta <= radius; ydelta += 2) {
+                    dlog(origin.x + ',' + origin.y + ' - ' + this.name);
+                    var site = new RoomPosition(origin.x + xdelta, origin.y +
+                        ydelta, this.name);
+                    var res = this.createConstructionSite(site, STRUCTURE_LINK);
+                    if (res == OK) {
+                        this.memory.primeLinkLoc = site;
+                        break dance;
+                    }
+                }
+            }
+        radius++;
+
+        // epstein failsafe
+        if (radius > 10) {
+            return false;
+        }
+    }
+
+    this.placeAuxLink = function(srcId) {
+    
+    }
+
+
+
+    // Start sanity checks
+    //
+    // Is there a prime node
+    if (util.def(this.memory.primeLinkId)) {
+        primeLink = Game.getObjectById(this.memory.primeLinkId);
+    }
+
+    if (!util.def(primeLink)) {
+            // No Prime Link
+            // Is it placed but not built yet?
+
+        if (util.def(this.memory.primeLinkLoc)) {
+                // At least it's been tried, let's see if it's still there
+
+            var bud = this.lookForAt(LOOK_CONSTRUCTION_SITES, this.memory.primeLinkLoc.x, this.memory.primeLinkLoc.y);
+            for (var hmm in bud) {
+                var derp = bud[hmm];
+                if (derp.structureType == STRUCTURE_LINK) {
+                    // prime link placed, just not built yet
+                    primeLink = 'building';
+                }
+            }
+
+            if (primeLink != 'building') {
+
+                // Maybe it was building and is done now - 
+                var bud = this.lookForAt(LOOK_STRUCTURES, this.memory.primeLinkLoc.x,this.memory.primeLinkLoc.y);
+
+                for (var hmm in bud) {
+                    var derp = bud[hmm];
+                    if (derp.structureType == STRUCTURE_LINK) {
+                        // prime link placed, just not built yet
+                        this.memory.primeLinkId = derp.id;
+                        primeLink = derp;
+                    }
+                }
+            }
+            if (!util.def(primeLink)) {
+                dlog('Error placing prime link in ' + this.name);
+            }
+        } else {
+                // prime link has not been placed. Go forth and do good things.
+            if (!this.placePrimeLink()) {
+                dlog('Error placing prime link in ' + this.name);
+                return false;
+            }
+        }
+    }
+
+
+    // So - have a prime link, and some I can place. Should be one per source. 
+
+    // Check for existing
+    if (this.memory.sources.length > 1) {
+        for (var src in this.memory.sources) {
+            var asrc = this.memory.sources[src];
+            if(!util.def(asrc.linkId)) {
+                var res = this.placeAuxLink(asrc);
+                if (res) {
+                    placeNum--;
+                }
+            }
+        }
+    
+        if (placeNum > 0 ) {
+        for (var src in this.memory.sources) {
+            var asrc = this.memory.sources[src];
+            if(!util.def(asrc.linkId)) {
+                var res = this.placeAuxLink(asrc);
+                if (res) {
+                    asrc.linkId = asrc.id; 
+                    placeNum--;
+
+                }
+            }
+        }
+        } 
+    }
+    
+    // Want to place it within reach of a miner, so behind a mineshaft, but leave room for pathing
+}
+
+
 Room.prototype.placeSpawn = function() {
     if (!this.controller || !this.controller.level) {
         return false;
@@ -528,7 +658,8 @@ Room.prototype.placeSpawn = function() {
     // if (util.def(this.memory.spawnId) && Game.getObjectById(this.memory.spawnId)) {
     // 
     // }
-    dlog('called');
+    dlog('called spawn placer');
+
 
     var ctrlPos = this.controller.pos;
     var clstSrc = ctrlPos.findClosestByRange(FIND_SOURCES);

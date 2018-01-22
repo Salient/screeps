@@ -34,7 +34,13 @@ module.exports.disperse = function(creep) {
     if (creep.room.name == wander.sporeFrom) { //Still in origin room. Head out.
         if (util.def(wander.nextPortal)) {
             var portal = new RoomPosition(wander.nextPortal.x, wander.nextPortal.y, wander.nextPortal.roomName);
-            var res = creep.moveTo(portal);
+            var res = creep.moveTo(portal, {
+                reusePath: 5,
+                visualizePathStyle: {
+                    stroke: '61f22ff',
+                    opacity: 1
+                }
+            });
             switch (res) {
                 case OK:
                 case ERR_TIRED:
@@ -109,13 +115,13 @@ module.exports.disperse = function(creep) {
                         break;
                     case ERR_NOT_IN_RANGE:
                         var res = creep.moveTo(ctrl);
-                        switch(res) {
+                        switch (res) {
                             case OK:
                             case ERR_TIRED:
                                 return true;
                                 break;
-                            default: 
-                        dlog('error reserving instead of claiming because GCL ' + util.getError(res));
+                            default:
+                                dlog('error reserving instead of claiming because GCL ' + util.getError(res));
                                 return false;
                         }
 

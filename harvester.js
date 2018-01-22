@@ -260,6 +260,7 @@ module.exports.fillTank = function(creep) {
         creep.memory.taskState = 'SINK';
         return false;
     }
+
     creep.say('🔌');
     var targ = Game.getObjectById(creep.memory.eTarget);
 

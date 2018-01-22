@@ -149,7 +149,7 @@ function nextPriority(room) {
             popCon.minerWeight * vetoMiner,
         //'soldier': 15 + ((6 - room.memory.strategy.defcon) * 20),
         'medic': ((have.soldier - have.medic) * popCon.medicWeight),
-        'scout': (econCon.tankMiss + econCon.gatherMiss) * 10 // only want to create spores when i'm near full production
+        'scout': (econCon.tankMiss + econCon.gatherMiss) * 4 // only want to create spores when i'm near full production
     }
     var needsOfTheMany = Object.keys(needsOfTheFew).sort(function(keya, keyb) {
             return needsOfTheFew[keyb] - needsOfTheFew[keya];
@@ -157,11 +157,18 @@ function nextPriority(room) {
         // If the score is really high, the need is great. Have creep stop drawing
         // from spawn/extensions until spawn is complete
     if (needsOfTheFew[needsOfTheMany[0]] > 100) {
-        //        dlog(room.name + ' Need ' + needsOfTheMany[0] + ' with score ' +
-        //            needsOfTheFew[needsOfTheMany[0]])
-        //        dlog(room.name + ' Next ' + needsOfTheMany[1] + ' with score ' +
-        //            needsOfTheFew[needsOfTheMany[1]])
+         dlog(room.name + ' Need ' + needsOfTheMany[0] + ' with score ' +
+             needsOfTheFew[needsOfTheMany[0]])
+         dlog(room.name + ' Next ' + needsOfTheMany[1] + ' with score ' +
+             needsOfTheFew[needsOfTheMany[1]])
                 room.memory.nrgReserve = room.energyCapacityAvailable;
+
+        // TODO - put this somewhere more sensible
+        if (needsOfTheMany[0] == 'scout') {
+            // reset the economy counters to prevent spawing scouts forever more
+            econCon.tankMiss = 0;
+            econCon.gatherMiss = 0;
+        }
         return needsOfTheMany[0];
     }
     return false;
@@ -322,7 +329,7 @@ var spawn = function(room) {
     var counter = 0;
     var cost = 0;
 
-    while (cost <= cap) {
+    while (cost <= cap && body.length <51) {
         body.push(pattern[counter++ % pattern.length]);
         cost += BODYPART_COST[body[body.length - 1]];
     }

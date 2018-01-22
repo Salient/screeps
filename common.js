@@ -63,6 +63,31 @@ var def = function(obj) {
 
 module.exports.def = def;
 
+module.exports.sequence = [{
+    x: -1,
+    y: -1
+}, {
+    x: 0,
+    y: -1
+}, {
+    x: 1,
+    y: -1
+}, {
+    x: -1,
+    y: 0
+}, {
+    x: 1,
+    y: 0
+}, {
+    x: 1,
+    y: -1
+}, {
+    x: 1,
+    y: 0
+}, {
+    x: 1,
+    y: 1
+}];
 
 Creep.prototype.leaveRoom = function(dest = "") {
     // TODO
@@ -82,7 +107,7 @@ Creep.prototype.leaveRoom = function(dest = "") {
             this.taskState = 'LEAVING';
             var exits = this.room.find(FIND_EXIT);
         }
-        
+
         lust.start = this.room.name;
 
         if (exits.length > 1) {
