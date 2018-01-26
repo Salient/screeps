@@ -620,6 +620,11 @@ Room.prototype.placeLinks = function() {
     // So - have a prime link, and some I can place. Should be one per source. 
 
     // Check for existing
+    for (var n this.memory.sources) {
+        var disrc = this.memory.sources[n];
+
+
+    }
     if (this.memory.sources.length > 1) {
         for (var src in this.memory.sources) {
             var asrc = this.memory.sources[src];

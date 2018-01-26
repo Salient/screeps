@@ -2,7 +2,9 @@
  * 
  */
 
-var getError = function(result) {
+module.exports.myName = Game.spawns[Object.keys(Game.spawns)[0]].owner.username;
+
+module.exports.getError  = function(result) {
 
     var errorCodes = {
         "0": "OK",
@@ -30,8 +32,6 @@ var getError = function(result) {
     }
 }
 
-module.exports.getError = getError;
-
 module.exports.getRand = function getRandomIntInclusive(min, max) {
     min = Math.ceil(min);
     max = Math.floor(max);
@@ -43,6 +43,7 @@ function dlog(module, msg) {
     // var from = name;
     console.log('[DEBUG ' + module + "] " + msg);
 }
+
 module.exports.dlog = dlog;
 
 module.exports.dumpObject = function(obj) {
@@ -128,7 +129,7 @@ Creep.prototype.leaveRoom = function(dest = "") {
                 return true;
                 break;
             default:
-                dlog(this.name + ' Error leaving room: ' + getError(res))
+                dlog(this.name + ' Error leaving room: ' + res)
                 return false;
         }
     } else {

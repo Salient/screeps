@@ -145,7 +145,8 @@ var performTask = function(creep) {
             jobResult = build.repair(creep);
             break;
         case 'scout':
-            jobResult = spore.disperse(creep);
+            //jobResult = spore.disperse(creep);
+            jobResult = spore.infest(creep);
             break;
         case 'filltank':
             jobResult = harvest.fillTank(creep);

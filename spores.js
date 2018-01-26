@@ -2,6 +2,93 @@ var util = require('common');
 var harvest = require('harvester');
 var ovrmnd = require('overmind');
 
+Creep.prototype.appropriate = function(ctrlId) {
+
+    var ctrl = Game.getObjectById(ctrlId);
+
+    if (!ctrl || !ctrl.structureType || ctrl.structureType != STRUCTURE_CONTROLLER) {
+        return ERR_INVALID_ARGS;
+    }
+
+    if (ctrl.level > 0) {
+        //somebody owns this room
+        if (ctrl.my) {
+            return ERR_FULL;
+        } else {
+            return this.attackController(ctrl);
+        }
+    } else if (ctrl.reservation) {
+        var res = ctrl.reservation.username;
+        if (res == util.myName) {
+            return this.claimController(ctrl);
+        } else {
+            return this.attackController(ctrl);
+        }
+    } else {
+        return this.claimController(ctrl);
+    }
+    dlog('wtf scout mess');
+}
+
+module.exports.infest = function(creep) {
+
+    creep.say('🔱');
+    var objective = creep.memory.rTarget;
+    if (!objective) {
+        var targetList = ovrmnd.getPriority();
+        if (!targetList || targetList.length == 0) {
+            dlog('big bad boo');
+            return false;
+        }
+
+        var score = 0;
+        var best = null;
+
+        dlog('target list is ');
+
+        for (var land in targetList) {
+            var promised = targetList[land];
+            var range = creep.pos.getRangeTo(promised);
+            var promised = targetList[land];
+
+            if (promised.score / range > score || promised.score == NaN) {
+                dlog(land)
+                score = promised.score / range;
+                best = land;
+            }
+        }
+
+        dlog(best)
+        var bestRoom = Game.rooms[best];
+        if (bestRoom.controller) {
+            objective = best.controller.id;
+        } else {
+            dlog('poop');
+            return false;
+        }
+    }
+
+
+    var res = creep.appropriate(objective);
+    switch (res) {
+        case OK:
+        case ERR_TIRED:
+            dlog('derrp')
+            return true;
+            break;
+        case ERR_NOT_IN_RANGE:
+            creep.moveTo(ctrl);
+            break;
+            //case ERR_GCL_NOT_ENOUGH:
+        default:
+            dlog('error infesting, ' + util.getError(res));
+            return false;
+    }
+    dlog(creep.name + ' in ' + creep.room.name + ', ppooop');
+}
+
+
+
 module.exports.disperse = function(creep) {
     creep.say('🔱');
     if (!util.def(creep.memory.wanderlust)) {
@@ -127,11 +214,11 @@ module.exports.disperse = function(creep) {
 
                         break;
                     default:
-                        dlog(creep.name + ' error reserving ' + util.getError(res));
+                        dlog(creep.name + '(' + creep.room.name + ')  error reserving ' + util.getError(res));
 
                 }
             default:
-                dlog(creep.name + ' error claiming ' + util.getError(res));
+                dlog(creep.name + '(' + creep.room.name + ' error claiming ' + util.getError(res));
 
         }
 

@@ -33,108 +33,10 @@ Creep.prototype.fillTank = function() {
     fillTank(this);
 }
 
-// / Utiilty functions
-//
-//
-// Finds all stuff on the ground, returns object with resource types as keys
-// function freeEnergy(room) {
-//
-// var sits = room.find(FIND_DROPPED_RESOURCES);
-// var total = {};
-// for (var dd in sits) {
-// var clump = sits[dd];
-// if (!util.def(total[clump.resourceType])) {
-// total[clump.resourceType] = 0;
-// }
-// total[clump.resourceType] += clump.amount;
-// }
-// return total;
-// }
-//
-// module.exports.freeEnergy = freeEnergy;
-//
-// Game.s = function() {
-// for (var r in Game.rooms) {
-// harvest.setupSources(Game.rooms[r]);
-// }
-// }
-
-// Optimize energy gathering by available roles in the room
-//module.exports.sortingHat = sortingHat; 
-//function sortingHat(creep) {
-//
-//    var taskList = creep.memory.taskList;
-//
-//    var availPop = creep.room.memory.strategy.currentPopulation;
-//
-//    // initialize these two for
-//    // testing later
-//    // find the miners in the room
-//    var assignments = {
-//        'shuttle': 0,
-//        'miner': 0,
-//        'workerBee': 0
-//    };
-//
-//    creep.room.find(FIND_MY_CREEPS).forEach(function(creeper, index, array) {
-//        var jerksCurTask = creeper.memory.taskList;
-//
-//        if (!util.def(jerksCurTask)) {
-//            dlog('Brain dead creep!');
-//            return;
-//        }
-//
-//        var curTask = jerksCurTask[jerksCurTask.length - 1];
-//        if (typeof assignments[curTask] === 'undefined') {
-//            assignments[curTask] = 0;
-//        }
-//        assignments[curTask]++;
-//    });
-//
-//    // dlog('sorting ' + creep.name + ', role: ' + creep.memory.role)
-//    switch (creep.memory.role) {
-//
-//        case 'gatherer': // default tasking for gatherer
-//            if (util.def(availPop.workerBee) && util.def(availPop.miner)) {
-//                if ((availPop.workerBee < availPop.miner) &&
-//                    (availPop.workerBee > 0)) {
-//                    if (assignments.shuttle <= assignments.miner) {
-//                        creep.memory.taskList.push('shuttle')
-//                    } else {
-//                        creep.memory.taskList.push('gatherer')
-//                    }
-//                } else {
-//                    creep.memory.taskList.push('janitor')
-//                }
-//            } else {
-//                creep.memory.taskList.push('gatherer')
-//            }
-//
-//            break;
-//        case 'workerBee': // default tasking for worker bee
-//            creep.memory.taskList.push('shuttle')
-//            break;
-//        default:
-//            creep.memory.taskList.push('gatherer')
-//    }
-//
-//}
-
-//function findAlternateSource(creep) {
-//
-//    var option = findSource(creep);
-//
-//    while (option) {
-//
-//        if (Game.getObjectById(option.srcId).energy > 300) {
-//            creep.memory.sTarget = option;
-//            return option;
-//        }
-//    }
-//    return false;
-//}
 Room.prototype.needMiner = function() {
 
+    // TODO - figure out miners for reserved and unclaimed rooms
+    
     // calculate current mining througput vs energy left and time til regen
     var horsepower = 0;
 
@@ -143,7 +45,8 @@ Room.prototype.needMiner = function() {
     });
 
     // Should at least have a miner for every source...
-    if (miner.length < this.memory.sources.length) {
+    // At least, below level 6 or so
+    if (miner.length < this.memory.sources.length && this.controller.level < 6) {
         return true;
     }
 
@@ -798,7 +701,7 @@ function findSink(creep) {
     if (targets.length == 0) {
         //        dlog(creep.name + ': no sink targets in this room, trying origin');
         // dlog(Memory.rooms[creep.memory.birthRoom].spawnId)
-        dlog(creep.name + '/' + creep.room.name + ': fix me sink')
+        // dlog(creep.name + '/' + creep.room.name + ': fix me sink')
         return Memory.rooms[creep.memory.birthRoom].spawnId;
         //        return false;
     }
