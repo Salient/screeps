@@ -14,13 +14,7 @@ module.exports.taskMinions = function(room) {
 
         if (room.memory.planned &&
             creep.memory.taskList[creep.memory.taskList.length - 1] != 'builder') {
-            // warm up the heat map
-            var x = (creep.pos.x < 1) ? 1 : (creep.pos.x > 48) ? 48 :
-                creep.pos.x;
-            var y = (creep.pos.y < 1) ? 1 : (creep.pos.y > 48) ? 48 :
-                creep.pos.y;
-            room.memory.heatmap[x][y] += 10;
-
+            
             //            if (creep.taskState = 'RETURNING' || creep.taskState == 'LEAVING') {
             var test = Game.getObjectById(creep.memory.eTarget);
             if (!test){
