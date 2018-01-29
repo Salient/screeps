@@ -41,7 +41,7 @@ function builder(creep) {
     }
 
     if (creep.carry.energy == 0) {
-        creep.changeTask('filltank');
+        creep.addTask('filltank');
         return true;
     }
 
@@ -49,8 +49,7 @@ function builder(creep) {
     //		return harvest.fillTank(creep);
     //	}
 
-    if (!util.def(creep.memory.bTarget) ||
-        !util.def(Game.getObjectById(creep.memory.bTarget))) {
+    if (!util.def(creep.memory.bTarget)) {
         var orders = findSite(creep) || repairDuty(creep);
         if (!util.def(orders) || orders == false) {
             dlog(creep.name + ' says nothing to build or repair, converting to technician')
@@ -63,16 +62,9 @@ function builder(creep) {
 
     var target = Game.getObjectById(creep.memory.bTarget);
     if (!util.def(target)) {
-        dlog('problem is here');
-        creep.memory.bTarget = null;
+        // Looks like its done or gone. either way.
+        delete creep.memory.bTarget;
         return false;
-    }
-
-    // check if done
-    if (util.def(target.hits) && (target.hits == target.hitsMax)) {
-        targetId = null
-        creep.say('Done!')
-        return true;
     }
 
     if (target.progress >= 0) {
@@ -112,6 +104,7 @@ function builder(creep) {
 
     } else if (needsRepair(target)) {
 
+        dlog(creep.name + 'im repairing now?')
         if ((creep.pos.isNearTo(target)) && (creep.carry.energy > 0)) {
             creep.say(sayProgress(target) + '%');
             creep.repair(target)

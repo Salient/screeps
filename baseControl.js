@@ -20,14 +20,19 @@ function attackHostiles(support) {
     }); // Get most sensible
 
     var res = support.attack(hitList[0]);
-	switch(res){
-		case OK: return true; break;
-		case ERR_NOT_ENOUGH_ENERGY:
-		case ERR_RCL_NOT_ENOUGH: return false; break;
-			default: 
-        dlog('Attack Error -  ' + util.getError(res));
-			return false; break;
-	}
+    switch (res) {
+        case OK:
+            return true;
+            break;
+        case ERR_NOT_ENOUGH_ENERGY:
+        case ERR_RCL_NOT_ENOUGH:
+            return false;
+            break;
+        default:
+            dlog('Attack Error -  ' + util.getError(res));
+            return false;
+            break;
+    }
 }
 
 function healTroops(support) {
@@ -49,14 +54,18 @@ function healTroops(support) {
     }); // Get most sensible
 
     var res = support.heal(hitList[0]);
-	switch(res){
-		case OK: return true; break;
-		case ERR_NOT_ENOUGH_ENERGY:
-		return false; break;
-			default: 
-        dlog('Heal Error -  ' + util.getError(res));
-			return false; break;
-	}
+    switch (res) {
+        case OK:
+            return true;
+            break;
+        case ERR_NOT_ENOUGH_ENERGY:
+            return false;
+            break;
+        default:
+            dlog('Heal Error -  ' + util.getError(res));
+            return false;
+            break;
+    }
 }
 
 function repairBase(support) {
@@ -79,14 +88,19 @@ function repairBase(support) {
     }); // Get most sensible
 
     var res = support.repair(hitList[0]);
-	switch(res){
-		case OK: return true; break;
-		case ERR_NOT_ENOUGH_ENERGY:
-		case ERR_RCL_NOT_ENOUGH: return false; break;
-			default: 
-        dlog('Repair Error -  ' + util.getError(res));
-			return false; break;
-	}
+    switch (res) {
+        case OK:
+            return true;
+            break;
+        case ERR_NOT_ENOUGH_ENERGY:
+        case ERR_RCL_NOT_ENOUGH:
+            return false;
+            break;
+        default:
+            dlog('Repair Error -  ' + util.getError(res));
+            return false;
+            break;
+    }
 }
 
 function repairRoads(support) {
@@ -108,23 +122,29 @@ function repairRoads(support) {
         return 0;
     }); // Get most sensible
 
-    var spin =0;
+    var spin = 0;
 
-    while(spin < targets.length) {
+    while (spin < targets.length) {
         var roadCrack = hitList[spin];
-            if (roadCrack.room.memory.heatmap[roadCrack.pos.x][roadCrack.pos.y] < 60) {
-                     spin++; continue;
-            }
-    var res = support.repair(roadCrack);
-	switch(res){
-        case OK:
-            return true; break;
-		case ERR_NOT_ENOUGH_ENERGY:
-		case ERR_RCL_NOT_ENOUGH: return false; break;
-			default: 
-        dlog('Road Repair Error -  ' + util.getError(res));
-			return false; break;
-	}}
+        if (roadCrack.room.memory.heatmap[roadCrack.pos.x][roadCrack.pos.y] < 60) {
+            spin++;
+            continue;
+        }
+        var res = support.repair(roadCrack);
+        switch (res) {
+            case OK:
+                return true;
+                break;
+            case ERR_NOT_ENOUGH_ENERGY:
+            case ERR_RCL_NOT_ENOUGH:
+                return false;
+                break;
+            default:
+                dlog('Road Repair Error -  ' + util.getError(res));
+                return false;
+                break;
+        }
+    }
 }
 
 function towerControl(room) {
@@ -136,12 +156,11 @@ function towerControl(room) {
     });
 
     for (var gun in towers) {
-
         if (attackHostiles(towers[gun]) ||
             //  repairBase(towers[gun]) ||
             repairRoads(towers[gun]) ||
             healTroops(towers[gun])) {
-            return true;
+            continue;
         } else {
             return false
         };

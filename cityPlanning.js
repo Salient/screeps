@@ -562,7 +562,7 @@ Room.prototype.placeLinks = function() {
     }
 
     this.placeAuxLink = function(srcId) {
-    
+
     }
 
 
@@ -575,11 +575,11 @@ Room.prototype.placeLinks = function() {
     }
 
     if (!util.def(primeLink)) {
-            // No Prime Link
-            // Is it placed but not built yet?
+        // No Prime Link
+        // Is it placed but not built yet?
 
         if (util.def(this.memory.primeLinkLoc)) {
-                // At least it's been tried, let's see if it's still there
+            // At least it's been tried, let's see if it's still there
 
             var bud = this.lookForAt(LOOK_CONSTRUCTION_SITES, this.memory.primeLinkLoc.x, this.memory.primeLinkLoc.y);
             for (var hmm in bud) {
@@ -593,7 +593,7 @@ Room.prototype.placeLinks = function() {
             if (primeLink != 'building') {
 
                 // Maybe it was building and is done now - 
-                var bud = this.lookForAt(LOOK_STRUCTURES, this.memory.primeLinkLoc.x,this.memory.primeLinkLoc.y);
+                var bud = this.lookForAt(LOOK_STRUCTURES, this.memory.primeLinkLoc.x, this.memory.primeLinkLoc.y);
 
                 for (var hmm in bud) {
                     var derp = bud[hmm];
@@ -608,7 +608,7 @@ Room.prototype.placeLinks = function() {
                 dlog('Error placing prime link in ' + this.name);
             }
         } else {
-                // prime link has not been placed. Go forth and do good things.
+            // prime link has not been placed. Go forth and do good things.
             if (!this.placePrimeLink()) {
                 dlog('Error placing prime link in ' + this.name);
                 return false;
@@ -619,38 +619,43 @@ Room.prototype.placeLinks = function() {
 
     // So - have a prime link, and some I can place. Should be one per source. 
 
+
+    // Enumerate sources in room
+
+
+
     // Check for existing
-    for (var n this.memory.sources) {
+    for (var n in this.memory.sources) {
         var disrc = this.memory.sources[n];
 
-
+        for (var m in this.memory.shafts) {}
     }
     if (this.memory.sources.length > 1) {
         for (var src in this.memory.sources) {
             var asrc = this.memory.sources[src];
-            if(!util.def(asrc.linkId)) {
+            if (!util.def(asrc.linkId)) {
                 var res = this.placeAuxLink(asrc);
                 if (res) {
                     placeNum--;
                 }
             }
         }
-    
-        if (placeNum > 0 ) {
-        for (var src in this.memory.sources) {
-            var asrc = this.memory.sources[src];
-            if(!util.def(asrc.linkId)) {
-                var res = this.placeAuxLink(asrc);
-                if (res) {
-                    asrc.linkId = asrc.id; 
-                    placeNum--;
 
+        if (placeNum > 0) {
+            for (var src in this.memory.sources) {
+                var asrc = this.memory.sources[src];
+                if (!util.def(asrc.linkId)) {
+                    var res = this.placeAuxLink(asrc);
+                    if (res) {
+                        asrc.linkId = asrc.id;
+                        placeNum--;
+
+                    }
                 }
             }
         }
-        } 
     }
-    
+
     // Want to place it within reach of a miner, so behind a mineshaft, but leave room for pathing
 }
 

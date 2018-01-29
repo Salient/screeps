@@ -1,5 +1,37 @@
 var util = require('common')
 
+Creep.prototype.exploreNewRoom = function() {
+
+    if (!util.def(Memory.Overmind)) {
+        Memory.Overmind = {};
+    }
+
+    var omd = Memory.Overmind;
+
+    if (!util.def(omd.knownRooms)) {
+    omd.knownRooms = {};
+    }
+
+    var knownRooms = omd.knownRooms;
+
+    var curRoom = this.room.name;
+
+
+    var adjRooms =    Game.map.describeExits(curRoom);
+
+    util.shuffle(adjRooms);
+
+    for (var dir in adjRooms) {
+        var adjRoomName = adjRooms[dir];
+        if (omd.knownRooms[adjRoomName]) {
+            continue;
+        }
+
+        this.leaveRoom(adjRoomName);
+    }
+
+    this.leaveRoom(adjRooms[0]);
+}
 
 Room.prototype.classify = function() {
     var classification = {};
@@ -116,7 +148,7 @@ module.exports.getPriority = function() {
             if (targets) {
                 candidates.push(targets);
             }
-            if (candidates.length > 3 ) {
+            if (candidates.length > 3) {
                 break;
             }
         }
@@ -134,7 +166,7 @@ module.exports.getPriority = function() {
             });
 
         dlog("c4" + candidates);
-        
+
         if (candidates.length == 0) {
             return false;
         }

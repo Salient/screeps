@@ -71,6 +71,13 @@ Object.defineProperty(Creep.prototype, "taskState", {
     }
 });
 
+Object.defineProperty(Creep.prototype, "currentTask", {
+    get() {
+            return this.memory.taskList[0];
+    }
+});
+
+
 Creep.prototype.changeTask = function(newtask) {
     if (util.def(this.memory.taskList) && this.memory.taskList.length > 0) {
         this.memory.taskList.pop();

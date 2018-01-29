@@ -36,7 +36,7 @@ Creep.prototype.fillTank = function() {
 Room.prototype.needMiner = function() {
 
     // TODO - figure out miners for reserved and unclaimed rooms
-    
+
     // calculate current mining througput vs energy left and time til regen
     var horsepower = 0;
 
@@ -439,10 +439,9 @@ function gatherer(creep) {
             creep.say('💰');
             return source();
             break;
-        case 'LEAVING':
-            creep.say('💢');
+                   case 'LEAVING':
             return creep.leaveRoom();
-            break;
+           break;
         default:
             dlog('Gather logic fallthru: ' + creep.taskState, creep);
             return false;
@@ -462,7 +461,11 @@ function gatherer(creep) {
                 // dlog('mining')
                 var tres = mine(creep);
                 if (!tres) {
-                    creep.leaveRoom();
+                    if (creep.carry > 0) {
+                        creep.changeTask('builder')
+                    } else {
+                        creep.leaveRoom();
+                    }
                     return true;
                 }
                 return tres;
@@ -520,8 +523,8 @@ function gatherer(creep) {
 
             if (!util.def(test) || !test) {
                 // dlog('unable to acquire new sink.');
-                if (!creep.room.memory.nrgReserve){
-                dlog(creep.name + ' invalid sink target, returned ' + test);
+                if (!creep.room.memory.nrgReserve) {
+                    dlog(creep.name + ' invalid sink target, returned ' + test);
                 }
                 //        creep.memory.taskList.pop();
 
@@ -798,6 +801,10 @@ function checkSourceMiners(creep) {
     for (var thisSource in sources) {
 
         var thisSrcId = sources[thisSource].id;
+        var srcObj = Game.getObjectById(thisSrcId);
+        if (srcObj.energy < 100) {
+            continue;
+        }
         var found = false;
 
         for (var thisShaft in shafts) {
@@ -815,7 +822,7 @@ function checkSourceMiners(creep) {
                 continue;
             }
 
-            if (thisShaftId == thisSrcId && assigneeRole == 'miner') {
+            if (thisShaftId == thisSrcId && assigneeRole == 'miner' && shafts[thisShaft].assignedTo != creep.name) {
                 found = true;
                 break;
             }
@@ -835,7 +842,7 @@ function checkSourceMiners(creep) {
 
             for (var old in shafts) {
                 if (shafts[old].srcId == thisSrcId) {
-                    if ((shafts[old].assignedTo == 'unassigned') || (Game.creeps[shafts[old].assignedTo].memory.role != 'miner')) {
+                    if ((shafts[old].assignedTo == creep.name) || (shafts[old].assignedTo == 'unassigned') || (Game.creeps[shafts[old].assignedTo].memory.role != 'miner')) {
                         shafts[old].assignedTo = creep.name;
                         creep.memory.mTarget = shafts[old];
                     }

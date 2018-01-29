@@ -37,8 +37,8 @@ module.exports.infest = function(creep) {
     if (!objective) {
         var targetList = ovrmnd.getPriority();
         if (!targetList || targetList.length == 0) {
-            dlog('big bad boo');
-            return false;
+            dlog('no target list');
+            creep.leaveRoom();
         }
 
         var score = 0;
@@ -60,12 +60,14 @@ module.exports.infest = function(creep) {
 
         dlog(best)
         var bestRoom = Game.rooms[best];
-        if (bestRoom.controller) {
+
+        if (bestRoom && bestRoom.controller) {
             objective = best.controller.id;
         } else {
-            dlog('poop');
-            return false;
+            dlog('no room in targetlist');
+            creep.leaveRoom();
         }
+        return;
     }
 
 
@@ -73,7 +75,6 @@ module.exports.infest = function(creep) {
     switch (res) {
         case OK:
         case ERR_TIRED:
-            dlog('derrp')
             return true;
             break;
         case ERR_NOT_IN_RANGE:
@@ -84,7 +85,6 @@ module.exports.infest = function(creep) {
             dlog('error infesting, ' + util.getError(res));
             return false;
     }
-    dlog(creep.name + ' in ' + creep.room.name + ', ppooop');
 }
 
 
