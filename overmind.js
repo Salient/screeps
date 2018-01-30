@@ -9,7 +9,7 @@ Creep.prototype.exploreNewRoom = function() {
     var omd = Memory.Overmind;
 
     if (!util.def(omd.knownRooms)) {
-    omd.knownRooms = {};
+        omd.knownRooms = {};
     }
 
     var knownRooms = omd.knownRooms;
@@ -17,7 +17,7 @@ Creep.prototype.exploreNewRoom = function() {
     var curRoom = this.room.name;
 
 
-    var adjRooms =    Game.map.describeExits(curRoom);
+    var adjRooms = Game.map.describeExits(curRoom);
 
     util.shuffle(adjRooms);
 
@@ -34,13 +34,24 @@ Creep.prototype.exploreNewRoom = function() {
 }
 
 Room.prototype.classify = function() {
+
+    var ovrmnd = Memory.Overmind.globalTerrain;
+    if (util.def(ovrmnd) & ovrmnd[this.name] && ovrmnd[this.name].revised) {
+
+        if (ovrmnd[this.name].revised < Game.time + 60) {
+            dlog('skipping classification of ' + this.name + ' because its been less than a minute')
+        }
+
+    }
     var classification = {};
+
 
     if (!util.def(this.controller)) {
         classification.class = 'wasteland';
         return;
     }
 
+    dlog('classifying ' + this.name)
     if (this.controller.level > 0) {
         //somebody owns this room
         if (this.controller.my) {
@@ -67,6 +78,7 @@ Room.prototype.classify = function() {
 
 Room.prototype.score = function() {
 
+    dlog('scoring room ' + this.name)
     var nmes = this.find(FIND_HOSTILE_CREEPS);
     var srcs = this.find(FIND_SOURCES);
     var anathem = this.find(FIND_HOSTILE_STRUCTURES);
@@ -81,14 +93,23 @@ Room.prototype.score = function() {
     }
 
     if (srcs.length > 1) {
-        var srcDist = srcs[0].pos.findPathTo(srcs[1]);
+        var srcDist = srcs[0].pos.findPathTo(srcs[1]).length;
+        dlog('srcs dist: ' + srcDist)
+    } else {
+        srcDist = 0;
     }
 
     if (srcs.length > 0) {
-        var ctrlDist = srcs[0].pos.findPathTo(this.controller);
+        var ctrlDist = srcs[0].pos.findPathTo(this.controller).length;
+        dlog('ctrl dist: ' + ctrlDist)
+    } else {
+        var ctrlDist = 0;
     }
 
-    return srcs * 10 + exits * 3 + ore * 10 - 2 * (srcDist + ctrlDist) - (nmes * 5 + anathem * 10 + mustdie * 20);
+    // dlog('nme' + nmes.length + ', srcs:' + srcs.length + ', anathem: ' + anathem.length+ ' mustdie: ' + mustdie.length + ', ore: ' + ore.length + ', exits:' + exits.length + ', srcDist: ' + srcDist + ', ctrlDist: ' + ctrlDist);
+    var score = srcs.length * 10 + exits.length * 3 + ore.length * 10 - 2 * (srcDist + ctrlDist) - (nmes.length * 5 + anathem.length * 10 + mustdie.length * 20);
+    dlog('score is ' + score)
+    return score;
 
 }
 

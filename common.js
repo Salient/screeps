@@ -5,15 +5,12 @@
 module.exports.myName = Game.spawns[Object.keys(Game.spawns)[0]].owner.username;
 
 
-function shuffle(a) {
-    var j, x, i;
-    for (i = a.length - 1; i > 0; i--) {
-        j = Math.floor(Math.random() * (i + 1));
-        x = a[i];
-        a[i] = a[j];
-        a[j] = x;
-    }
-}
+
+var shuffle = function(o) {
+    for (var j, x, i = o.length; i; j = Math.floor(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x);
+    return o;
+};
+
 module.exports.shuffle = shuffle;
 
 module.exports.getError = function(result) {
@@ -58,13 +55,15 @@ function dlog(module, msg) {
 
 module.exports.dlog = dlog;
 
-module.exports.dumpObject = function(obj) {
+var dumpObject = function(obj) {
     dlog('JS OBJ', 'Dumping Object...');
     for (var x in obj) {
         dlog('JS OBJ', 'Key: ' + x + ', value ' + obj[x] + '.');
     }
 }
 
+module.exports.dumpObject = dumpObject;
+module.exports.dumpObj = dumpObject;
 
 var def = function(obj) {
     return (obj === false) ? false : !!obj;
@@ -102,6 +101,19 @@ module.exports.sequence = [{
     y: 1
 }];
 
+Creep.prototype.moveAwayFromExit = function() {
+
+    var pos = this.pos;
+    if (pos.x == 0) {
+        this.move(RIGHT);
+    } else if (pos.x == 49) {
+        this.move(LEFT);
+    } else if (pos.y == 0) {
+        this.move(BOTTOM);
+    } else {
+        this.move(TOP);
+    }
+}
 Creep.prototype.leaveRoom = function(dest = "") {
     // TODO
     // maybe add optional flags to head toward or away from captial?
@@ -111,63 +123,60 @@ Creep.prototype.leaveRoom = function(dest = "") {
         this.addTask('leaveroom');
     }
 
+    // Check if already set up
 
-    if (dest != "") {
-        // New pilrgimage starting
+    if (!def(this.memory.wanderlust)) {
+        if (dest != "") {
+            // New pilrgimage starting
 
-        if (this.room.name == dest) {
-            ///uhh guess i'm already here? what?
-            dlog(creep.name + 'wants to leave to the room its already in');
-            //  this.memory.taskList.pop();
-            return false;
-        }
+            if (this.room.name == dest) {
+                ///uhh guess i'm already here? what?
+                dlog(creep.name + 'wants to leave to the room its already in');
+                //  this.memory.taskList.pop();
+                return false;
+            }
 
-        var interRoomRoute = Game.map.findRoute(creep.room.name, dest);
+            var interRoomRoute = Game.map.findRoute(creep.room.name, dest);
 
-        if (interRoomRoute == ERR_NO_PATH) {
-            //this.memory.taskList.pop();
-            dlog('interroom routing error');
-            return false;
-        }
+            if (interRoomRoute == ERR_NO_PATH) {
+                //this.memory.taskList.pop();
+                dlog('interroom routing error');
+                return false;
+            }
 
-        if (interRoomRoute.length > 0) {
+            if (interRoomRoute.length > 0) {
 
-            this.memory.wanderlust = {
-                route: interRoomRoute
+                this.memory.wanderlust = {
+                    route: interRoomRoute
+                }
+            } else {
+                dlog('very sratnge interroom routing error');
+                return false;
             }
         } else {
-            dlog('very sratnge interroom routing error');
-            return false;
-        }
-    } else {
-        // Supposed to pick a random exit
+            // Supposed to pick a random exit
 
-        var adjRooms = shuffle(Game.map.describeExits(this.room));
-        var randAdjRoom = adjRooms[Object.keys(adjRooms)[0]];
+            var adjRooms = shuffle(Game.map.describeExits(this.room.name));
+            var randAdjRoom = adjRooms[Object.keys(adjRooms)[0]];
 
-        this.memory.wanderlust = {
-            route: {
-                room: randAdjRoom,
-                exit: Object.keys(adjRooms)[0]
+            this.memory.wanderlust = {
+                route: [{
+                    room: randAdjRoom,
+                    exit: Object.keys(adjRooms)[0]
+                }]
             }
         }
-    }
-
-
-    if (!def(this.memory.wanderlust) || !def(this.memory.wanderlust.route)) {
-        dlog('told to leave room but I dont remember where to');
-        this.memory.taskList.pop();
-        return false;
     }
 
     var lustRoute = this.memory.wanderlust.route;
 
     if (this.room.name == lustRoute[0].room) {
         //made it to the next room. 
-
+        Game.rooms[this.room.name].classify();
         if (lustRoute.length == 1) {
             // this is the destination
-            this.room.classify();
+        // need to move away from exit or forever roam the halls of infitite mirrors
+            this.moveAwayFromExit();
             this.memory.taskList.pop();
             delete this.memory.wanderlust;
             return true;
@@ -175,22 +184,30 @@ Creep.prototype.leaveRoom = function(dest = "") {
         lustRoute.shift();
     }
 
-    var movePos = new RoomPosition(25, 25, lustRoute[0].room);
 
-    var derp = creep.moveTo(movePos, {
+    var nextHop = lustRoute[0];
+
+    if (!def(nextHop.exitPos)) {
+        this.memory.wanderlust.route[0].exitPos = this.pos.findClosestByRange(parseInt(nextHop.exit));
+    }
+
+    var newRoomPos = new RoomPosition(nextHop.exitPos.x, nextHop.exitPos.y, nextHop.exitPos.roomName);
+
+
+    var derp = this.moveTo(newRoomPos, {
         reusePath: 15,
         visualizePathStyle: {
             stroke: '41ff166'
         }
     });
 
-    switch (res) {
+    switch (derp) {
         case OK:
         case ERR_TIRED:
             return true
             break;
         default:
-            dlog('trouble with interrom');
+            dlog('trouble with interrom: ' + derp);
     }
 
     return;

@@ -875,6 +875,10 @@ function findSource(creep) {
         var sources = recall.sources;
     }
 
+    if (sources.length == 0) {
+        return false;
+    }
+
     if (!util.def(recall.lastAssignedSrc)) {
         recall.lastAssignedSrc = sources[0].id;
     }
