@@ -10,6 +10,64 @@ function dlog(msg, creep) {
     }
 }
 
+Creep.prototype.outsource = function() {
+    var ovr = Memory.Overmind.globalTerrain;
+
+    var srcs = this.room.memory.sources;
+    if (!util.def(srcs)) {
+        this.leaveRoom();
+        return true;
+    } else {
+        for (var thing in srcs) {
+            var realthing = Game.getObjectById(srcs[thing].id);
+            if (realthing.ticksToRegeneration < 80) {
+                // no need to leave room, more is on the way soon
+                return true;
+            } 
+        }
+        // nothing coming soon. leave room.
+        this.leaveRoom();
+        return true;
+    }
+    //shoulding get here
+    //
+    return false;
+    return this.exploreNewRoom();
+    // outsourcing disabled
+
+    dlog(this.name + '/' + this.room.name , ' outsourcing')
+    if (ovr.length < 2) {
+        dlog('derp')
+        return
+    };
+
+    var score = 0;
+    //    var best = (Object.keys(ovr)[0] == this.room.name) ? Object.keys(ovr)[1] : Object.keys(ovr)[0]; 
+        var best = null ; 
+    
+    for (var land in ovr) {
+        if (land == this.room.name) {
+            continue;
+        }
+
+        var promised = ovr[land];
+
+        if (promised.class == 'conquered' || promised.class == 'wasteland' || promised.class == 'heathens') {
+            continue;
+        }
+
+        var range = Game.map.getRoomLinearDistance(this.room.name, land);
+        if (promised.score / range > score) {
+            score = promised.score / range;
+            best = land;
+        }
+    }
+    if (!util.def(best)) {
+        this.exploreNewRoom();
+    }
+    this.leaveRoom(best);
+}
+
 Creep.prototype.hitUp = function(target) {
     if (!util.def(target)) {
         dlog('not suing hitup right. Got: ' + target)
@@ -439,9 +497,10 @@ function gatherer(creep) {
             creep.say('💰');
             return source();
             break;
-                   case 'LEAVING':
-            return creep.leaveRoom();
-           break;
+        case 'LEAVING':
+
+            return creep.outsource();
+            break;
         default:
             dlog('Gather logic fallthru: ' + creep.taskState, creep);
             return false;
@@ -464,7 +523,7 @@ function gatherer(creep) {
                     if (creep.carry > 0) {
                         creep.changeTask('builder')
                     } else {
-                        creep.leaveRoom();
+                        creep.outsource();
                     }
                     return true;
                 }

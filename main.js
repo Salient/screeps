@@ -5,38 +5,39 @@ var util = require('common');
 var harvest = require('harvester');
 var taskMaster = require('tasker');
 var baseSupport = require('baseControl');
-var visuals = require('visuals')
-    //const profiler = require('screeps-profiler');
-    //dlog("-----------------------\n\n" + 'New Global Tick \nGenesis count ' + Game.cpu.getUsed())
-    //Game.f = function() {
-    //    for (var ff in Game.flags) {
-    //        Game.flags[ff].remove();
-    //    }
-    //}
-    //
-
-////Game.fe = function() {
-////    for (var ff in Game.rooms) {
-////        var res = harvest.freeEnergy(Game.rooms[ff]);
-////        dlog('Free energy in room ' + ff);
-////        for (var type in res) {
-////            dlog(type + ": " + res[type])
-////        }
-////    }
-////}
-//
-//Game.p = function() {
-//        for (var r in Game.rooms) {
-//            construct.p(Game.rooms[r]);
-//        }
-//    }
-//    //
-//    //Game.q = function() {
-//    //    for (var r in Game.rooms) {
-//        construct.controlLevelChange(Game.rooms[r]);
+var visuals = require('visuals');
+var overmind = require('overmind');
+//const profiler = require('screeps-profiler');
+//dlog("-----------------------\n\n" + 'New Global Tick \nGenesis count ' + Game.cpu.getUsed())
+//Game.f = function() {
+//    for (var ff in Game.flags) {
+//        Game.flags[ff].remove();
 //    }
 //}
 //
+dlog('global tick')
+    ////Game.fe = function() {
+    ////    for (var ff in Game.rooms) {
+    ////        var res = harvest.freeEnergy(Game.rooms[ff]);
+    ////        dlog('Free energy in room ' + ff);
+    ////        for (var type in res) {
+    ////            dlog(type + ": " + res[type])
+    ////        }
+    ////    }
+    ////}
+    //
+    //Game.p = function() {
+    //        for (var r in Game.rooms) {
+    //            construct.p(Game.rooms[r]);
+    //        }
+    //    }
+    //    //
+    //    //Game.q = function() {
+    //    //    for (var r in Game.rooms) {
+    //        construct.controlLevelChange(Game.rooms[r]);
+    //    }
+    //}
+    //
 function exterminate() {
     for (var r in Game.rooms) {
         var room = (Game.rooms[r]);
@@ -101,6 +102,37 @@ module.exports.loop = function() {
             }
         }
 
+        Game.score = function() {
+            dlog(overmind.getPriority());
+        }
+
+        Game.sr = function(room) {
+            dlog(overmind.scoreroom(room));
+        }
+
+        Game.rank = function() {
+            var ark = Object.keys(Memory.Overmind.globalTerrain);
+
+            var arr = ark.sort(function(a, b) {
+                var x = Memory.Overmind.globalTerrain[a];
+                var y = Memory.Overmind.globalTerrain[b];
+
+                if (x.score > y.score) {
+                    return 1;
+                }
+                if (x.score < y.score) {
+                    return -1;
+                }
+                return 0;
+
+            });
+
+            for (var rrr in arr) {
+                dlog(arr[rrr] + ': ' + Memory.Overmind.globalTerrain[arr[rrr]].score);
+            }
+        }
+
+
         Game.destroyAll = function(structure) {
             for (var ff in Game.rooms) {
                 var sits = Game.rooms[ff].find(FIND_STRUCTURES, {
@@ -136,7 +168,7 @@ module.exports.loop = function() {
             thisRoom.coolHeatmap();
             thisRoom.coolEconStats();
             // dlog(thisRoom.name + ' source miss: ' + thisRoom.memory.strategy.economy.gatherMiss + ', tankMiss: ' +thisRoom.memory.strategy.economy.tankMiss); 
-            
+
             //    if (!(Math.floor(thisRoom.memory.nextSpawn - Game.time) % 10)) {
             //        dlog('Next spawn in ' + thisRoom.name + ' in ' + Math.floor((thisRoom.memory.nextSpawn - Game.time)));
             //}
@@ -168,7 +200,7 @@ module.exports.loop = function() {
             //
             //            }
             //
-            baseSupport.towerControl(thisRoom);
+            // baseSupport.towerControl(thisRoom);
             //dlog('after base  CPU ' + thisRoom.name + ': ' + Game.cpu.getUsed());
 
         }
@@ -203,14 +235,14 @@ module.exports.loop = function() {
         }
 
         //// 
-    //        if (!(Game.time % 300)) {
-    //
-    //            for (var r in Memory.rooms) {
-    //                if (!Game.rooms[r]) {
-    //                    delete Memory.rooms[r];
-    //                }
-    //            }
-    //        }
+        //        if (!(Game.time % 300)) {
+        //
+        //            for (var r in Memory.rooms) {
+        //                if (!Game.rooms[r]) {
+        //                    delete Memory.rooms[r];
+        //                }
+        //            }
+        //        }
         //    });
     }
     //

@@ -536,6 +536,40 @@ Room.prototype.placeLinks = function() {
         return false;
     }
 
+    var linkSet = this.memory.links;
+    if (!util.def(linkSet)) {
+        this.memory.links = {};
+    }
+
+    // Link memory object structure
+    //
+    // obj{
+    // id: game object id,
+    // constructId: game object id for construction site
+    // pos: position object,
+    // type: prime, source, shuttle
+
+
+    // refresh list 
+    for (var linkId in linkSet) {
+        var link = linkSet[ind];
+
+        if (!Game.getObjectById(linkId)) {
+            // check if it was a construction site 
+            var stuff = link.pos.lookForAt(LOOK_STRUCTURES);
+            for (var thing in stuff) {
+                var newStructure = stuff[thing];
+                if (newStructure.structureType == STRUCTURE_LINK) {
+                    linkSet[newStructure.id] = {
+                        pos: newStructure.pos,
+                        type: 'prime'
+                    };
+                }
+            }
+            delete linkSet.linkId;
+        }
+    }
+
     var primeLink = null;
 
     this.placePrimeLink = function() {
@@ -548,24 +582,29 @@ Room.prototype.placeLinks = function() {
                         ydelta, this.name);
                     var res = this.createConstructionSite(site, STRUCTURE_LINK);
                     if (res == OK) {
-                        this.memory.primeLinkLoc = site;
+                        var newSite = site.lookForAt(LOOK_CONSTRUCTION_SITES)[0];
+                        linkSet[newSite.id] = {
+                                pos: site,
+                                type: 'prime'
+                            }
+                            // this.memory.primeLinkLoc = site;
                         break dance;
                     }
                 }
-            }
-        radius++;
+                radius++;
 
-        // epstein failsafe
-        if (radius > 10) {
-            return false;
-        }
+                // epstein failsafe
+                if (radius > 10) {
+                    return false;
+                }
+            }
     }
 
     this.placeAuxLink = function(srcId) {
 
     }
 
-
+    return;
 
     // Start sanity checks
     //

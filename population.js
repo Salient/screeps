@@ -149,7 +149,7 @@ function nextPriority(room) {
             popCon.minerWeight * vetoMiner,
         //'soldier': 15 + ((6 - room.memory.strategy.defcon) * 20),
         'medic': ((have.soldier - have.medic) * popCon.medicWeight),
-        'scout': (econCon.tankMiss + econCon.gatherMiss) * 4 // only want to create spores when i'm near full production
+        'scout': have.miner*(econCon.tankMiss + econCon.gatherMiss) * 4 // only want to create spores when i'm near full production
     }
     var needsOfTheMany = Object.keys(needsOfTheFew).sort(function(keya, keyb) {
             return needsOfTheFew[keyb] - needsOfTheFew[keya];
@@ -353,7 +353,7 @@ var spawn = function(room) {
                     room.memory.strategy.economy.tankMiss = 0;
                 }
             }
-            //   dlog('Spawned ' + want);
+            dlog('Spawned ' + want);
             room.memory.nextSpawn = Game.time + body.length * CREEP_SPAWN_TIME;
             room.memory.nrgReserve = false;
             break;

@@ -104,16 +104,28 @@ module.exports.sequence = [{
 Creep.prototype.moveAwayFromExit = function() {
 
     var pos = this.pos;
+    var movedir = null;
     if (pos.x == 0) {
-        this.move(RIGHT);
+        movedir = RIGHT;
     } else if (pos.x == 49) {
-        this.move(LEFT);
+        movedir = LEFT;
     } else if (pos.y == 0) {
-        this.move(BOTTOM);
+        movedir = BOTTOM;
     } else {
-        this.move(TOP);
+        movedir = TOP;
     }
+
+    if (!movedir) {
+        dlog('stf');
+    }
+    var res = this.move(movedir);
+    // dlog(this.name + ' moved away, res: ' + res)
 }
+
+Creep.prototype.moveRandom = function() {
+    this.move(Math.floor(Math.random() * (8) + 1)); //The maximum is inclusive and the minimum is inclusive 
+}
+
 Creep.prototype.leaveRoom = function(dest = "") {
     // TODO
     // maybe add optional flags to head toward or away from captial?
@@ -124,6 +136,7 @@ Creep.prototype.leaveRoom = function(dest = "") {
     }
 
     // Check if already set up
+    //     dlog(this.name + '/' + this.room.name, ' leave room called, dest: ' + dest);
 
     if (!def(this.memory.wanderlust)) {
         if (dest != "") {
@@ -131,16 +144,16 @@ Creep.prototype.leaveRoom = function(dest = "") {
 
             if (this.room.name == dest) {
                 ///uhh guess i'm already here? what?
-                dlog(creep.name + 'wants to leave to the room its already in');
+                dlog(this.name + 'wants to leave to the room its already in');
                 //  this.memory.taskList.pop();
                 return false;
             }
 
-            var interRoomRoute = Game.map.findRoute(creep.room.name, dest);
+            var interRoomRoute = Game.map.findRoute(this.room.name, dest);
 
             if (interRoomRoute == ERR_NO_PATH) {
                 //this.memory.taskList.pop();
-                dlog('interroom routing error');
+                dlog('leaving room', 'interroom routing error');
                 return false;
             }
 
@@ -154,45 +167,90 @@ Creep.prototype.leaveRoom = function(dest = "") {
                 return false;
             }
         } else {
+            //             return false;
             // Supposed to pick a random exit
 
+            //            var roomChoice = {
+            //                "name": null,
+            //                "score": 0,
+            //                "exit": null
+            //            };
+            //
             var adjRooms = shuffle(Game.map.describeExits(this.room.name));
-            var randAdjRoom = adjRooms[Object.keys(adjRooms)[0]];
+            var randomExit = {
+                room: adjRooms[Object.keys(adjRooms)[0]],
+                exit: Object.keys(adjRooms)[0]
+            }
+            var score = -999;
 
+            //dumpObject(Memory.Overmind.globalTerrain)
+
+            for (var option in adjRooms) {
+                var exit = adjRooms[option];
+                if (Memory.Overmind.globalTerrain[exit]) {
+                    var storedScore = Memory.Overmind.globalTerrain[exit].score;
+                    if (!storedScore) {
+                        storedScore = 0;
+                    }
+                    if (storedScore > score) {
+                        score = storedScore;
+
+                        //dlog('testing ' + exit + ' with score ' + score)
+                        randomExit = {
+                            room: exit,
+                            exit: option
+                        }
+                    }
+                }
+            }
+            //
+            //            for (var rr in adjRooms) {
+            //                if (Memory.Overmind && Memory.Overmind.globalTerrain && Memory.Overmind.globalTerrain[adjRooms[rr]] && Memory.Overmind.globalTerrain[adjRooms[rr]].score > 0) {
+            //                    var option = Memory.Overmind.globalTerrain[adjRooms[rr]].score;
+            //                    if (option > roomChoice.score) {
+            //                        roomChoice.name = adjRooms[rr];
+            //                        roomChoice.score = option;
+            //                        roomChoice.exit = rr;
+            //                    }
+            //                }
+            //            }
+            //            if (!roomChoice.name) {
+            //                roomChoice.name = adjRooms[Object.keys(adjRooms)[0]];
+            //            }
+            //
+            dlog(this.name + '/' + this.room.name, ' selecting new exit from room. (' + randomExit.room + '), score:' + score);
+            //            dumpObject(randomExit);
             this.memory.wanderlust = {
-                route: [{
-                    room: randAdjRoom,
-                    exit: Object.keys(adjRooms)[0]
-                }]
+                route: [randomExit]
             }
         }
     }
-
     var lustRoute = this.memory.wanderlust.route;
 
     if (this.room.name == lustRoute[0].room) {
         //made it to the next room. 
+        // need to move away from exit or forever roam the halls of infitite mirrors
+        this.moveAwayFromExit();
         Game.rooms[this.room.name].classify();
         if (lustRoute.length == 1) {
             // this is the destination
-        // need to move away from exit or forever roam the halls of infitite mirrors
-            this.moveAwayFromExit();
+            // dlog('at elaveroom dest')
             this.memory.taskList.pop();
             delete this.memory.wanderlust;
-            return true;
+            return false;
+        } else {
+            dlog(this.name, 'at next hop, currently in ' + lustRoute[0].room + ' on the way to ' + lustRoute[lustRoute.length - 1].room);
+            lustRoute.shift();
         }
-        lustRoute.shift();
     }
 
 
     var nextHop = lustRoute[0];
-
     if (!def(nextHop.exitPos)) {
         this.memory.wanderlust.route[0].exitPos = this.pos.findClosestByRange(parseInt(nextHop.exit));
     }
 
     var newRoomPos = new RoomPosition(nextHop.exitPos.x, nextHop.exitPos.y, nextHop.exitPos.roomName);
-
 
     var derp = this.moveTo(newRoomPos, {
         reusePath: 15,
@@ -207,58 +265,10 @@ Creep.prototype.leaveRoom = function(dest = "") {
             return true
             break;
         default:
-            dlog('trouble with interrom: ' + derp);
+            dlog(this.name + '/' + this.room.name, ' trouble with interrom move : ' + derp + ', dest: ' + nextHop.room);
+            //  this.moveAwayFromExit();
+            this.moveRandom();
+            delete this.memory.wanderlust;
     }
-
-    return;
-
-    if (!def(this.memory.wanderlust)) {
-        this.memory.wanderlust = {};
-    }
-
-    var lust = this.memory.wanderlust;
-
-    if (!def(lust.start)) {
-
-        //       dlog('COMMON', this.name + ' now leaving room');
-        if (dest == 'home') {
-            this.taskState = 'RETURNING'
-            var exits = this.room.find(Game.map.findExit(creep.room, creep.memory.birthRoom));
-        } else {
-            this.taskState = 'LEAVING';
-            var exits = this.room.find(FIND_EXIT);
-        }
-
-        lust.start = this.room.name;
-
-        if (exits.length > 1) {
-            lust.end = exits[Math.floor(Math.random() * exits.length)];
-        } else {
-            lust.end = exits[0];
-        }
-    }
-
-    if (this.room.name == lust.start) {
-        // Still here on our way out 
-        var waypoint = new RoomPosition(lust.end.x, lust.end.y, lust.end.roomName);
-        var res = this.moveTo(waypoint);
-        switch (res) {
-            case OK:
-            case ERR_TIRED:
-                return true;
-                break;
-            default:
-                dlog('COMMON', this.name + ' Error leaving room: ' + res)
-                return false;
-        }
-        dlog('COMMON', this.name + ' on my way out');
-    } else {
-        // we have arrived
-        //  dlog('COMMON',this.name + ' arrived in different room');
-        this.memory.taskList.pop();
-        delete this.memory.wanderlust.start;
-        delete this.memory.wanderlust.end;
-        return false;
-    }
-    dlog('uhhhhh')
+    return false;
 }

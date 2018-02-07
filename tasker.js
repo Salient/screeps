@@ -14,11 +14,11 @@ module.exports.taskMinions = function(room) {
 
         if (room.memory.planned &&
             creep.memory.taskList[creep.memory.taskList.length - 1] != 'builder') {
-            
+
             //            if (creep.taskState = 'RETURNING' || creep.taskState == 'LEAVING') {
             var test = Game.getObjectById(creep.memory.eTarget);
-            if (!test){
-            test = Game.getObjectById(creep.memory.sinkId);
+            if (!test) {
+                test = Game.getObjectById(creep.memory.sinkId);
             }
             if (util.def(test) && test.room.name != creep.room.name) {
                 dlog('boosting')
@@ -52,7 +52,7 @@ Creep.prototype.warmMap = function() {
             this.pos.x;
         var y = (this.pos.y < 1) ? 1 : (this.pos.y > 48) ? 48 :
             this.pos.y;
-        this.room.memory.heatmap[x][y] += 9;
+        this.room.memory.heatmap[x][y] += 20;
     }
 }
 
@@ -67,7 +67,7 @@ Object.defineProperty(Creep.prototype, "taskState", {
 
 Object.defineProperty(Creep.prototype, "currentTask", {
     get() {
-            return this.memory.taskList[0];
+        return this.memory.taskList[this.memory.taskList.length - 1];
     }
 });
 
@@ -153,7 +153,10 @@ var performTask = function(creep) {
             jobResult = harvest.fillTank(creep);
             break;
         case 'leaveroom':
-            creep.leaveRoom();
+            jobResult = creep.leaveRoom();
+            break;
+        case 'explore':
+            jobResult = creep.exploreNewRoom();
             break;
         case 'busywork':
             creep.memory.taskList.pop();
@@ -170,10 +173,10 @@ var performTask = function(creep) {
 
     //	dlog(creep.name + ' did ' + curJob + ' and his aim was ' + jobResult);
     if (!jobResult) {
-        //        if (creep.memory.taskList.length > 1) {
-        // dlog(creep.name + " popped job, was: " + creep.memory.taskList[creep.memory.taskList.length - 1] + ', task queue length: ' + creep.memory.taskList.length);
-        creep.memory.taskList.pop();
-        // }
+        if (creep.memory.taskList.length > 10) {
+            dlog(creep.name + " popped job, was: " + creep.memory.taskList[creep.memory.taskList.length - 1] + ', task queue length: ' + creep.memory.taskList.length);
+        }
+            creep.memory.taskList.pop();
     }
 }
 module.exports.performTask = performTask;
@@ -185,7 +188,7 @@ var getDefaultTask = function(creep) { // What to do if the creep has
     // case creep is still spawning.
 
     if (!util.def(role)) {
-        dlog('some serious shisnit here')
+        dlog(creep.name + ' some serious shisnit here')
         role = 'worker'
     }
     // dlog('found a ' + creep.memory.role + ' needing a job')

@@ -130,6 +130,18 @@ Room.prototype.updateStrategy = function() {
         case 4:
             strat.population.minWorker = 4;
             break;
+        case 5:
+            strat.population.minWorker = 3;
+            break;
+        case 6:
+            strat.population.minWorker = 3;
+            break;
+        case 7:
+            strat.population.minWorker = 2;
+            break;
+        case 8:
+            strat.population.minWorker = 2;
+            break;
     }
 }
 
@@ -297,3 +309,4 @@ function lvl5room(room) {}
 function lvl6room(room) {}
 
 function lvl7room(room) {}
+function lvl8room(room) {}

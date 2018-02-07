@@ -108,7 +108,7 @@ function repairRoads(support) {
     var targets = support.room.find(FIND_STRUCTURES, {
         filter: (i) => i.hits < i.hitsMax && i.structureType == 'road'
     });
-    //		dlog('found ' + targets.length)
+
     if (targets.length == 0) {
         return false
     }
@@ -126,7 +126,7 @@ function repairRoads(support) {
 
     while (spin < targets.length) {
         var roadCrack = hitList[spin];
-        if (roadCrack.room.memory.heatmap[roadCrack.pos.x][roadCrack.pos.y] < 60) {
+        if (roadCrack.room.memory.heatmap[roadCrack.pos.x][roadCrack.pos.y] < 30) {
             spin++;
             continue;
         }
@@ -149,13 +149,24 @@ function repairRoads(support) {
 
 function towerControl(room) {
 
-    var towers = room.find(FIND_MY_STRUCTURES, {
-        filter: {
-            structureType: STRUCTURE_TOWER
+    var towers = room.memory.towers;
+    if (!util.def(towers)) {
+        room.memory.towers = {
+            refreshed: 0 
         }
-    });
+    }
 
-    for (var gun in towers) {
+    if (towers.refreshed + 317 + util.getRand(1, 100) < Game.time) {
+        // cache expired. redo.
+        towers.refreshed = Game.time;
+        towers.assets = room.find(FIND_MY_STRUCTURES, {
+            filter: {
+                structureType: STRUCTURE_TOWER
+            }
+        });
+    }
+
+    for (var gun in towers.assets) {
         if (attackHostiles(towers[gun]) ||
             //  repairBase(towers[gun]) ||
             repairRoads(towers[gun]) ||
