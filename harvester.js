@@ -23,7 +23,7 @@ Creep.prototype.outsource = function() {
             if (realthing.ticksToRegeneration < 80) {
                 // no need to leave room, more is on the way soon
                 return true;
-            } 
+            }
         }
         // nothing coming soon. leave room.
         this.leaveRoom();
@@ -35,7 +35,7 @@ Creep.prototype.outsource = function() {
     return this.exploreNewRoom();
     // outsourcing disabled
 
-    dlog(this.name + '/' + this.room.name , ' outsourcing')
+    dlog(this.name + '/' + this.room.name, ' outsourcing')
     if (ovr.length < 2) {
         dlog('derp')
         return
@@ -43,8 +43,8 @@ Creep.prototype.outsource = function() {
 
     var score = 0;
     //    var best = (Object.keys(ovr)[0] == this.room.name) ? Object.keys(ovr)[1] : Object.keys(ovr)[0]; 
-        var best = null ; 
-    
+    var best = null;
+
     for (var land in ovr) {
         if (land == this.room.name) {
             continue;
@@ -208,7 +208,7 @@ function mine(creep) {
         if (!res || res == ERR_TIRED) {
             return true;
         }
-        dlog(creep.name + ' mine error : ' + util.getError(res))
+		dlog(creep.name + '/' + creep.room.name  + ' mine error : ' + util.getError(res))
     }
     return false
 }
@@ -751,6 +751,7 @@ function findBacon(creep) {
 
 function findSink(creep) {
 
+
     //var sinkPriority = [STRUCTURE_LINK, STRUCTURE_SPAWN, STRUCTURE_EXTENSION, STRUCTURE_TOWER, STRUCTURE_POWER_SPAWN, STRUCTURE_STORAGE];
     var sinkPriority = [STRUCTURE_LINK, STRUCTURE_SPAWN, STRUCTURE_EXTENSION, STRUCTURE_TOWER, STRUCTURE_STORAGE];
 
@@ -758,9 +759,32 @@ function findSink(creep) {
         sinkPriority.pop(); // Pop off storage, lest we get into a loop sourcing and sinking back to storage
     }
 
-    var targets = creep.room.find(FIND_MY_STRUCTURES);
+    if (!util.def(creep.room.memory.cache)) {
+        creep.room.memory.cache = {}
+    }
 
-    if (targets.length == 0) {
+    var cache = creep.room.memory.cache;
+    if (!util.def(cache.structures) || cache.structuresTimer + 200 < Game.time) {
+        cache.structures = creep.room.find(FIND_MY_STRUCTURES);
+        cache.structuresTimer = Game.time;
+    }
+
+    var targets = cache.structures;
+
+	var distance = {};
+
+
+    for (var x in targets) {
+        if (!targets[x].my) {
+			dlog('smeep')
+			continue
+        }
+           distance[targets[x].id] = creep.pos.getRangeTo(Game.getObjectById(targets[x].id));
+    }
+
+	var keysSorted = Object.keys(distance).sort(function(a,b){return distance[a]-distance[b]});
+
+	if (Object.keys(distance).length == 0) {
         //        dlog(creep.name + ': no sink targets in this room, trying origin');
         // dlog(Memory.rooms[creep.memory.birthRoom].spawnId)
         // dlog(creep.name + '/' + creep.room.name + ': fix me sink')
@@ -768,31 +792,17 @@ function findSink(creep) {
         //        return false;
     }
 
-    for (var x in targets) {
-        var object = targets[x];
-        object.distance = creep.pos.getRangeTo(object);
-    }
-
-    // Might as well find the closest priority 
-    targets.sort(function(a, b) {
-        if (a.distance > b.distance) {
-            return 1;
-        }
-        if (a.distance < b.distance) {
-            return -1;
-        }
-        return 0;
-    });
-
     // dlog('finding sink in ' + creep.room.name + ', targets: ' + targets)
 
     var backup = false;
+	var best = null;
+	var score = null;
 
     for (var need in sinkPriority) {
         var priority = sinkPriority[need];
         dance:
-            for (var sink in targets) {
-                var potential = targets[sink];
+            for (var sink in keysSorted) {
+                var potential = Game.getObjectById(keysSorted[sink]);
                 if (potential.structureType == priority && potential.isActive()) {
                     var space = (potential.structureType == STRUCTURE_STORAGE) ? (potential.store[RESOURCE_ENERGY] < potential.storeCapacity) : (potential.energy < potential.energyCapacity);
                     if (space) {

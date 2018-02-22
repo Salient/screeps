@@ -3,28 +3,32 @@
 var util = require('common');
 
 function showFutureRoads(room) {
-
     if (!util.def(room.memory.planned)) {
         return;
     }
 
+    return;
 
-    var heatm = room.memory.heatmap;
+    var heatm = room.memory.trafficMap;
 
     if (!util.def(heatm)) {
         return
     }
-    for (var x = 1; x < 49; x++) {
-        for (var y = 1; y < 49; y++) {
-            if (heatm[x][y] > 15) {
-                room.visual.circle(x, y, {
-                    fill: '#2277FF'
-                })
+
+    for (var xval in heatm) {
+        for (var yval in heatm[xval]) {
+            var spot = heatm[xval][yval];
+            // util.dumpObj(spot)
+            if (util.def(spot)) {
+                if (spot.heat > 40) {
+                    room.visual.circle(xval, yval, {
+                        fill: '#2277FF'
+                    })
+                }
             }
         }
     }
 }
-
 module.exports = function show(room) {
     showFutureRoads(room);
 }

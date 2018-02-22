@@ -41,18 +41,45 @@ module.exports.taskMinions = function(room) {
 //    }
 //}
 
-Creep.prototype.warmMap = function() {
-    if (!util.def(this.room.memory.heatmap) || !util.def(this.memory.taskList)) {
+Creep.prototype.updateTraffic = function() {
+    if (!util.def(this.room.memory.trafficMap)) {
+        this.room.memory.trafficMap = {};
+    }
+
+    if (!util.def(this.memory.taskList)) {
+        dlog('???')
         return
     }
 
+    var map = this.room.memory.trafficMap;
+
+
+    var myX = this.pos.x;
+    var myY = this.pos.y;
+
+    if (!util.def(map[myX])) {
+        map[myX] = {};
+    }
+
+
+
+    if (!util.def(map[myX][myY])) {
+        map[myX][myY] = {
+            heat: 0,
+            refreshed: 0
+        }
+    }
+
+    var thisSpot = map[myX][myY];
     if (this.memory.taskList.length > 0 && this.memory.taskList[this.memory.taskList.length - 1] != 'builder') {
-        // warm up the heat map
-        var x = (this.pos.x < 1) ? 1 : (this.pos.x > 48) ? 48 :
-            this.pos.x;
-        var y = (this.pos.y < 1) ? 1 : (this.pos.y > 48) ? 48 :
-            this.pos.y;
-        this.room.memory.heatmap[x][y] += 20;
+
+		thisSpot.heat = thisSpot.heat - (Game.time - thisSpot.refreshed); // decrement value 1 per tick since last updated
+        if (thisSpot.heat < 0) {
+            thisSpot.heat = 15
+        } else {
+            thisSpot.heat = thisSpot.heat + 15
+        }
+		thisSpot.refreshed = Game.time;
     }
 }
 
@@ -92,7 +119,7 @@ var performTask = function(creep) {
         return;
     }
 
-    creep.warmMap();
+    creep.updateTraffic();
     // Two types of tasks: default role task, and special assigned tasks
     // role tasks are search and perform logic, assigned are specific targets
     // to prevent multiple units trying to work on the same thing
@@ -176,7 +203,7 @@ var performTask = function(creep) {
         if (creep.memory.taskList.length > 10) {
             dlog(creep.name + " popped job, was: " + creep.memory.taskList[creep.memory.taskList.length - 1] + ', task queue length: ' + creep.memory.taskList.length);
         }
-            creep.memory.taskList.pop();
+        creep.memory.taskList.pop();
     }
 }
 module.exports.performTask = performTask;

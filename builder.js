@@ -52,7 +52,7 @@ function builder(creep) {
     if (!util.def(creep.memory.bTarget)) {
         var orders = findSite(creep) || repairDuty(creep);
         if (!util.def(orders) || orders == false) {
-            dlog(creep.name + ' says nothing to build or repair, converting to technician')
+            dlog(creep.name + '/' + creep.room.name + ' says nothing to build or repair, converting to technician')
             creep.changeTask('technician');
             return true;
         } else {

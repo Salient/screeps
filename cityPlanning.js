@@ -601,7 +601,17 @@ Room.prototype.placeLinks = function() {
     }
 
     this.placeAuxLink = function(srcId) {
+		//
+		// lookforatarea look constant   LOOK_TERRAIN
+		var source = Game.getObjectById(srcId);
 
+		//		var epicenter = source.pos;
+		var bounds = util.bound(source.pos, 2);
+		dlog('----')
+		util.dumpObj(bounds)
+		var sourceMap = source.room.lookForAt(LOOK_TERRAIN, bounds.top, bounds.left, bounds.bottom, bounds.right);
+		util.dumpObj(sourceMap);
+		dlog('ooooo')
     }
 
     return;

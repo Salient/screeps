@@ -48,12 +48,13 @@ Creep.prototype.exploreNewRoom = function() {
 
 Room.prototype.classify = function() {
 
+	// dlog('classifying '+ this.name + ',')
     var roomRec = Memory.Overmind.globalTerrain[this.name];
 
     if (util.def(roomRec) && roomRec.revised) {
 
         if (roomRec.revised > Game.time - 300) {
-            //dlog('skipping classification of ' + this.name + ' because its been less than a minute')
+			// dlog('skipping classification of ' + this.name + ' because its been less than a minute')
             return;
         }
 
@@ -81,6 +82,7 @@ Room.prototype.classify = function() {
     }
 
     classification.score = this.score();
+	// dlog('score for ' + this.name + ': ' + classification.score)
     classification.revised = Game.time;
     Memory.Overmind.globalTerrain[this.name] = classification;
 }
@@ -116,9 +118,11 @@ Room.prototype.score = function() {
         var ctrlDist = 0;
     }
 
-    //  dlog('nme' + nmes.length + ', srcs:' + srcs.length + ', anathem: ' + anathem.length+ ' mustdie: ' + mustdie.length + ', ore: ' + ore.length + ', exits:' + exits.length + ', srcDist: ' + srcDist + ', ctrlDist: ' + ctrlDist);
-    var score = (srcs.length * 30) + (exits.length)*50 + 100 * ctrl - (srcDist + ctrlDist) + ore.length * 10 - (nmes.length * 50 + anathem.length * 100 + mustdie.length * 200);
-    // dlog('score is ' + score)
+	// dlog('exits ' + Object.keys(exits).length)
+
+	// dlog('nme' + nmes.length + ', srcs:' + srcs.length + ', anathem: ' + anathem.length+ ' mustdie: ' + mustdie.length + ', ore: ' + ore.length + ', exits:' + Object.keys(exits).length + ', srcDist: ' + srcDist + ', ctrlDist: ' + ctrlDist);
+    var score = (srcs.length * 30) + (Object.keys(exits).length)*50 + 100 * ctrl - (srcDist + ctrlDist) + ore.length * 10 - (nmes.length * 50 + anathem.length * 100 + mustdie.length * 200);
+	// dlog('score is ' + score)
     return score;
 
 }

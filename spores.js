@@ -49,15 +49,31 @@ function selectNewRoom(creep) {
 
     for (var land in targetList) {
         var promised = targetList[land];
+		if (promised == creep.room.name) {
+			continue; // skip where we already are
+		}
+		if (Memory.Overmind.globalTerrain && Memory.Overmind.globalTerrain[promised]) {
+
+			var type = Memory.Overmind.globalTerrain[promised].type;
+			dlog('type is ' + type);
+		}
+		// if (util.def(null))
+
         var range = Game.map.getRoomLinearDistance(creep.room.name, promised);
         var prophecy = Memory.Overmind.globalTerrain[promised];
-        if (prophecy.score / range > score || prophecy.score == NaN) {
+		if (!util.def(prophecy.score)) { 
+			// hmmm
+			creep.leaveRoom(prophecy); // go score it
+			//prophecy.score = 1;
+		}
+		
+        if (prophecy.score / range > score) {
             score = prophecy.score / range;
             best = promised;
         }
     }
 
-    if (best) {
+    if (util.def(best)) {
         objective = best
         return best;
     } else {

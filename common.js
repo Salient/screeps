@@ -48,6 +48,16 @@ module.exports.getRand = function getRandomIntInclusive(min, max) {
 }
 
 
+// Return object with top,left,bottom,right properties a la  room position index within boundaries up to [margin] away
+module.exports.bound = function bound(pos, margin = 1) {
+    return {
+        top: (pos.y < margin) ? 1 : pos.y - margin,
+        left: (pos.x < margin) ? 1 : pos.x - margin,
+        bottom: (pos.y + margin <= 49) ? pos.y + margin : 49,
+        right: (pos.x + margin <= 49) ? pos.x + margin : 49
+    }
+}
+
 function dlog(module, msg) {
     // var from = name;
     console.log('[DEBUG ' + module + "] " + msg);
@@ -66,7 +76,10 @@ module.exports.dumpObject = dumpObject;
 module.exports.dumpObj = dumpObject;
 
 var def = function(obj) {
-    return (obj === false) ? false : !!obj;
+	//  return (obj === false) ? false : !!obj;
+	// return (obj === false) ? false : (obj === undefined || obj === null) ? false : true;
+	
+	return	!!obj;
     //	if ((typeof obj !== undefined) || (obj === null)) {
     //		return false;
     //	}
@@ -139,7 +152,7 @@ Creep.prototype.leaveRoom = function(dest = "") {
     //     dlog(this.name + '/' + this.room.name, ' leave room called, dest: ' + dest);
 
     if (!def(this.memory.wanderlust)) {
-        if (dest != "") {
+        if (dest) {
             // New pilrgimage starting
 
             if (this.room.name == dest) {

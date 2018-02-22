@@ -5,10 +5,23 @@ var util = require('common');
 
 function attackHostiles(support) {
 
-    var targets = support.room.find(FIND_HOSTILE_CREEPS);
-    if (targets.length == 0) {
-        return false
+
+    if (!util.def(support.room.memory.onAlert)) {
+        support.room.memory.onAlert = false;
     }
+
+    var targets = [];
+    if (support.room.memory.onAlert || !(Game.time % 11)) {
+        targets = support.room.find(FIND_HOSTILE_CREEPS);
+    }
+
+    if (targets.length == 0) {
+        support.room.memory.onAlert = false;
+        return false
+    } else {
+        support.room.memory.onAlert = true;
+    }
+
     var hitList = targets.sort(function(a, b) {
         if (a.hits / a.hitsMax > b.hits / b.hitsMax) {
             return 1;
@@ -37,12 +50,30 @@ function attackHostiles(support) {
 
 function healTroops(support) {
 
-    var targets = support.room.find(FIND_MY_CREEPS, {
-        filter: (i) => i.hits < i.hitsMax
-    });
-    if (targets.length == 0) {
-        return false
+
+    if (!util.def(support.room.memory.injured)) {
+        support.room.memory.injured = false; 
     }
+
+    // temp
+    if (support.room.memory.injured == 'no') {
+    support.room.memory.injured = false;
+    }
+
+    var targets = [];
+    if (support.room.memory.injured  || !(Game.time % (11 + util.getRand(0, 3)))) {
+        var targets = support.room.find(FIND_MY_CREEPS, {
+            filter: (i) => i.hits < i.hitsMax
+        });
+    }
+
+    if (targets.length == 0) {
+        support.room.memory.injured = false ; 
+        return false
+    } else {
+        support.room.memory.injured = true;
+    }
+
     var hitList = targets.sort(function(a, b) {
         if (a.hits / a.hitsMax > b.hits / b.hitsMax) {
             return 1;
@@ -52,6 +83,7 @@ function healTroops(support) {
         }
         return 0;
     }); // Get most sensible
+        dlog('d')
 
     var res = support.heal(hitList[0]);
     switch (res) {
@@ -69,14 +101,26 @@ function healTroops(support) {
 }
 
 function repairBase(support) {
-    //dlog(support.id + ' trying to repar');
-    var targets = support.room.find(FIND_MY_STRUCTURES, {
-        filter: (i) => i.hits < i.hitsMax
-    });
-    //	dlog('found ' + targets.length)
-    if (targets.length == 0) {
-        return false
+
+    if (!util.def(support.room.memory.damanged)) {
+        support.room.memory.damanged = false;
     }
+
+    var targets = [];
+    if (support.room.memory.damanged || !(Game.time % 61)) {
+        var targets = support.room.find(FIND_MY_STRUCTURES, {
+            filter: (i) => i.hits < i.hitsMax
+        });
+    }
+
+    if (targets.length == 0) {
+        support.room.memory.damanged = false;
+        return false
+    } else {
+        support.room.memory.damanged = true;
+    }
+    //dlog(support.id + ' trying to repar');
+    //	dlog('found ' + targets.length)
     var hitList = targets.sort(function(a, b) {
         if (a.hits / a.hitsMax > b.hits / b.hitsMax) {
             return 1;
@@ -104,14 +148,28 @@ function repairBase(support) {
 }
 
 function repairRoads(support) {
-    //	dlog(support.id + ' trying to repar');
-    var targets = support.room.find(FIND_STRUCTURES, {
-        filter: (i) => i.hits < i.hitsMax && i.structureType == 'road'
-    });
+
+    if (!util.def(support.room.memory.potholes)) {
+        support.room.memory.potholes = false;
+    }
+
+    var targets = [];
+    if (support.room.memory.potholes || !(Game.time % 150 + util.getRand(1,21))) {
+
+        var targets = support.room.find(FIND_STRUCTURES, {
+            filter: (i) => i.hits < i.hitsMax && i.structureType == 'road'
+        });
+
+    }
 
     if (targets.length == 0) {
+        support.room.memory.potholes = false;
         return false
+    } else {
+        support.room.memory.potholes = true;
     }
+    //	dlog(support.id + ' trying to repar');
+
     var hitList = targets.sort(function(a, b) {
         if (a.hits / a.hitsMax > b.hits / b.hitsMax) {
             return 1;
@@ -126,9 +184,15 @@ function repairRoads(support) {
 
     while (spin < targets.length) {
         var roadCrack = hitList[spin];
-        if (roadCrack.room.memory.heatmap[roadCrack.pos.x][roadCrack.pos.y] < 30) {
-            spin++;
-            continue;
+        if (roadCrack.room.memory.trafficMap && roadCrack.room.memory.trafficMap[roadCrack.pos.x] && roadCrack.room.memory.trafficMap[roadCrack.pos.x][roadCrack.pos.y]) {
+            var road = roadCrack.room.memory.trafficMap[roadCrack.pos.x][roadCrack.pos.y];
+            var decrement = road.heat - (Game.time - road.refereshed); 
+            road.heat = (decrement > road.heat) ? 0 : road.heat - decrement;
+            road.refereshed = Game.time;
+            if (road.heat < 30) {
+                spin++;
+                continue;
+            }
         }
         var res = support.repair(roadCrack);
         switch (res) {
@@ -149,28 +213,44 @@ function repairRoads(support) {
 
 function towerControl(room) {
 
+
+    if (!Game.rooms[room.name]) {
+        return false;
+    }
+
     var towers = room.memory.towers;
-    if (!util.def(towers)) {
+    if (!util.def(towers) || !util.def(towers.refreshed)) {
         room.memory.towers = {
-            refreshed: 0 
+            refreshed: 0
         }
     }
 
     if (towers.refreshed + 317 + util.getRand(1, 100) < Game.time) {
         // cache expired. redo.
+        dlog('tower cache expired')
         towers.refreshed = Game.time;
-        towers.assets = room.find(FIND_MY_STRUCTURES, {
+        var towerIds = room.find(FIND_MY_STRUCTURES, {
             filter: {
                 structureType: STRUCTURE_TOWER
             }
         });
+        var temp = [];
+        for (var ind in towerIds) {
+            temp.push(towerIds[ind].id);
+        }
+        towers.assets = temp;
     }
 
     for (var gun in towers.assets) {
-        if (attackHostiles(towers[gun]) ||
-            //  repairBase(towers[gun]) ||
-            repairRoads(towers[gun]) ||
-            healTroops(towers[gun])) {
+        var thisTower = Game.getObjectById(towers.assets[gun]);
+        if (!thisTower) {
+            continue
+        }
+
+        if (attackHostiles(thisTower) ||
+            //  repairBase(thisTower) ||
+            repairRoads(thisTower) ||
+            healTroops(thisTower)) {
             continue;
         } else {
             return false

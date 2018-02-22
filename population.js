@@ -157,10 +157,8 @@ function nextPriority(room) {
         // If the score is really high, the need is great. Have creep stop drawing
         // from spawn/extensions until spawn is complete
     if (needsOfTheFew[needsOfTheMany[0]] > 100) {
-         dlog(room.name + ' Need ' + needsOfTheMany[0] + ' with score ' +
-             needsOfTheFew[needsOfTheMany[0]])
-         dlog(room.name + ' Next ' + needsOfTheMany[1] + ' with score ' +
-             needsOfTheFew[needsOfTheMany[1]])
+        //dlog(room.name + ' Need ' + needsOfTheMany[0] + ' with score ' + needsOfTheFew[needsOfTheMany[0]])
+        //dlog(room.name + ' Next ' + needsOfTheMany[1] + ' with score ' + needsOfTheFew[needsOfTheMany[1]])
                 room.memory.nrgReserve = room.energyCapacityAvailable;
 
         // TODO - put this somewhere more sensible
@@ -353,7 +351,7 @@ var spawn = function(room) {
                     room.memory.strategy.economy.tankMiss = 0;
                 }
             }
-            dlog('Spawned ' + want);
+            dlog(room.name + ' spawned ' + want);
             room.memory.nextSpawn = Game.time + body.length * CREEP_SPAWN_TIME;
             room.memory.nrgReserve = false;
             break;
