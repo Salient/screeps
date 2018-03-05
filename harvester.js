@@ -13,6 +13,7 @@ function dlog(msg, creep) {
 Creep.prototype.outsource = function() {
     var ovr = Memory.Overmind.globalTerrain;
 
+    this.taskState = 'SOURCE'
     var srcs = this.room.memory.sources;
     if (!util.def(srcs)) {
         this.leaveRoom();
@@ -26,19 +27,19 @@ Creep.prototype.outsource = function() {
             }
         }
         // nothing coming soon. leave room.
-        this.leaveRoom();
-        return true;
+        //   this.leaveRoom();
+        //  return true;
     }
     //shoulding get here
     //
-    return false;
-    return this.exploreNewRoom();
+    // return false;
+    //  return this.exploreNewRoom();
     // outsourcing disabled
 
     dlog(this.name + '/' + this.room.name, ' outsourcing')
     if (ovr.length < 2) {
         dlog('derp')
-        return
+        return false;
     };
 
     var score = 0;
@@ -66,6 +67,7 @@ Creep.prototype.outsource = function() {
         this.exploreNewRoom();
     }
     this.leaveRoom(best);
+    return true;
 }
 
 Creep.prototype.hitUp = function(target) {
@@ -208,7 +210,7 @@ function mine(creep) {
         if (!res || res == ERR_TIRED) {
             return true;
         }
-		dlog(creep.name + '/' + creep.room.name  + ' mine error : ' + util.getError(res))
+        dlog(creep.name + '/' + creep.room.name + ' mine error : ' + util.getError(res))
     }
     return false
 }
@@ -473,7 +475,12 @@ function gatherer(creep) {
     }
 
     // Done dropping off
-    if (creep.carry.energy == 0) {
+    if (creep.carry.energy == 0 && creep.memory.taskState != 'LEAVING') {
+        if (creep.taskState == 'SINK' && creep.room.memory.nrgReserve == false) {
+            // pop job just in case something else needs doing 
+            creep.memory.taskState = "SOURCE";
+            return false;
+        }
         creep.memory.taskState = 'SOURCE';
         if (util.def(creep.memory.sinkId)) {
             delete creep.memory.sinkId;
@@ -498,7 +505,7 @@ function gatherer(creep) {
             return source();
             break;
         case 'LEAVING':
-
+            creep.log('leaving?')
             return creep.outsource();
             break;
         default:
@@ -520,11 +527,8 @@ function gatherer(creep) {
                 // dlog('mining')
                 var tres = mine(creep);
                 if (!tres) {
-                    if (creep.carry > 0) {
-                        creep.changeTask('builder')
-                    } else {
-                        creep.outsource();
-                    }
+                    creep.taskState = "LEAVING";
+                    creep.changeTask('builder');
                     return true;
                 }
                 return tres;
@@ -706,9 +710,8 @@ function findBacon(creep) {
         })
     ];
 
-    if (!util.def(creep.room.memory.strategy.economy.energyReservePerLevel) || !util.def(creep.room.controller)) {
-        var storageReserves = 20000;
-    } else {
+    var storageReserves = 20000;
+    if (util.def(creep.room.memory.strategy.economy.energyReservePerLevel) && util.def(creep.room.controller)) {
         storageReserves = creep.room.memory.strategy.economy.energyReservePerLevel * creep.room.controller.level;
     }
 
@@ -743,7 +746,6 @@ function findBacon(creep) {
 
     if (score == 0 || !util.def(best)) {
         creep.room.memory.strategy.economy.gatherMiss++;
-
         return null;
     }
     return best.id;
@@ -771,20 +773,22 @@ function findSink(creep) {
 
     var targets = cache.structures;
 
-	var distance = {};
+    var distance = {};
 
 
     for (var x in targets) {
         if (!targets[x].my) {
-			dlog('smeep')
-			continue
+            dlog('smeep')
+            continue
         }
-           distance[targets[x].id] = creep.pos.getRangeTo(Game.getObjectById(targets[x].id));
+        distance[targets[x].id] = creep.pos.getRangeTo(Game.getObjectById(targets[x].id));
     }
 
-	var keysSorted = Object.keys(distance).sort(function(a,b){return distance[a]-distance[b]});
+    var keysSorted = Object.keys(distance).sort(function(a, b) {
+        return distance[a] - distance[b]
+    });
 
-	if (Object.keys(distance).length == 0) {
+    if (Object.keys(distance).length == 0) {
         //        dlog(creep.name + ': no sink targets in this room, trying origin');
         // dlog(Memory.rooms[creep.memory.birthRoom].spawnId)
         // dlog(creep.name + '/' + creep.room.name + ': fix me sink')
@@ -795,8 +799,8 @@ function findSink(creep) {
     // dlog('finding sink in ' + creep.room.name + ', targets: ' + targets)
 
     var backup = false;
-	var best = null;
-	var score = null;
+    var best = null;
+    var score = null;
 
     for (var need in sinkPriority) {
         var priority = sinkPriority[need];
@@ -990,6 +994,7 @@ function findSource(creep) {
 
     // Whelp...i guess nothing is available
     //    dlog('No mineshafts available...');
+    creep.taskState = 'LEAVING'
     return false;
 }
 

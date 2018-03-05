@@ -6,20 +6,27 @@ var util = require('common');
 function attackHostiles(support) {
 
 
-    if (!util.def(support.room.memory.onAlert)) {
-        support.room.memory.onAlert = false;
+    var towers = support.room.memory.cache.towers;
+
+    if (!util.def(towers.onAlert)) {
+        towers.onAlert = false;
+    }
+    if (!util.def(towers.timeouts.attack)) {
+        towers.timeouts.attack = Game.time;
     }
 
     var targets = [];
-    if (support.room.memory.onAlert || !(Game.time % 11)) {
+    if (towers.onAlert || (towers.timeouts.attack + 11 + util.getRand(1,5) < Game.time )) {
+        dlog("Scanning for hostiles...");
+        towers.timeouts.attack = Game.time;
         targets = support.room.find(FIND_HOSTILE_CREEPS);
     }
 
     if (targets.length == 0) {
-        support.room.memory.onAlert = false;
-        return false
+        towers.onAlert = false;
+        return false;
     } else {
-        support.room.memory.onAlert = true;
+        towers.onAlert = true;
     }
 
     var hitList = targets.sort(function(a, b) {
@@ -52,23 +59,23 @@ function healTroops(support) {
 
 
     if (!util.def(support.room.memory.injured)) {
-        support.room.memory.injured = false; 
+        support.room.memory.injured = false;
     }
 
     // temp
     if (support.room.memory.injured == 'no') {
-    support.room.memory.injured = false;
+        support.room.memory.injured = false;
     }
 
     var targets = [];
-    if (support.room.memory.injured  || !(Game.time % (11 + util.getRand(0, 3)))) {
+    if (support.room.memory.injured || !(Game.time % (11 + util.getRand(0, 3)))) {
         var targets = support.room.find(FIND_MY_CREEPS, {
             filter: (i) => i.hits < i.hitsMax
         });
     }
 
     if (targets.length == 0) {
-        support.room.memory.injured = false ; 
+        support.room.memory.injured = false;
         return false
     } else {
         support.room.memory.injured = true;
@@ -83,7 +90,7 @@ function healTroops(support) {
         }
         return 0;
     }); // Get most sensible
-        dlog('d')
+    dlog('d')
 
     var res = support.heal(hitList[0]);
     switch (res) {
@@ -154,14 +161,14 @@ function repairRoads(support) {
     }
 
     var targets = [];
-    if (support.room.memory.potholes || !(Game.time % 150 + util.getRand(1,21))) {
+
+    if (support.room.memory.potholes || !(Game.time % 150 )) {
 
         var targets = support.room.find(FIND_STRUCTURES, {
             filter: (i) => i.hits < i.hitsMax && i.structureType == 'road'
         });
 
     }
-
     if (targets.length == 0) {
         support.room.memory.potholes = false;
         return false
@@ -186,7 +193,7 @@ function repairRoads(support) {
         var roadCrack = hitList[spin];
         if (roadCrack.room.memory.trafficMap && roadCrack.room.memory.trafficMap[roadCrack.pos.x] && roadCrack.room.memory.trafficMap[roadCrack.pos.x][roadCrack.pos.y]) {
             var road = roadCrack.room.memory.trafficMap[roadCrack.pos.x][roadCrack.pos.y];
-            var decrement = road.heat - (Game.time - road.refereshed); 
+            var decrement = road.heat - (Game.time - road.refereshed);
             road.heat = (decrement > road.heat) ? 0 : road.heat - decrement;
             road.refereshed = Game.time;
             if (road.heat < 30) {
@@ -218,16 +225,29 @@ function towerControl(room) {
         return false;
     }
 
-    var towers = room.memory.towers;
+    // sanity checks
+    var towers = room.memory.cache.towers;
     if (!util.def(towers) || !util.def(towers.refreshed)) {
-        room.memory.towers = {
+        room.memory.cache.towers = {
             refreshed: 0
         }
     }
 
+    if (!util.def(towers.timeouts)){
+        towers.timeouts = {};
+    }
+
+    if (!util.def(towers.timeouts)) {
+        towers.timeouts = {
+            attack: Game.time,
+            repair: Game.time,
+            heal: Game.time,
+            roads: Game.time
+        };
+    }
+
     if (towers.refreshed + 317 + util.getRand(1, 100) < Game.time) {
         // cache expired. redo.
-        dlog('tower cache expired')
         towers.refreshed = Game.time;
         var towerIds = room.find(FIND_MY_STRUCTURES, {
             filter: {
@@ -248,7 +268,7 @@ function towerControl(room) {
         }
 
         if (attackHostiles(thisTower) ||
-            //  repairBase(thisTower) ||
+            repairBase(thisTower) ||
             repairRoads(thisTower) ||
             healTroops(thisTower)) {
             continue;

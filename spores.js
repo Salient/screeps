@@ -85,6 +85,20 @@ function selectNewRoom(creep) {
 
 module.exports.infest = function(creep) {
 
+    for (var flag in  Game.flags) {
+var thisFlag = Game.flags[flag];
+        if (thisFlag.room.name != creep.room.name) {
+        creep.log("moving to flag");
+        creep.log(util.getError(creep.moveTo(thisFlag)));
+        return true;
+        }
+    }
+
+
+
+    // return true;
+
+    /*
     var objective = creep.memory.rTarget;
     if (!objective) {
         objective = selectNewRoom(creep);
@@ -98,12 +112,13 @@ module.exports.infest = function(creep) {
         creep.leaveRoom(objective);
         return true;
     }
+    */ 
 
     creep.say('🔱');
     //        dlog(this.name, 'at next hop, currently in ' + lustRoute[0].room + ' on the way to ' +  lustRoute[lustRoute.length -1].room );
     //   dlog(this.name, 'at next hop, currently in ' + lustRoute[0].room + ' on the way to ' +  lustRoute[lustRoute.length -1].room );
 
-    if (objective == creep.room.name) {
+    /* if (objective == creep.room.name) {
         // we have arrived
         if (!creep.room.controller) {
             dlog('target room has no controller. exploring.');
@@ -111,7 +126,7 @@ module.exports.infest = function(creep) {
             delete objective;
             return;
         };
-
+        */
         var res = creep.appropriate(creep.room.controller.id);
         switch (res) {
             case OK:
@@ -126,12 +141,13 @@ module.exports.infest = function(creep) {
                 stroke: '#ffffff'
             }
         });
+                creep.log(res);
                 break;
                 //case ERR_GCL_NOT_ENOUGH:
             default:
-                dlog(creep.name + ' in ' + creep.room.name + 'error infesting, ' + res); //util.getError(res));
+                dlog(creep.name + ' in ' + creep.room.name + 'error infesting, ' + util.getError(res)); //util.getError(res));
                 return false;
-        }
+                // }
     }
 }
 

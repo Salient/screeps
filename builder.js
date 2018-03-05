@@ -41,31 +41,32 @@ function builder(creep) {
     }
 
     if (creep.carry.energy == 0) {
-        creep.addTask('filltank');
-        return true;
+        // Just got doing something else
+        if (creep.taskState != 'SINK') {
+            creep.addTask('filltank');
+            return true;
+        }
+        // load done
+        return false;
     }
 
     //if (creep.memory.taskState == 'SOURCE') {
     //		return harvest.fillTank(creep);
     //	}
+    var target = Game.getObjectById(creep.memory.bTarget);
 
-    if (!util.def(creep.memory.bTarget)) {
+    if (!util.def(creep.memory.bTarget) || !target) {
         var orders = findSite(creep) || repairDuty(creep);
         if (!util.def(orders) || orders == false) {
-            dlog(creep.name + '/' + creep.room.name + ' says nothing to build or repair, converting to technician')
-            creep.changeTask('technician');
-            return true;
+            // dlog(creep.name + '/' + creep.room.name + ' says nothing to build or repair, converting to technician')
+            // creep.changeTask('technician');
+            return false;
         } else {
             creep.memory.bTarget = orders;
+            target = Game.getObjectById(orders);
         }
     }
 
-    var target = Game.getObjectById(creep.memory.bTarget);
-    if (!util.def(target)) {
-        // Looks like its done or gone. either way.
-        delete creep.memory.bTarget;
-        return false;
-    }
 
     if (target.progress >= 0) {
 
@@ -226,26 +227,25 @@ function upgradeRC(creep) {
         creep.memory.taskState = 'SINK';
     }
 
-    if (creep.carry.energy == 0) {
-        creep.changeTask('filltank');
-        return true;
-    }
 
-    //    if (creep.memory.taskState == 'SOURCE') {
-    //       return harvest.fillTank(creep);
-    //}
+    if (creep.carry.energy == 0) {
+        // Just got doing something else
+        if (creep.taskState != 'SINK') {
+            creep.addTask('filltank');
+            return true;
+        }
+        // Job done
+        return false;
+    }
 
     if (!util.def(rc)) {
         // no controller in this room
-         return false;
-         }
+        return false;
+    }
     if (rc.my) {
         var res = creep.upgradeController(rc);
     } else {
-        var res = creep.claimController(rc);
-        if (res == ERR_GCL_NOT_ENOUGH) {
-            var res = creep.reserveController(rc);
-        }
+        return false;
     }
 
     switch (res) {
@@ -268,8 +268,8 @@ function upgradeRC(creep) {
             }
             break;
         case ERR_NOT_ENOUGH_RESOURCES:
-            creep.changeTask('filltank');
-            return true;
+            creep.taskState = "SOURCE";
+            return false;
             break;
         case ERR_NO_BODYPART:
             return false;

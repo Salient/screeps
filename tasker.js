@@ -245,7 +245,6 @@ var getDefaultTask = function(creep) { // What to do if the creep has
 function somethingNeedDoing(creep) {
 
     var role = creep.memory.role;
-
     switch (role) {
         case 'worker':
             var result = Math.floor((Math.random() * 10));

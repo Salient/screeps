@@ -124,6 +124,20 @@ function nextPriority(room) {
         return 'worker'
     }
 
+    var myGlobalRooms = 0;
+    for (var rooms in Game.rooms) {
+        if (Game.rooms[rooms].controller && Game.rooms[rooms].controller.my) {
+        myGlobalRooms++;
+        }
+    }
+
+    var scoutVeto = 1;
+    if (myGlobalRooms >= Game.gcl.level-1){ // there should not be a -1 here, but somethign is messed up. remove it later
+        scoutVeto = 0;
+    }
+    dlog("scout veto called: " + scoutVeto + ', global rooms: ' + myGlobalRooms + ', gcl: ' + Game.gcl.level);
+    
+
     // How is the Economy? Are there enough workers transporting energy?
     var nrg = room.find(FIND_DROPPED_RESOURCES, {
         filter: {
@@ -149,7 +163,7 @@ function nextPriority(room) {
             popCon.minerWeight * vetoMiner,
         //'soldier': 15 + ((6 - room.memory.strategy.defcon) * 20),
         'medic': ((have.soldier - have.medic) * popCon.medicWeight),
-        'scout': have.miner*(econCon.tankMiss + econCon.gatherMiss) * 4 // only want to create spores when i'm near full production
+        'scout': have.miner*(econCon.tankMiss + econCon.gatherMiss) * 4 * scoutVeto// only want to create spores when i'm near full production
     }
     var needsOfTheMany = Object.keys(needsOfTheFew).sort(function(keya, keyb) {
             return needsOfTheFew[keyb] - needsOfTheFew[keya];

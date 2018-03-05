@@ -4,7 +4,13 @@
 
 module.exports.myName = Game.spawns[Object.keys(Game.spawns)[0]].owner.username;
 
+Creep.prototype.log = function(msg) { 
+    console.log(this.name + '/' + this.room.name + ': ' + msg);
+}
 
+Room.prototype.log = function(msg) { 
+    console.log("(debug) " + this.name + ': ' + msg);
+}
 
 var shuffle = function(o) {
     for (var j, x, i = o.length; i; j = Math.floor(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x);
