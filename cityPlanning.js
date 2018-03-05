@@ -33,18 +33,12 @@ Room.prototype.coolHeatmap = function() {
         }
     }
 
-    if (!util.def(this.memory.strategy)) {
+    if (!util.def(this.memory.strategy.construction)) {
         return;
     }
 }
 
 Room.prototype.needStructure = function(structure) {
-
-    var origin = Game.getObjectById(this.memory.spawnId).pos;
-    if (!util.def(origin)) {
-        dlog('big bad voodoo');
-        return false;
-    }
 
     var cap = CONTROLLER_STRUCTURES[structure][this.controller.level];
     var have = this.find(FIND_MY_STRUCTURES, {
@@ -312,6 +306,7 @@ function bootstrap(room) {
 
     var spwn = room.find(FIND_MY_SPAWNS)[0];
     if (!util.def(spwn)) {
+        room.placeSpawn();
         // this is a new room where I don't have a spawn. bail for now.
         return false;
     }
@@ -356,7 +351,7 @@ function planRoom(room) {
     // 4, walls around exits
     // Sanity Checks
 
-    if (!util.def(room.memory.planned) || !util.def(room.memory.heatmap)) {
+    if (!util.def(room.memory.planned)) {
         if (!bootstrap(room)) {
             return false; // bail for now
         }
@@ -367,6 +362,7 @@ function planRoom(room) {
     room.placeStorage();
     room.buildRoads();
     room.placeLinks();
+    // room.placeSpawn();
 
     //if (!(Game.time % 17)) {
     // }
@@ -532,7 +528,7 @@ Room.prototype.placeLinks = function() {
     }
 
     if (placeNum == 0) {
-        dlog('decided that I dont want to place anything')
+        dlog('decided that I dont want to place anyt links ')
         return false;
     }
 
@@ -552,7 +548,7 @@ Room.prototype.placeLinks = function() {
 
     // refresh list 
     for (var linkId in linkSet) {
-        var link = linkSet[ind];
+        var link = linkSet[linkId];
 
         if (!Game.getObjectById(linkId)) {
             // check if it was a construction site 
@@ -562,7 +558,7 @@ Room.prototype.placeLinks = function() {
                 if (newStructure.structureType == STRUCTURE_LINK) {
                     linkSet[newStructure.id] = {
                         pos: newStructure.pos,
-                        type: 'prime'
+                        type: link.type
                     };
                 }
             }
@@ -570,7 +566,6 @@ Room.prototype.placeLinks = function() {
         }
     }
 
-    var primeLink = null;
 
     this.placePrimeLink = function() {
         var radius = 5;
@@ -601,18 +596,23 @@ Room.prototype.placeLinks = function() {
     }
 
     this.placeAuxLink = function(srcId) {
-		//
-		// lookforatarea look constant   LOOK_TERRAIN
-		var source = Game.getObjectById(srcId);
+        //
+        // lookforatarea look constant   LOOK_TERRAIN
+        var source = Game.getObjectById(srcId);
 
-		//		var epicenter = source.pos;
-		var bounds = util.bound(source.pos, 2);
-		dlog('----')
-		util.dumpObj(bounds)
-		var sourceMap = source.room.lookForAt(LOOK_TERRAIN, bounds.top, bounds.left, bounds.bottom, bounds.right);
-		util.dumpObj(sourceMap);
-		dlog('ooooo')
+        //		var epicenter = source.pos;
+        var bounds = util.bound(source.pos, 2);
+        dlog('----')
+        util.dumpObj(bounds)
+        var sourceMap = source.room.lookForAt(LOOK_TERRAIN, bounds.top, bounds.left, bounds.bottom, bounds.right);
+        util.dumpObj(sourceMap);
+        dlog('ooooo')
     }
+
+
+
+    // Two link strategies possible, in room mining, and across room pipelining
+    //  if this.memory.strategy)
 
     return;
 
@@ -620,10 +620,8 @@ Room.prototype.placeLinks = function() {
     //
     // Is there a prime node
     if (util.def(this.memory.primeLinkId)) {
-        primeLink = Game.getObjectById(this.memory.primeLinkId);
-    }
 
-    if (!util.def(primeLink)) {
+        //   primeLink)) {
         // No Prime Link
         // Is it placed but not built yet?
 
@@ -710,14 +708,47 @@ Room.prototype.placeLinks = function() {
 
 
 Room.prototype.placeSpawn = function() {
+
     if (!this.controller || !this.controller.level) {
         return false;
+    }
+
+    var buildstatus = this.memory.cache.construction;
+    if (!util.def(buildstatus)) {
+        buildstatus = {};
+    }
+
+    if (buildstatus[this.name] && buildstatus[this.name].spawn) {
+        // Alread building. let's keeps it going 
+
+        var counter = 0;
+        for (var drones in buildstatus[this.name].spawn) {
+            if (!Game.creeps[buildstatus[this.name].spawn[drones]]) {
+                delete buildstatus[this.name].spawn[drones];
+            }
+        }
+
+
+        return;
+    }
+
+    for (var poor in Game.creeps) {
+        var soul = Game.creeps[poor];
+        if (soul.taskState != "SPECIAL") {
+            Game.creeps[poor].focusBuild("dc284fb70fd9707");
+        }
+    }
+
+    var placeNum = this.needStructure(STRUCTURE_SPAWN);
+
+    if (placeNum == 0) {
+        return;
     }
 
     // if (util.def(this.memory.spawnId) && Game.getObjectById(this.memory.spawnId)) {
     // 
     // }
-    dlog('called spawn placer');
+    this.log('called spawn placer, need is ' + placeNum);
 
 
     var ctrlPos = this.controller.pos;
@@ -725,11 +756,16 @@ Room.prototype.placeSpawn = function() {
     var kingsRoad = ctrlPos.findPathTo(clstSrc);
     var midpoint = kingsRoad[Math.floor(kingsRoad.length / 2)];
 
+    var counter = 0;
     var start = 5;
     while (start < kingsRoad.length - 5) {
         var testSq = new RoomPosition(kingsRoad[start].x, kingsRoad[start].y, this.name);
+        //    this.createFlag(testSq, 'spawnLoc' + counter, COLOR_RED, COLOR_WHITE);
+        counter++;
+
         if (this.isAdjacentClear(testSq)) {
-            testSq.createConstructionSite(STRUCTURE_SPAWN);
+            var res = testSq.createConstructionSite(STRUCTURE_SPAWN);
+            dlog('create spawn result is ' + util.getError(res))
             return true;
         }
         start++;
@@ -739,7 +775,6 @@ Room.prototype.placeSpawn = function() {
 
 Room.prototype.isAdjacentClear = function(pos) {
 
-    dlog('calledadj')
     var x = (pos.x < 2) ? 2 : (pos.x > 47) ? 47 :
         pos.x;
     var y = (pos.y < 2) ? 2 : (pos.y > 47) ? 47 :
@@ -761,11 +796,9 @@ Room.prototype.isAdjacentClear = function(pos) {
 
     for (var sq in surroundings) {
         if (surroundings[sq] == 'wall') {
-            dlog('bah');
             return false
         }
     }
-    dlog('ohgood')
     return true;
 }
 

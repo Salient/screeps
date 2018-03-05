@@ -118,7 +118,7 @@ function nextPriority(room) {
     // Are we bootstrapping?
     //if (have.worker < popCon.minWorker || (have.miner > popCon.minWorker && have.worker < room.controller.level * 2)) { //arbitrary shenanigans here
     if (have.worker < popCon.minWorker) { //arbitrary shenanigans here
-        dlog('Bootstrapping worker population')
+        room.log('Bootstrapping worker population')
         room.memory.nrgReserve = (room.energyAvailable > 300) ? room.energyAvailable : 300; // Guarantee we can still light this
         // rocket
         return 'worker'
@@ -132,10 +132,9 @@ function nextPriority(room) {
     }
 
     var scoutVeto = 1;
-    if (myGlobalRooms >= Game.gcl.level-1){ // there should not be a -1 here, but somethign is messed up. remove it later
+    if (myGlobalRooms >= Game.gcl.level){ // there should not be a -1 here, but somethign is messed up. remove it later
         scoutVeto = 0;
     }
-    dlog("scout veto called: " + scoutVeto + ', global rooms: ' + myGlobalRooms + ', gcl: ' + Game.gcl.level);
     
 
     // How is the Economy? Are there enough workers transporting energy?

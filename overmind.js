@@ -1,5 +1,18 @@
 var util = require('common')
 
+Creep.prototype.focusBuild = function(siteId) {
+
+    if ((this.getActiveBodyparts(CARRY) == 0) || (this.getActiveBodyparts(WORK) == 0)) {
+        return false;
+    }
+    this.memory.bTarget = siteId;
+    this.taskState = "SPECIAL";
+    this.changeTask("builder");
+
+    this.log("mind dominated to build something");
+    return true;
+}
+
 Creep.prototype.exploreNewRoom = function() {
 
     //    if (!util.def(Memory.Overmind)) {
@@ -14,14 +27,14 @@ Creep.prototype.exploreNewRoom = function() {
     //
     //    var knownRooms = omd.knownRooms;
     //
-    
+
     var curRoom = this.room.name;
 
     // homesick check
     var wanderdistance = Game.map.getRoomLinearDistance(curRoom, this.memory.birthRoom);
     if (wanderdistance > 5) {
         dlog(this.name + 'is feeling homesick')
-         this.memory.taskList.pop();
+        this.memory.taskList.pop();
         this.leaveRoom(this.memory.birthRoom);
         return true;
     }
@@ -42,19 +55,19 @@ Creep.prototype.exploreNewRoom = function() {
 
     //dlog(this.name + '(' + this.room.name + ')  wants to explore new room, but no adjacent room is unexplored. going to move to ' + fallback + ' and then try again');
     //this.addTask('explore');
-        this.leaveRoom(fallback);
+    this.leaveRoom(fallback);
     return true;
 }
 
 Room.prototype.classify = function() {
 
-	// dlog('classifying '+ this.name + ',')
+    // dlog('classifying '+ this.name + ',')
     var roomRec = Memory.Overmind.globalTerrain[this.name];
 
     if (util.def(roomRec) && roomRec.revised) {
 
         if (roomRec.revised > Game.time - 300) {
-			// dlog('skipping classification of ' + this.name + ' because its been less than a minute')
+            // dlog('skipping classification of ' + this.name + ' because its been less than a minute')
             return;
         }
 
@@ -68,7 +81,7 @@ Room.prototype.classify = function() {
         if (this.controller.my) {
             classification.class = 'conquered'; // oh cool, I own it
         } else {
-            classification.class = 'heathens'; 
+            classification.class = 'heathens';
         }
     } else if (this.controller.reservation) {
         var res = this.controller.reservation.username;
@@ -82,7 +95,7 @@ Room.prototype.classify = function() {
     }
 
     classification.score = this.score();
-	// dlog('score for ' + this.name + ': ' + classification.score)
+    // dlog('score for ' + this.name + ': ' + classification.score)
     classification.revised = Game.time;
     Memory.Overmind.globalTerrain[this.name] = classification;
 }
@@ -118,11 +131,11 @@ Room.prototype.score = function() {
         var ctrlDist = 0;
     }
 
-	// dlog('exits ' + Object.keys(exits).length)
+    // dlog('exits ' + Object.keys(exits).length)
 
-	// dlog('nme' + nmes.length + ', srcs:' + srcs.length + ', anathem: ' + anathem.length+ ' mustdie: ' + mustdie.length + ', ore: ' + ore.length + ', exits:' + Object.keys(exits).length + ', srcDist: ' + srcDist + ', ctrlDist: ' + ctrlDist);
-    var score = (srcs.length * 30) + (Object.keys(exits).length)*50 + 100 * ctrl - (srcDist + ctrlDist) + ore.length * 10 - (nmes.length * 50 + anathem.length * 100 + mustdie.length * 200);
-	// dlog('score is ' + score)
+    // dlog('nme' + nmes.length + ', srcs:' + srcs.length + ', anathem: ' + anathem.length+ ' mustdie: ' + mustdie.length + ', ore: ' + ore.length + ', exits:' + Object.keys(exits).length + ', srcDist: ' + srcDist + ', ctrlDist: ' + ctrlDist);
+    var score = (srcs.length * 30) + (Object.keys(exits).length) * 50 + 100 * ctrl - (srcDist + ctrlDist) + ore.length * 10 - (nmes.length * 50 + anathem.length * 100 + mustdie.length * 200);
+    // dlog('score is ' + score)
     return score;
 
 }
@@ -131,7 +144,7 @@ module.exports.scoreroom = function(roomname) {
 
     var room = Game.rooms[roomname];
     util.dumpObj(room)
-    // dlog('scoring room ' + this.name)
+        // dlog('scoring room ' + this.name)
     var nmes = room.find(FIND_HOSTILE_CREEPS);
     var srcs = room.find(FIND_SOURCES);
     var anathem = room.find(FIND_HOSTILE_STRUCTURES);

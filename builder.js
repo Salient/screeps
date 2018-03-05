@@ -37,16 +37,20 @@ function builder(creep) {
     creep.say('⚒')
 
     if (creep.carry.energy == creep.carryCapacity) {
-        creep.memory.taskState = 'SINK';
+        if (creep.taskState != "SPECIAL") {
+            creep.taskState = "SINK";
+        }
     }
 
     if (creep.carry.energy == 0) {
         // Just got doing something else
         if (creep.taskState != 'SINK') {
-            creep.addTask('filltank');
-            return true;
+                creep.addTask('filltank');
+                return true;
         }
+
         // load done
+        // creep.log('builder popping')
         return false;
     }
 
@@ -230,11 +234,12 @@ function upgradeRC(creep) {
 
     if (creep.carry.energy == 0) {
         // Just got doing something else
-        if (creep.taskState != 'SINK') {
+        if (creep.taskState != 'SINK' && harvest.findCashMoney(creep)) {
             creep.addTask('filltank');
             return true;
         }
         // Job done
+        // creep.log('tech popping')
         return false;
     }
 

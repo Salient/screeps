@@ -131,7 +131,7 @@ function mine(creep) {
     if (!util.def(creep.memory.mTarget)) {
         // Will return a mineshaft object or false if none available
         var posting = findSource(creep);
-        if (!util.def(posting)) {
+        if (!util.def(posting) || !posting) {
             return false;
         }
         var newsrc = Game.getObjectById(posting.srcId);
@@ -220,7 +220,8 @@ module.exports.mine = mine
 module.exports.fillTank = function(creep) {
 
     if (creep.carry.energy == creep.carryCapacity) {
-        creep.memory.taskState = 'SINK';
+        if (creep.taskState != "SPECIAL"){
+        creep.taskState = 'SINK';}
         return false;
     }
 
@@ -505,7 +506,7 @@ function gatherer(creep) {
             return source();
             break;
         case 'LEAVING':
-            creep.log('leaving?')
+            // creep.log('leaving?')
             return creep.outsource();
             break;
         default:

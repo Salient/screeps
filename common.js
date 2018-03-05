@@ -83,7 +83,7 @@ module.exports.dumpObj = dumpObject;
 
 var def = function(obj) {
 	//  return (obj === false) ? false : !!obj;
-	// return (obj === false) ? false : (obj === undefined || obj === null) ? false : true;
+	 return (obj === false) ? true : (obj === undefined || obj === null) ? false : true;
 	
 	return	!!obj;
     //	if ((typeof obj !== undefined) || (obj === null)) {

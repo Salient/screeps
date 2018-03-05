@@ -28,7 +28,7 @@ Creep.prototype.appropriate = function(ctrlId) {
     } else {
         var res = this.claimController(ctrl);
         if (res != ERR_GCL_NOT_ENOUGH) {
-            return res; 
+            return res;
         } else {
             return this.reserveController(ctrl);
         }
@@ -49,24 +49,24 @@ function selectNewRoom(creep) {
 
     for (var land in targetList) {
         var promised = targetList[land];
-		if (promised == creep.room.name) {
-			continue; // skip where we already are
-		}
-		if (Memory.Overmind.globalTerrain && Memory.Overmind.globalTerrain[promised]) {
+        if (promised == creep.room.name) {
+            continue; // skip where we already are
+        }
+        if (Memory.Overmind.globalTerrain && Memory.Overmind.globalTerrain[promised]) {
 
-			var type = Memory.Overmind.globalTerrain[promised].type;
-			dlog('type is ' + type);
-		}
-		// if (util.def(null))
+            var type = Memory.Overmind.globalTerrain[promised].type;
+            dlog('type is ' + type);
+        }
+        // if (util.def(null))
 
         var range = Game.map.getRoomLinearDistance(creep.room.name, promised);
         var prophecy = Memory.Overmind.globalTerrain[promised];
-		if (!util.def(prophecy.score)) { 
-			// hmmm
-			creep.leaveRoom(prophecy); // go score it
-			//prophecy.score = 1;
-		}
-		
+        if (!util.def(prophecy.score)) {
+            // hmmm
+            creep.leaveRoom(prophecy); // go score it
+            //prophecy.score = 1;
+        }
+
         if (prophecy.score / range > score) {
             score = prophecy.score / range;
             best = promised;
@@ -85,12 +85,13 @@ function selectNewRoom(creep) {
 
 module.exports.infest = function(creep) {
 
-    for (var flag in  Game.flags) {
-var thisFlag = Game.flags[flag];
+    for (var flag in Game.flags) {
+        var thisFlag = Game.flags[flag];
+        // util.dumpObj(thisFlag
         if (thisFlag.room.name != creep.room.name) {
-        creep.log("moving to flag");
-        creep.log(util.getError(creep.moveTo(thisFlag)));
-        return true;
+            creep.log("moving to flag");
+            creep.log(util.getError(creep.moveTo(thisFlag)));
+            return true;
         }
     }
 
@@ -112,7 +113,7 @@ var thisFlag = Game.flags[flag];
         creep.leaveRoom(objective);
         return true;
     }
-    */ 
+    */
 
     creep.say('🔱');
     //        dlog(this.name, 'at next hop, currently in ' + lustRoute[0].room + ' on the way to ' +  lustRoute[lustRoute.length -1].room );
@@ -127,27 +128,35 @@ var thisFlag = Game.flags[flag];
             return;
         };
         */
-        var res = creep.appropriate(creep.room.controller.id);
-        switch (res) {
-            case OK:
-            case ERR_TIRED:
+    var res = creep.appropriate(creep.room.controller.id);
+    switch (res) {
+        case OK:
+        case ERR_TIRED:
+            return true;
+            break;
+        case ERR_FULL:
+            var newtarg = selectNewRoom(creep);
+            dlog('new is ' + newtarg)
+            if (newtarg) {
+                creep.leaveRoom(newtarg);
                 return true;
-                break;
-            case ERR_NOT_IN_RANGE:
-        var res = creep.moveTo(creep.room.controller, {
-            reusePath: 15,
-            visualizePathStyle: {
-                opacity: 0.9,
-                stroke: '#ffffff'
             }
-        });
-                creep.log(res);
-                break;
-                //case ERR_GCL_NOT_ENOUGH:
-            default:
-                dlog(creep.name + ' in ' + creep.room.name + 'error infesting, ' + util.getError(res)); //util.getError(res));
-                return false;
-                // }
+            break;
+        case ERR_NOT_IN_RANGE:
+            var res = creep.moveTo(creep.room.controller, {
+                reusePath: 15,
+                visualizePathStyle: {
+                    opacity: 0.9,
+                    stroke: '#ffffff'
+                }
+            });
+            creep.log(res);
+            break;
+            //case ERR_GCL_NOT_ENOUGH:
+        default:
+            dlog(creep.name + ' in ' + creep.room.name + 'error infesting, ' + util.getError(res)); //util.getError(res));
+            return false;
+            // }
     }
 }
 
