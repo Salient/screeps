@@ -624,7 +624,7 @@ function gatherer(creep) {
                 return true;
                 break; // gatherer(creep); break;
             default:
-                dlog('error sinking into ' + mySink.structureType + ': ' + util.getError(res));
+                creep.log('error sinking into ' + mySink.structureType + ': ' + util.getError(res));
                 delete creep.memory.sinkId;
                 return false;
         }

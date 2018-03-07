@@ -21,6 +21,15 @@ Creep.prototype.appropriate = function(ctrlId) {
     } else if (ctrl.reservation) {
         var res = ctrl.reservation.username;
         if (res == util.myName) {
+            var res2 = this.claimController(ctrl); 
+            switch (res2) {
+                case OK:
+                    return OK;
+                    break;
+                case ERR_GCL_NOT_ENOUGH:
+                    return  this.reserveController(ctrl);
+                default: this.log('nope: ' + res2 + ', ' + util.getError(res2));
+            }
             return this.claimController(ctrl);
         } else {
             return this.attackController(ctrl);
@@ -30,6 +39,7 @@ Creep.prototype.appropriate = function(ctrlId) {
         if (res != ERR_GCL_NOT_ENOUGH) {
             return res;
         } else {
+            var spre = this.reserveController(ctrl);
             return this.reserveController(ctrl);
         }
     }
@@ -136,7 +146,6 @@ module.exports.infest = function(creep) {
             break;
         case ERR_FULL:
             var newtarg = selectNewRoom(creep);
-            dlog('new is ' + newtarg)
             if (newtarg) {
                 creep.leaveRoom(newtarg);
                 return true;
@@ -150,11 +159,10 @@ module.exports.infest = function(creep) {
                     stroke: '#ffffff'
                 }
             });
-            creep.log(res);
             break;
             //case ERR_GCL_NOT_ENOUGH:
         default:
-            dlog(creep.name + ' in ' + creep.room.name + 'error infesting, ' + util.getError(res)); //util.getError(res));
+            creep.log('error infesting, ' + util.getError(res)); //util.getError(res));
             return false;
             // }
     }

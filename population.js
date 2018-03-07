@@ -384,7 +384,7 @@ var spawn = function(room) {
             // var ddd = util.getError(babyMomma.spawnCreep(body, want + '-' +
             // (Math.floor((Math.random() * 10000))), { memory: {
         case ERR_BUSY:
-            dlog('huh? thats impossiblei');
+           room.log('huh? thats impossiblei');
             break;
         default:
             dlog('Error spawning - ' + util.getError(result))

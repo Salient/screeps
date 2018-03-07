@@ -110,11 +110,20 @@ Room.prototype.score = function() {
     var mustdie = this.find(FIND_HOSTILE_SPAWNS);
     var ore = this.find(FIND_MINERALS);
     var exits = Game.map.describeExits(this.name);
+    var conweight = 1;
 
-    if (util.def(this.controller)) {
-        var ctrl = 1;
-    } else {
-        var ctrl = 0;
+    var ctrl = this.controller;
+
+    if (ctrl.level > 0) {
+        //somebody owns this room
+        conweight = 0.25;
+    } else if (ctrl.reservation) {
+        var res = ctrl.reservation.username;
+        if (res == util.myName) {
+            conweight = 1 - (5000 / ctrl.reservation.ticksToEnd);
+        } else {
+            conweight = 0.75;
+        }
     }
 
     if (srcs.length > 1) {
@@ -134,7 +143,7 @@ Room.prototype.score = function() {
     // dlog('exits ' + Object.keys(exits).length)
 
     // dlog('nme' + nmes.length + ', srcs:' + srcs.length + ', anathem: ' + anathem.length+ ' mustdie: ' + mustdie.length + ', ore: ' + ore.length + ', exits:' + Object.keys(exits).length + ', srcDist: ' + srcDist + ', ctrlDist: ' + ctrlDist);
-    var score = (srcs.length * 30) + (Object.keys(exits).length) * 50 + 100 * ctrl - (srcDist + ctrlDist) + ore.length * 10 - (nmes.length * 50 + anathem.length * 100 + mustdie.length * 200);
+    var score = ((srcs.length * 30) + (Object.keys(exits).length) * 50 + 100) * ctrl - (srcDist + ctrlDist) + ore.length * 10 - (nmes.length * 50 + anathem.length * 100 + mustdie.length * 200);
     // dlog('score is ' + score)
     return score;
 
@@ -200,7 +209,8 @@ module.exports.getPriority = function() {
         }
 
         var score = overmind.globalTerrain[r];
-        if (!score || score.revised > Game.time + 300) {
+        if (!score || score.revised < Game.time + 300) {
+            room.log("classifying")
             room.classify();
         }
 
