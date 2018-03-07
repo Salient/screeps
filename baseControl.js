@@ -70,7 +70,6 @@ function healTroops(support) {
     var targets = [];
     if (towers.injured || (towers.timeouts.heal < Game.time)) {
         towers.timeouts.heal = Game.time + 11 + util.getRand(1, Object.keys(Game.rooms).length);
-        support.room.log("scanning for heal")
         var targets = support.room.find(FIND_MY_CREEPS, {
             filter: (i) => i.hits < i.hitsMax
         });
@@ -92,7 +91,6 @@ function healTroops(support) {
         }
         return 0;
     }); // Get most sensible
-    dlog('d')
 
     var res = support.heal(hitList[0]);
     switch (res) {
@@ -252,7 +250,6 @@ function towerControl(room) {
     }
 
     if (!util.def(towers.timeouts)) {
-        dlog('ber')
         towers.timeouts = {
             attack: Game.time,
             repair: Game.time,

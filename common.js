@@ -258,7 +258,7 @@ Creep.prototype.leaveRoom = function(dest = "") {
             delete this.memory.wanderlust;
             return false;
         } else {
-            dlog(this.name, 'at next hop, currently in ' + lustRoute[0].room + ' on the way to ' + lustRoute[lustRoute.length - 1].room);
+            // dlog(this.name, 'at next hop, currently in ' + lustRoute[0].room + ' on the way to ' + lustRoute[lustRoute.length - 1].room);
             lustRoute.shift();
         }
     }

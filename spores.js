@@ -21,14 +21,15 @@ Creep.prototype.appropriate = function(ctrlId) {
     } else if (ctrl.reservation) {
         var res = ctrl.reservation.username;
         if (res == util.myName) {
-            var res2 = this.claimController(ctrl); 
+            var res2 = this.claimController(ctrl);
             switch (res2) {
                 case OK:
                     return OK;
                     break;
                 case ERR_GCL_NOT_ENOUGH:
-                    return  this.reserveController(ctrl);
-                default: this.log('nope: ' + res2 + ', ' + util.getError(res2));
+                    return this.reserveController(ctrl);
+                default:
+                    this.log('nope: ' + res2 + ', ' + util.getError(res2));
             }
             return this.claimController(ctrl);
         } else {
@@ -64,8 +65,12 @@ function selectNewRoom(creep) {
         }
         if (Memory.Overmind.globalTerrain && Memory.Overmind.globalTerrain[promised]) {
 
-            var type = Memory.Overmind.globalTerrain[promised].type;
+            var type = Memory.Overmind.globalTerrain[promised].class;
             dlog('type is ' + type);
+            if(!util.def(type)) {
+                dlog('type is undef - object dump is ');
+            util.dumpObj(Memory.Overmind.globalTerrain[promised]);
+            }
         }
         // if (util.def(null))
 
@@ -95,16 +100,16 @@ function selectNewRoom(creep) {
 
 module.exports.infest = function(creep) {
 
-    for (var flag in Game.flags) {
-        var thisFlag = Game.flags[flag];
-        // util.dumpObj(thisFlag
-        if (thisFlag.room.name != creep.room.name) {
-            creep.log("moving to flag");
-            creep.log(util.getError(creep.moveTo(thisFlag)));
-            return true;
-        }
-    }
-
+    //for (var flag in Game.flags) {
+    //        var thisFlag = Game.flags[flag];
+    //        // util.dumpObj(thisFlag
+    //        if (thisFlag.room.name != creep.room.name) {
+    //            creep.log("moving to flag");
+    //            creep.log(util.getError(creep.moveTo(thisFlag)));
+    //            return true;
+    //        }
+    //    }
+    //
 
 
     // return true;
@@ -138,6 +143,15 @@ module.exports.infest = function(creep) {
             return;
         };
         */
+    if (!util.def(creep.room.controller)) {
+        var newtarg = selectNewRoom(creep);
+        if (newtarg) {
+            creep.leaveRoom(newtarg);
+        } else {
+            creep.leaveRoom();
+        }
+        return true;
+    }
     var res = creep.appropriate(creep.room.controller.id);
     switch (res) {
         case OK:

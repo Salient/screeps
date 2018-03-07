@@ -114,15 +114,19 @@ Room.prototype.score = function() {
 
     var ctrl = this.controller;
 
-    if (ctrl.level > 0) {
-        //somebody owns this room
-        conweight = 0.25;
-    } else if (ctrl.reservation) {
-        var res = ctrl.reservation.username;
-        if (res == util.myName) {
-            conweight = 1 - (5000 / ctrl.reservation.ticksToEnd);
-        } else {
-            conweight = 0.75;
+    if (!util.def(ctrl)) {
+        conweight = 0.1;
+    } else {
+        if (ctrl.level > 0) {
+            //somebody owns this room
+            conweight = 0.25;
+        } else if (ctrl.reservation) {
+            var res = ctrl.reservation.username;
+            if (res == util.myName) {
+                conweight = 1 - (5000 / ctrl.reservation.ticksToEnd);
+            } else {
+                conweight = 0.75;
+            }
         }
     }
 
