@@ -14,24 +14,9 @@ var debug = false
 
 // FYI, max call stack size is 4500. ish. it seems to depend
 
-Room.prototype.coolHeatmap = function() {
-    // Measure traffic around the room
-    if (!util.def(this.memory.heatmap)) {
-        return;
-    }
-    var heatm = this.memory.heatmap;
 
-    // Cool the heat map
-    // Remember we can't build roads on the first or last tile (exits)
-    for (var x = 1; x < 49; x++) {
-        for (var y = 1; y < 49; y++) {
-            if (heatm[x][y] > 0) {
-                --heatm[x][y]
-            } else {
-                heatm[x][y] = 0
-            }
-        }
-    }
+
+Room.prototype.coolTrafficMap = function() {
 
     if (!util.def(this.memory.strategy.construction)) {
         return;
@@ -57,61 +42,80 @@ Room.prototype.needStructure = function(structure) {
     }
 }
 
-Room.prototype.zeroHeatMap = function() {
-    var hm = this.memory.heatmap;
-    for (var x in hm) {
-        var y = hm[x];
-        for (var sq in y) {
-            y[sq] = 0;
-        }
-    }
-}
-
 Room.prototype.buildRoads = function() {
 
-    if (!util.def(this.memory.planned) || this.memory.planned == false) {
-        return;
+    var maxBuild = 5;
+
+    if (this.memory.strategy && this.memory.strategy.construction) {
+        maxBuild = this.memory.strategy.construction.maxBuildSites;
     }
 
-    var spwn = Game.getObjectById(this.memory.spawnId);
     var have = this.find(FIND_MY_CONSTRUCTION_SITES, {
         filter: {
             structureType: STRUCTURE_ROAD
         }
     }).length;
-    var paths = this.memory.infrastructure.paths;
 
-    for (var p in paths) {
-        var hwy = paths[p];
-        for (var sq in hwy) {
-            if (have > this.memory.strategy.construction.maxBuildSites) {
-                this.zeroHeatMap();
-                return true;;
-            }; // Let's not get carried away
-            var st = hwy[sq];
-            var res = this.createConstructionSite(st.x, st.y, STRUCTURE_ROAD);
-            if (!res) {
-                have++;
+    if (have >= maxBuild) {
+        return false;
+    }
+
+    if (util.def(this.memory.planned) && this.memory.planned == true) {
+        var paths = this.memory.infrastructure.paths;
+
+        for (var p in paths) {
+            var hwy = paths[p];
+            for (var sq in hwy) {
+                if (have >= maxBuild) {
+                    return true;;
+                }; // Let's not get carried away
+                var st = hwy[sq];
+                var res = this.createConstructionSite(st.x, st.y, STRUCTURE_ROAD);
+                if (!res) {
+                    have++;
+                }
             }
         }
     }
 
-    var heatm = this.memory.heatmap;
-    var infraVars = this.memory.strategy.construction;
+    // Taken care of explicit paths
+    // start at the top and look for any tile that has high traffic
 
-    if (!util.def(heatm)) {
-        return
+    // Measure traffic around the room
+    if (!util.def(this.memory.trafficMap)) {
+        this.memory.trafficMap = {};
     }
+this.log('scoring traffic for road building');
+    var map = this.memory.trafficMap;
+
+    // Remember we can't build roads on the first or last tile (exits)
     for (var x = 1; x < 49; x++) {
+        if (!util.def(map[x])) {
+            map[x] = {};
+        }
+
         for (var y = 1; y < 49; y++) {
-            if (heatm[x][y] > 25) {
-                if (have > infraVars.maxBuildSites * this.controller.level) {
-                    return true;
+
+            if (!util.def(map[x][y])) {
+                map[x][y] = {
+                    heat: 0,
+                    refreshed: 0
                 }
-                var res = this.createConstructionSite(x, y, STRUCTURE_ROAD)
+            }
+            var thisSpot = map[x][y];
+
+            thisSpot.heat = thisSpot.heat - (Game.time - thisSpot.refreshed);
+            thisSpot.heat = (thisSpot.heat < 0) ? 0 : thisSpot.heat;
+            thisSpot.refreshed = Game.time;
+            if (thisSpot.heat > 25) {
+                if (have >= maxBuild) {
+                    return true;
+                }; // Let's not get carried away
+                var res = this.createConstructionSite(x, y, STRUCTURE_ROAD);
                 if (!res) {
                     have++;
                 }
+
             }
         }
     }
@@ -311,17 +315,6 @@ function bootstrap(room) {
         return false;
     }
     room.memory.spawnId = spwn.id;
-    // Track popular creep routes
-    // Create room matrix and initialize to 0
-    var heatmap = [];
-    for (var x = 1; x < 49; x++) {
-        heatmap[x] = [];
-        for (var y = 1; y < 49; y++) {
-            heatmap[x][y] = 0;
-        }
-    }
-
-    room.memory.heatmap = heatmap;
 
     // Create roads to controller
     // Later, storage, links, etc.
@@ -351,6 +344,9 @@ function planRoom(room) {
     // 4, walls around exits
     // Sanity Checks
 
+    // should do this even if room isn't owned
+    room.buildRoads();
+
     if (!util.def(room.memory.planned)) {
         if (!bootstrap(room)) {
             return false; // bail for now
@@ -360,7 +356,6 @@ function planRoom(room) {
     room.placeContainers()
     room.placeTower();
     room.placeStorage();
-    room.buildRoads();
     room.placeLinks();
     // room.placeSpawn();
 

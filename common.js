@@ -5,7 +5,7 @@
 module.exports.myName = Game.spawns[Object.keys(Game.spawns)[0]].owner.username;
 
 Creep.prototype.log = function(msg) { 
-    console.log(this.name + '/' + this.room.name + ': ' + msg);
+    console.log(this.name + '/' + this.room.name + '/' + this.currentTask + ': ' + msg);
 }
 
 Room.prototype.log = function(msg) { 
@@ -135,10 +135,10 @@ Creep.prototype.moveAwayFromExit = function() {
     }
 
     if (!movedir) {
-        dlog('stf');
+        this.log('stf');
     }
     var res = this.move(movedir);
-    // dlog(this.name + ' moved away, res: ' + res)
+    // this.log(this.name + ' moved away, res: ' + res)
 }
 
 Creep.prototype.moveRandom = function() {
@@ -155,7 +155,7 @@ Creep.prototype.leaveRoom = function(dest = "") {
     }
 
     // Check if already set up
-    //     dlog(this.name + '/' + this.room.name, ' leave room called, dest: ' + dest);
+    //     this.log(this.name + '/' + this.room.name, ' leave room called, dest: ' + dest);
 
     if (!def(this.memory.wanderlust)) {
         if (dest) {
@@ -163,7 +163,7 @@ Creep.prototype.leaveRoom = function(dest = "") {
 
             if (this.room.name == dest) {
                 ///uhh guess i'm already here? what?
-                dlog(this.name + 'wants to leave to the room its already in');
+                this.log(this.name + 'wants to leave to the room its already in');
                 //  this.memory.taskList.pop();
                 return false;
             }
@@ -172,7 +172,7 @@ Creep.prototype.leaveRoom = function(dest = "") {
 
             if (interRoomRoute == ERR_NO_PATH) {
                 //this.memory.taskList.pop();
-                dlog('leaving room', 'interroom routing error');
+                this.log('interroom routing error, trying to leave,  no path?');
                 return false;
             }
 
@@ -182,7 +182,7 @@ Creep.prototype.leaveRoom = function(dest = "") {
                     route: interRoomRoute
                 }
             } else {
-                dlog('very sratnge interroom routing error');
+                this.log('very sratnge interroom routing error');
                 return false;
             }
         } else {
@@ -214,7 +214,7 @@ Creep.prototype.leaveRoom = function(dest = "") {
                     if (storedScore > score) {
                         score = storedScore;
 
-                        //dlog('testing ' + exit + ' with score ' + score)
+                        //this.log('testing ' + exit + ' with score ' + score)
                         randomExit = {
                             room: exit,
                             exit: option
@@ -237,7 +237,7 @@ Creep.prototype.leaveRoom = function(dest = "") {
             //                roomChoice.name = adjRooms[Object.keys(adjRooms)[0]];
             //            }
             //
-            dlog(this.name + '/' + this.room.name, ' selecting new exit from room. (' + randomExit.room + '), score:' + score);
+            this.log(' selecting new exit from room. (' + randomExit.room + '), score:' + score);
             //            dumpObject(randomExit);
             this.memory.wanderlust = {
                 route: [randomExit]
@@ -253,12 +253,12 @@ Creep.prototype.leaveRoom = function(dest = "") {
         Game.rooms[this.room.name].classify();
         if (lustRoute.length == 1) {
             // this is the destination
-            // dlog('at elaveroom dest')
+            // this.log('at elaveroom dest')
             this.memory.taskList.pop();
             delete this.memory.wanderlust;
             return false;
         } else {
-            // dlog(this.name, 'at next hop, currently in ' + lustRoute[0].room + ' on the way to ' + lustRoute[lustRoute.length - 1].room);
+            // this.log(this.name, 'at next hop, currently in ' + lustRoute[0].room + ' on the way to ' + lustRoute[lustRoute.length - 1].room);
             lustRoute.shift();
         }
     }
@@ -283,11 +283,17 @@ Creep.prototype.leaveRoom = function(dest = "") {
         case ERR_TIRED:
             return true
             break;
+        case ERR_NO_BODYPART:
+            this.log('awww sucks');
+            this.suicide();
+            return false;
+            break;
         default:
-            dlog(this.name + '/' + this.room.name, ' trouble with interrom move : ' + derp + ', dest: ' + nextHop.room);
+            this.log(' trouble with interrom move : ' + derp + ', dest: ' + nextHop.room);
             //  this.moveAwayFromExit();
             this.moveRandom();
-            delete this.memory.wanderlust;
+            return true;
+            // delete this.memory.wanderlust;
     }
     return false;
 }

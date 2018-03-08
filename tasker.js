@@ -41,7 +41,7 @@ module.exports.taskMinions = function(room) {
 //    }
 //}
 
-Creep.prototype.updateTraffic = function() {
+Creep.prototype.updateTraffic = function(boost) {
     if (!util.def(this.room.memory.trafficMap)) {
         this.room.memory.trafficMap = {};
     }
@@ -71,15 +71,22 @@ Creep.prototype.updateTraffic = function() {
     }
 
     var thisSpot = map[myX][myY];
-    if (this.memory.taskList.length > 0 && this.memory.taskList[this.memory.taskList.length - 1] != 'builder') {
+    if (this.memory.taskList.length > 0) {
 
-		thisSpot.heat = thisSpot.heat - (Game.time - thisSpot.refreshed); // decrement value 1 per tick since last updated
+        thisSpot.heat = thisSpot.heat - (Game.time - thisSpot.refreshed); // decrement value 1 per tick since last updated
         if (thisSpot.heat < 0) {
             thisSpot.heat = 15
         } else {
-            thisSpot.heat = thisSpot.heat + 15
+            if (this.currentTask == 'builder') {
+                thisSpot.heat = thisSpot.heat + 5;
+            } else {
+                thisSpot.heat = thisSpot.heat + 15;
+            }
         }
-		thisSpot.refreshed = Game.time;
+        if (util.def(boost)){
+            thisSpot.heat = thisSpot.heat + boost;
+        }
+        thisSpot.refreshed = Game.time;
     }
 }
 
@@ -135,7 +142,7 @@ var performTask = function(creep) {
         // Add default task, and then busy work
         //        dlog('Empty task list found: ' + creep.name);
         taskList.push(somethingNeedDoing(creep));
-        taskList.push(getDefaultTask(creep));
+        //         taskList.push(getDefaultTask(creep));
 
         //dlog('assinged ' + taskList[0] + ' to ' + creep.name);
 
@@ -180,6 +187,7 @@ var performTask = function(creep) {
             jobResult = harvest.fillTank(creep);
             break;
         case 'leaveroom':
+            creep.updateTraffic(50);
             jobResult = creep.leaveRoom();
             break;
         case 'explore':
@@ -200,6 +208,18 @@ var performTask = function(creep) {
 
     //	dlog(creep.name + ' did ' + curJob + ' and his aim was ' + jobResult);
     if (!jobResult) {
+
+        var count = creep.memory.taskSpinCount;
+        if (!util.def(count)) {
+            creep.memory.taskSpinCount = 1;
+        } else {
+            count = count + 1;
+
+            if (count > 5) {
+                creep.log('spinning my wheels here');
+            }
+        }
+
         if (creep.memory.taskList.length > 10) {
             dlog(creep.name + " popped job, was: " + creep.memory.taskList[creep.memory.taskList.length - 1] + ', task queue length: ' + creep.memory.taskList.length);
         }
@@ -246,6 +266,10 @@ function somethingNeedDoing(creep) {
 
     var role = creep.memory.role;
     switch (role) {
+        case 'miner':
+        case 'scout':
+            return role;
+            break;
         case 'worker':
             var result = Math.floor((Math.random() * 10));
             if (result < 5) {
@@ -260,6 +284,7 @@ function somethingNeedDoing(creep) {
             break;
 
         default:
+            dlog('do not have a default case for role ' + role);
             return role;
     }
 }

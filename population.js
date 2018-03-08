@@ -291,6 +291,7 @@ var spawn = function(room) {
     var cap = (reserve == false) ? room.energyCapacityAvailable : reserve;
 
     // short cut if we are charging up
+    var spawner = null;
     var goodCall = false;
     var spawns = room.find(FIND_MY_SPAWNS);
     for (var uterus in spawns) {
@@ -310,10 +311,12 @@ var spawn = function(room) {
             }
         } else {
             goodCall = true
+            spawner = babyMomma;
+
         }
     }
 
-    if (!goodCall) {
+    if (!goodCall || !util.def(spawner)) {
         return false
     }
 
@@ -347,7 +350,7 @@ var spawn = function(room) {
     // last iteration put us over
     body.pop()
 
-    var result = babyMomma.spawnCreep(body, 'Lvl' + body.length + '_' + want + '_' +
+    var result = spawner.spawnCreep(body, 'Lvl' + body.length + '_' + want + '_' +
         (Math.floor((Math.random() * 10000))), {
             memory: {
                 role: want,
@@ -364,7 +367,7 @@ var spawn = function(room) {
                     room.memory.strategy.economy.tankMiss = 0;
                 }
             }
-            dlog(room.name + ' spawned ' + want);
+            room.log(spawner.name + ' spawning ' + want);
             room.memory.nextSpawn = Game.time + body.length * CREEP_SPAWN_TIME;
             room.memory.nrgReserve = false;
             break;
@@ -385,6 +388,8 @@ var spawn = function(room) {
             // (Math.floor((Math.random() * 10000))), { memory: {
         case ERR_BUSY:
            room.log('huh? thats impossiblei');
+            room.log('status of util def: ' + util.def(babyMomma.spawning) + ', contents ' + babyMomma.spawning);
+
             break;
         default:
             dlog('Error spawning - ' + util.getError(result))

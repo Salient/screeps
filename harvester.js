@@ -36,9 +36,9 @@ Creep.prototype.outsource = function() {
     //  return this.exploreNewRoom();
     // outsourcing disabled
 
-    dlog(this.name + '/' + this.room.name, ' outsourcing')
+    this.log(this.name + '/' + this.room.name, ' outsourcing')
     if (ovr.length < 2) {
-        dlog('derp')
+        this.log('derp')
         return false;
     };
 
@@ -72,7 +72,7 @@ Creep.prototype.outsource = function() {
 
 Creep.prototype.hitUp = function(target) {
     if (!util.def(target)) {
-        dlog('not suing hitup right. Got: ' + target)
+        this.log('not suing hitup right. Got: ' + target)
         util.dumpObject(target);
 
         return false;
@@ -82,7 +82,7 @@ Creep.prototype.hitUp = function(target) {
     } else if (util.def(target.structureType)) {
         return this.withdraw(target, RESOURCE_ENERGY);
     } else {
-        dlog('what kind of twisted object is this?');
+        this.log('what kind of twisted object is this?');
     }
 }
 
@@ -182,7 +182,7 @@ function mine(creep) {
                 return true;
                 break;
             default:
-                dlog(' - ' + creep.name + ': Error trying to mine source ' + posting +
+                creep.log(' Error trying to mine source ' + posting +
                     ', ' + util.getError(result))
                 return false
         }
@@ -210,7 +210,7 @@ function mine(creep) {
         if (!res || res == ERR_TIRED) {
             return true;
         }
-        dlog(creep.name + '/' + creep.room.name + ' mine error : ' + util.getError(res))
+        creep.log(' mine error : ' + util.getError(res))
     }
     return false
 }
@@ -234,7 +234,7 @@ module.exports.fillTank = function(creep) {
             if (creep.getActiveBodyparts(WORK) > 0) {
                 return mine(creep);
             }
-            dlog('tank miss', creep)
+            creep.log('tank miss')
             creep.room.tankMiss();
 
             //            dlog('no available energy')
@@ -274,7 +274,7 @@ module.exports.fillTank = function(creep) {
             delete creep.memory.eTarget;
             break;
         default:
-            dlog('fill tank catch: ' + util.getError(res) + '()' + res)
+            creep.log('fill tank catch: ' + util.getError(res) + '()' + res)
             return false;
     }
 }
@@ -287,7 +287,7 @@ function findContainer(creep) {
     });
 
     if (!util.def(newTargets) || newTargets.length == 0) {
-        dlog(' asdf here')
+        creep.log(' asdf here')
         return false // No containers in the room. Bail.
     }
 
@@ -297,7 +297,7 @@ function findContainer(creep) {
         var candidate = newTargets[blob];
 
         if (candidate.store == 0) {
-            dlog('oops');
+            creep.log('oops');
             continue;
         }
 
@@ -306,7 +306,7 @@ function findContainer(creep) {
         // var path = creep.pos.findPathTo(candidate, { ignoreCreeps: true});
         var path = creep.pos.findPathTo(candidate);
         if (!util.def(path) || path.length == 0 || creep.moveTo(candidate)) {
-            dlog('oh')
+            creep.log('oh')
             continue;
         }
 
@@ -320,7 +320,7 @@ function findContainer(creep) {
 
 
     if (!util.def(targets) || targets.length == 0) {
-        dlog('no container targes')
+        creep.log('no container targes')
         return false // No accessible energy in the room. Bail.
     }
 
@@ -434,7 +434,7 @@ function findEnergy(creep) {
 
     if (totalE < 300) {
         if (creep.memory.taskList[creep.memory.taskList.length - 1] != 'gatherer') {
-            dlog('Energy crisis! Retasking to gatherer')
+            creep.log('Energy crisis! Retasking to gatherer')
             creep.addTask('gatherer');
         }
     }
@@ -510,7 +510,7 @@ function gatherer(creep) {
             return creep.outsource();
             break;
         default:
-            dlog('Gather logic fallthru: ' + creep.taskState, creep);
+            creep.log('Gather logic fallthru: ' + creep.taskState, creep);
             return false;
     }
 
@@ -560,13 +560,13 @@ function gatherer(creep) {
                 if (pap == OK || pap == ERR_TIRED) {
                     return true
                 } else {
-                    dlog('debug info gatherer source move error: ' + util.getError(pap))
+                    creep.log('debug info gatherer source move error: ' + util.getError(pap))
                     delete creep.memory.eTarget;
                     return false;
                 }
                 break;
             default:
-                dlog('gatherer catch: ' + util.getError(res))
+                creep.log('gatherer catch: ' + util.getError(res))
                 return false;
         }
     }
@@ -586,9 +586,9 @@ function gatherer(creep) {
             var test = findSink(creep);
 
             if (!util.def(test) || !test) {
-                // dlog('unable to acquire new sink.');
+                // creep.log('unable to acquire new sink.');
                 if (!creep.room.memory.nrgReserve) {
-                    dlog(creep.name + ' invalid sink target, returned ' + test);
+                    creep.log(creep.name + ' invalid sink target, returned ' + test);
                 }
                 //        creep.memory.taskList.pop();
 
@@ -615,7 +615,7 @@ function gatherer(creep) {
                 if (derp == OK || derp == ERR_TIRED) {
                     return true;
                 } else {
-                    dlog('debug info gatherer sink move error: ' + util.getError(derp))
+                    creep.log('debug info gatherer sink move error: ' + util.getError(derp))
                     return false
                 }
                 break;
@@ -630,7 +630,7 @@ function gatherer(creep) {
         }
 
     }
-    dlog('gatherer fallthru, task state: ' + creep.taskState);
+    creep.log('gatherer fallthru, task state: ' + creep.taskState);
     creep.room.memory.strategy.economy.gatherMiss++;
     return false
 }
@@ -824,7 +824,7 @@ function findSink(creep) {
                         if (pew == OK || pew == ERR_TIRED) {
                             return potential.id;
                         } else {
-                            dlog('found something good but path blocked or something: ' + util.getError(pew))
+                            creep.log('found something good but path blocked or something: ' + util.getError(pew))
                         }
                     }
                 }
@@ -892,7 +892,7 @@ function checkSourceMiners(creep) {
 
             var assigneeRole = Game.creeps[shafts[thisShaft].assignedTo].memory.role;
             if (!util.def(assigneeRole)) {
-                dlog('a strange and serious event');
+                creep.log('a strange and serious event');
                 continue;
             }
 
@@ -942,7 +942,7 @@ function findSource(creep) {
     var recall = creep.room.memory;
 
     if (!util.def(recall.shafts) || !util.def(recall.sources)) {
-        dlog('creep trying to find source in a room not setup!');
+        creep.log('creep trying to find source in a room not setup!');
         return false;
     } else {
         var shafts = recall.shafts

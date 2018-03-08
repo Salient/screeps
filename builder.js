@@ -36,6 +36,14 @@ function builder(creep) {
     // Take a look around the room for something to do
     creep.say('⚒')
 
+    if (creep.getActiveBodyparts(WORK) == 0 || creep.getActiveBodyparts(CARRY) == 0) {
+        // poor guy is probably injured or something
+        // TODO, maybe find nearest friendly city?
+        creep.changeTask('leaveroom');
+        creep.leaveRoom(creep.memory.birthRoom);
+        return true;
+    }
+
     if (creep.carry.energy == creep.carryCapacity) {
         if (creep.taskState != "SPECIAL") {
             creep.taskState = "SINK";
@@ -45,8 +53,8 @@ function builder(creep) {
     if (creep.carry.energy == 0) {
         // Just got doing something else
         if (creep.taskState != 'SINK') {
-                creep.addTask('filltank');
-                return true;
+            creep.addTask('filltank');
+            return true;
         }
 
         // load done
@@ -94,8 +102,7 @@ function builder(creep) {
                 }
                 break;
             case ERR_NOT_ENOUGH_RESOURCES:
-                creep.changeTask('filltank');
-                return true;
+                return harvest.fillTank(creep);
                 break;
             case ERR_RCL_NOT_ENOUGH:
                 creep.memory.taskList.pop();

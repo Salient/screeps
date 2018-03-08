@@ -121,6 +121,14 @@ module.exports.loop = function() {
                 dlog(overmind.scoreroom(room));
             }
 
+            Game.getscore = function(room) {
+                if (util.def(Memory.Overmind.globalTerrain[room])){
+                dlog('room score of ' + room + ': ' + Memory.Overmind.globalTerrain[room].score);
+                }
+                else {
+                dlog('room not in database')}
+            
+            }
             Game.rank = function() {
                 var ark = Object.keys(Memory.Overmind.globalTerrain);
 
@@ -195,7 +203,8 @@ module.exports.loop = function() {
                 //dlog('after tasking  CPU ' + thisRoom.name + ': ' + Game.cpu.getUsed());
                 //
                 // Manage building placement, build priorities, and roads
-                if (!(Game.time % 45) || !thisRoom.memory.planned) {
+                if (!(Game.time % 45)) {
+                    thisRoom.log('construct triggered')
 					    construct.planRoom(thisRoom);
                     //dlog('after construct  CPU ' + thisRoom.name + ': ' + Game.cpu.getUsed());
                 }

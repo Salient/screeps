@@ -95,7 +95,7 @@ Room.prototype.classify = function() {
     }
 
     classification.score = this.score();
-    // dlog('score for ' + this.name + ': ' + classification.score)
+     dlog('score for ' + this.name + ': ' + classification.score)
     classification.revised = Game.time;
     Memory.Overmind.globalTerrain[this.name] = classification;
 }
@@ -147,7 +147,9 @@ Room.prototype.score = function() {
     // dlog('exits ' + Object.keys(exits).length)
 
     // dlog('nme' + nmes.length + ', srcs:' + srcs.length + ', anathem: ' + anathem.length+ ' mustdie: ' + mustdie.length + ', ore: ' + ore.length + ', exits:' + Object.keys(exits).length + ', srcDist: ' + srcDist + ', ctrlDist: ' + ctrlDist);
-    var score = ((srcs.length * 30) + (Object.keys(exits).length) * 50 + 100) * ctrl - (srcDist + ctrlDist) + ore.length * 10 - (nmes.length * 50 + anathem.length * 100 + mustdie.length * 200);
+    var score = ((srcs.length * 30) + (Object.keys(exits).length) * 50 + 100) * conweight- (srcDist + ctrlDist) + ore.length * 10 - (nmes.length * 50 + anathem.length * 100 + mustdie.length * 200);
+    // this.log("calculating score. variables: "+ 
+    // srcs.length  + ' '+ (Object.keys(exits).length + ' ' + conweight+' ' +  srcDist + ' ' + ctrlDist + ' ' +  " " +  ore.length  + ' . ' + nmes.length + ' ' + anathem.length + ' ' + mustdie.length ));
     // dlog('score is ' + score)
     return score;
 
