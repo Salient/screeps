@@ -1,4 +1,5 @@
 var util = require('common');
+var planning = require('cityPlanning');
 var _ = require('lodash');
 var DEBUG_HARVEST = true;
 
@@ -15,10 +16,7 @@ Creep.prototype.outsource = function() {
 
     this.taskState = 'SOURCE'
     var srcs = this.room.memory.sources;
-    if (!util.def(srcs)) {
-        this.leaveRoom();
-        return true;
-    } else {
+    if (util.def(srcs)) {
         for (var thing in srcs) {
             var realthing = Game.getObjectById(srcs[thing].id);
             if (realthing.ticksToRegeneration < 80) {
@@ -36,7 +34,7 @@ Creep.prototype.outsource = function() {
     //  return this.exploreNewRoom();
     // outsourcing disabled
 
-    this.log(this.name + '/' + this.room.name, ' outsourcing')
+    this.log(' outsourcing')
     if (ovr.length < 2) {
         this.log('derp')
         return false;
@@ -90,7 +88,7 @@ Creep.prototype.hitUp = function(target) {
 // Drop what I'm doing and top off
 Creep.prototype.fillTank = function() {
     this.changeTask('filltank');
-    fillTank(this);
+    return fillTank(this);
 }
 
 Room.prototype.needMiner = function() {
@@ -130,22 +128,22 @@ function mine(creep) {
     // Two scenarios - mining by worker, and mining by miner
     if (!util.def(creep.memory.mTarget)) {
         // Will return a mineshaft object or false if none available
-        var posting = findSource(creep);
-        if (!util.def(posting) || !posting) {
+        var post= findSource(creep);
+        if (!util.def(post) || !post) {
             return false;
         }
-        var newsrc = Game.getObjectById(posting.srcId);
+        var newsrc = Game.getObjectById(post.srcId);
         if (creep.memory.role == 'worker' && newsrc.energy == 0 && newsrc.ticksToRegeneration > 40) {
             return false;
         }
-        creep.memory.mTarget = posting;
+        creep.memory.mTarget = post;
     }
 
     var posting = creep.memory.mTarget;
-    //dlog('should be an id' + posting)
     var srcObj = Game.getObjectById(posting.srcId);
 
     if (!util.def(srcObj)) {
+        creep.log('this is very strange')
         delete creep.memory.mTarget;
         return false;
     }
@@ -155,7 +153,6 @@ function mine(creep) {
     // dlog(creep.name + ' uh wut ' + posting.assignedTo + ' ' )
     // delete creep.memory.mTarget; false;
     // }
-
 
     // No idea why this is needed.
     posting.pos = new RoomPosition(posting.pos.x, posting.pos.y, posting.pos.roomName);
@@ -179,6 +176,7 @@ function mine(creep) {
                 //                return false;
                 break;
             case ERR_TIRED:
+                creep.log('tire')
                 return true;
                 break;
             default:
@@ -220,8 +218,9 @@ module.exports.mine = mine
 module.exports.fillTank = function(creep) {
 
     if (creep.carry.energy == creep.carryCapacity) {
-        if (creep.taskState != "SPECIAL"){
-        creep.taskState = 'SINK';}
+        if (creep.taskState != "SPECIAL") {
+            creep.taskState = 'SINK';
+        }
         return false;
     }
 
@@ -510,7 +509,7 @@ function gatherer(creep) {
             return creep.outsource();
             break;
         default:
-            creep.log('Gather logic fallthru: ' + creep.taskState, creep);
+            creep.log('Gather logic fallthru: ' + creep.taskState);
             return false;
     }
 
@@ -527,6 +526,7 @@ function gatherer(creep) {
             if (!util.def(rst)) {
                 // dlog('mining')
                 var tres = mine(creep);
+                //creep.log('tried to mine, result was ' + tres)
                 if (!tres) {
                     creep.taskState = "LEAVING";
                     creep.changeTask('builder');
@@ -943,6 +943,7 @@ function findSource(creep) {
 
     if (!util.def(recall.shafts) || !util.def(recall.sources)) {
         creep.log('creep trying to find source in a room not setup!');
+        planning.bootstrap(creep.room);
         return false;
     } else {
         var shafts = recall.shafts

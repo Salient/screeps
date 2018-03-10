@@ -53,8 +53,12 @@ function builder(creep) {
     if (creep.carry.energy == 0) {
         // Just got doing something else
         if (creep.taskState != 'SINK') {
-            creep.addTask('filltank');
-            return true;
+            if (harvest.fillTank(creep)) {
+                creep.addTask('filltank');
+                return true;
+            } else {
+                return false;
+            }
         }
 
         // load done

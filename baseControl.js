@@ -281,6 +281,7 @@ function towerControl(room) {
             continue
         }
 
+
         if (attackHostiles(thisTower) ||
             repairBase(thisTower) ||
             repairRoads(thisTower) ||

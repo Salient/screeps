@@ -95,7 +95,7 @@ Room.prototype.classify = function() {
     }
 
     classification.score = this.score();
-     dlog('score for ' + this.name + ': ' + classification.score)
+    // dlog('score for ' + this.name + ': ' + classification.score)
     classification.revised = Game.time;
     Memory.Overmind.globalTerrain[this.name] = classification;
 }

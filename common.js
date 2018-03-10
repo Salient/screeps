@@ -260,6 +260,7 @@ Creep.prototype.leaveRoom = function(dest = "") {
         } else {
             // this.log(this.name, 'at next hop, currently in ' + lustRoute[0].room + ' on the way to ' + lustRoute[lustRoute.length - 1].room);
             lustRoute.shift();
+            this.addTask('builder'); // stimulate the local economy
         }
     }
 

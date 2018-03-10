@@ -7,7 +7,7 @@ var taskMaster = require('tasker');
 var baseSupport = require('baseControl');
 var visuals = require('visuals');
 var overmind = require('overmind');
-const profiler = require('screeps-profiler');
+// const profiler = require('screeps-profiler');
 //dlog("-----------------------\n\n" + 'New Global Tick \nGenesis count ' + Game.cpu.getUsed())
 //Game.f = function() {
 //    for (var ff in Game.flags) {
@@ -62,6 +62,91 @@ function exterminate() {
 }
 Game.x = exterminate;
 
+Game.pw = function() {
+    for (var r in Game.rooms) {
+        var room = Game.rooms[r];
+        construct.planRoom(room);
+    }
+}
+
+Game.score = function() {
+    dlog(overmind.getPriority());
+}
+
+Game.test = function() {
+    var prime = Game.rooms['W7N4'];
+    var source = Game.getObjectById(prime.memory.sources[0].id);
+
+
+    //		var epicenter = source.pos;
+    var bounds = util.bound(source.pos, 2);
+    var sourceMap = source.room.lookForAtArea(LOOK_TERRAIN, bounds.top, bounds.left, bounds.bottom, bounds.right);
+}
+
+
+Game.sr = function(room) {
+    dlog(overmind.scoreroom(room));
+}
+
+Game.getscore = function(room) {
+    if (util.def(Memory.Overmind.globalTerrain[room])) {
+        dlog('room score of ' + room + ': ' + Memory.Overmind.globalTerrain[room].score);
+    } else {
+        dlog('room not in database')
+    }
+
+}
+Game.rank = function() {
+    var ark = Object.keys(Memory.Overmind.globalTerrain);
+
+    var arr = ark.sort(function(a, b) {
+        var x = Memory.Overmind.globalTerrain[a];
+        var y = Memory.Overmind.globalTerrain[b];
+
+        if (x.score > y.score) {
+            return 1;
+        }
+        if (x.score < y.score) {
+            return -1;
+        }
+        return 0;
+
+    });
+
+    for (var rrr in arr) {
+        dlog(arr[rrr] + ': ' + Memory.Overmind.globalTerrain[arr[rrr]].score);
+    }
+}
+
+
+Game.destroyAll = function(structure) {
+    for (var ff in Game.rooms) {
+        var sits = Game.rooms[ff].find(FIND_STRUCTURES, {
+            filter: (i) => i.structureType == structure
+        });
+        for (var dd in sits) {
+            sits[dd].destroy()
+        }
+    }
+}
+Game.destroySites = function(structure) {
+    for (var ff in Game.rooms) {
+        var sits = Game.rooms[ff].find(FIND_CONSTRUCTION_SITES, {
+            filter: (i) => i.structureType == structure
+        });
+        for (var dd in sits) {
+            sits[dd].remove()
+        }
+    }
+}
+Game.pp = function() {
+    for (var room in Game.rooms) {
+        var thisRoom = Game.rooms[room];
+        construct.x(room);
+    }
+}
+
+
 //
 //Game.t = function() {
 //    for (var r in Game.rooms) {
@@ -91,179 +176,151 @@ Game.x = exterminate;
 // Main.js logic should go here.
 
 // Handle upper level strategy for each room
-profiler.enable();
+// profiler.enable();
 module.exports.loop = function() {
-        //    dlog('\n\n New Tick ---')
-        profiler.wrap(function() {
-            Game.pw = function() {
-                for (var r in Game.rooms) {
-                    var room = Game.rooms[r];
-                    construct.planRoom(room);
+
+        // dlog('\n\n New Tick ---' + Game.cpu.getUsed());
+        var looptime = Game.cpu.getUsed();
+
+        // profiler.wrap(function() {
+        ///////////////////////////////////
+        // Main loops start
+        //
+
+        if (!util.def(Memory.loopcache)) {
+            Memory.loopcache = {};
+        }
+        // dlog('\n\n New Tick2 ---' + Game.cpu.getUsed());
+
+        var cache = Memory.loopcache;
+
+        // dlog('\n\n New Tick3 ---' + Game.cpu.getUsed());
+        // dlog('start room loop: ' + Game.cpu.getUsed());
+        var roomloop = Game.cpu.getUsed();
+
+        for (var room in Game.rooms) {
+            var thisRoom = Game.rooms[room];
+
+            // dlog('main start for ' + room + ', ' + Game.cpu.getUsed());
+
+            if (!util.def(cache[room])) {
+                cache[room] = {};
+            }
+
+            thisRoom.memory.lastUsed = Game.time;
+
+            // Pretty diagnostic information
+            //  visuals(thisRoom);
+            //                thisRoom.coolHeatmap();
+            //                 thisRoom.coolEconStats();
+            // dlog(thisRoom.name + ' source miss: ' + thisRoom.memory.strategy.economy.gatherMiss + ', tankMiss: ' +thisRoom.memory.strategy.economy.tankMiss); 
+
+            //    if (!(Math.floor(thisRoom.memory.nextSpawn - Game.time) % 10)) {
+            //        dlog('Next spawn in ' + thisRoom.name + ' in ' + Math.floor((thisRoom.memory.nextSpawn - Game.time)));
+            //}
+
+            //dlog('CPU ' + room.name + ': ' + Game.cpu.getUsed());
+
+
+            // Strategies
+            if (!util.def(cache[room].strategy)) {
+                cache[room].strategy = {
+                    refreshed: Game.time + 27 + util.getRand(1, 7),
+                    interval: 27,
+                    variability: 7
                 }
             }
 
-            Game.score = function() {
-                dlog(overmind.getPriority());
-            }
+            if (Game.time > cache[room].strategy.refreshed) {
+                var change = roomstrat.strategery(thisRoom);
+                cache[room].strategy.refreshed = Game.time + cache[room].strategy.interval + util.getRand(1, cache[room].strategy.variability);
 
-            Game.test = function() {
-                var prime = Game.rooms['W7N4'];
-                var source = Game.getObjectById(prime.memory.sources[0].id);
-
-
-                //		var epicenter = source.pos;
-                var bounds = util.bound(source.pos, 2);
-                var sourceMap = source.room.lookForAtArea(LOOK_TERRAIN, bounds.top, bounds.left, bounds.bottom, bounds.right);
-            }
-
-
-            Game.sr = function(room) {
-                dlog(overmind.scoreroom(room));
-            }
-
-            Game.getscore = function(room) {
-                if (util.def(Memory.Overmind.globalTerrain[room])){
-                dlog('room score of ' + room + ': ' + Memory.Overmind.globalTerrain[room].score);
-                }
-                else {
-                dlog('room not in database')}
-            
-            }
-            Game.rank = function() {
-                var ark = Object.keys(Memory.Overmind.globalTerrain);
-
-                var arr = ark.sort(function(a, b) {
-                    var x = Memory.Overmind.globalTerrain[a];
-                    var y = Memory.Overmind.globalTerrain[b];
-
-                    if (x.score > y.score) {
-                        return 1;
-                    }
-                    if (x.score < y.score) {
-                        return -1;
-                    }
-                    return 0;
-
-                });
-
-                for (var rrr in arr) {
-                    dlog(arr[rrr] + ': ' + Memory.Overmind.globalTerrain[arr[rrr]].score);
+                if (change) {
+                    // maybe alter variability or interval?
                 }
             }
 
-
-            Game.destroyAll = function(structure) {
-                for (var ff in Game.rooms) {
-                    var sits = Game.rooms[ff].find(FIND_STRUCTURES, {
-                        filter: (i) => i.structureType == structure
-                    });
-                    for (var dd in sits) {
-                        sits[dd].destroy()
-                    }
-                }
-            }
-            Game.destroySites = function(structure) {
-                for (var ff in Game.rooms) {
-                    var sits = Game.rooms[ff].find(FIND_CONSTRUCTION_SITES, {
-                        filter: (i) => i.structureType == structure
-                    });
-                    for (var dd in sits) {
-                        sits[dd].remove()
-                    }
-                }
-            }
-            Game.pp = function() {
-                for (var room in Game.rooms) {
-                    var thisRoom = Game.rooms[room];
-                    construct.x(room);
-                }
-            }
-
-            for (var room in Game.rooms) {
-                var thisRoom = Game.rooms[room];
-
-                // Pretty diagnostic information
-				//  visuals(thisRoom);
-				//                thisRoom.coolHeatmap();
-				//                 thisRoom.coolEconStats();
-                // dlog(thisRoom.name + ' source miss: ' + thisRoom.memory.strategy.economy.gatherMiss + ', tankMiss: ' +thisRoom.memory.strategy.economy.tankMiss); 
-
-                //    if (!(Math.floor(thisRoom.memory.nextSpawn - Game.time) % 10)) {
-                //        dlog('Next spawn in ' + thisRoom.name + ' in ' + Math.floor((thisRoom.memory.nextSpawn - Game.time)));
-                //}
-
-                //dlog('CPU ' + room.name + ': ' + Game.cpu.getUsed());
-                if (!(Game.time % 27)) {
-                    roomstrat.strategery(thisRoom);
-                    //dlog('after strat CPU ' + thisRoom.name + ': ' + Game.cpu.getUsed());
-                }
-
-                //dlog('before tasking  CPU ' + thisRoom.name + ': ' + Game.cpu.getUsed());
-                //            taskMaster.taskMinions(thisRoom);
-                //dlog('after tasking  CPU ' + thisRoom.name + ': ' + Game.cpu.getUsed());
-                //
-                // Manage building placement, build priorities, and roads
-                if (!(Game.time % 45)) {
-                    thisRoom.log('construct triggered')
-					    construct.planRoom(thisRoom);
-                    //dlog('after construct  CPU ' + thisRoom.name + ': ' + Game.cpu.getUsed());
-                }
-
-                if (Game.time > thisRoom.memory.nextSpawn) {
-                    population.spawn(thisRoom);
-                    //dlog('after spawn  CPU ' + thisRoom.name + ': ' + Game.cpu.getUsed());
-                }
-
-                //            if (!(Game.time % 300)) {
-                //                construct.refInfra(thisRoom);
-                //                //dlog('after refine  CPU ' + thisRoom.name + ': ' + Game.cpu.getUsed());
-                //
-                //            }
-                //
-				baseSupport.towerControl(thisRoom);
-                //dlog('after base  CPU ' + thisRoom.name + ': ' + Game.cpu.getUsed());
-
-            }
-
-
-            // Information stored in Game object does not persist across ticks
-            Game.dibsList = [];
-            for (var dude in Game.creeps) {
-                var mem = Game.creeps[dude].memory;
-
-                if (util.def(mem.eTarget)) {
-                    Game.dibsList.push(mem.eTarget);
-                }
-                if (util.def(mem.sinkId)) {
-                    Game.dibsList.push(mem.sinkId);
-                }
-            }
-
-
-            for (var dude in Game.creeps) {
-			 taskMaster.performTask(Game.creeps[dude]);
-            }
-
-            // Need to figure out where the best place to put housekeeping stuff. 
-            if (!(Game.time % 11)) {
-
-                for (var q in Memory.creeps) {
-                    if (!Game.creeps[q]) {
-                        delete Memory.creeps[q];
-                    }
-                }
-            }
-
-            //// 
-            //        if (!(Game.time % 300)) {
+            //dlog('before tasking  CPU ' + thisRoom.name + ': ' + Game.cpu.getUsed());
+            //            taskMaster.taskMinions(thisRoom);
+            //dlog('after tasking  CPU ' + thisRoom.name + ': ' + Game.cpu.getUsed());
             //
-            //            for (var r in Memory.rooms) {
-            //                if (!Game.rooms[r]) {
-            //                    delete Memory.rooms[r];
-            //                }
+            // Manage building placement, build priorities, and roads
+            if (!util.def(cache[room].planning)) {
+                cache[room].planning = {
+                    refreshed: Game.time + 45 + util.getRand(1, 7),
+                    interval: 47,
+                    variability: 7
+                }
+            }
+
+            if (Game.time > cache[room].planning.refreshed) {
+                var change = construct.planRoom(thisRoom);
+                cache[room].planning.refreshed = Game.time + cache[room].planning.interval + util.getRand(1, cache[room].planning.variability);
+
+                if (change) {
+                    // maybe alter variability or interval?
+                }
+            }
+
+            if (Game.time > thisRoom.memory.nextSpawn) {
+                population.spawn(thisRoom);
+                //dlog('after spawn  CPU ' + thisRoom.name + ': ' + Game.cpu.getUsed());
+            }
+
+            //            if (!(Game.time % 300)) {
+            //                construct.refInfra(thisRoom);
+            //                //dlog('after refine  CPU ' + thisRoom.name + ': ' + Game.cpu.getUsed());
+            //
             //            }
-            //        }
-        });
+            //
+            baseSupport.towerControl(thisRoom);
+            //dlog('after base  CPU ' + thisRoom.name + ': ' + Game.cpu.getUsed());
+
+        }
+        //dlog('room loop: ' +  (Game.cpu.getUsed() - roomloop)) ;
+
+
+        // Information stored in Game object does not persist across ticks
+        Game.dibsList = [];
+        for (var dude in Game.creeps) {
+            var mem = Game.creeps[dude].memory;
+
+            if (util.def(mem.eTarget)) {
+                Game.dibsList.push(mem.eTarget);
+            }
+            if (util.def(mem.sinkId)) {
+                Game.dibsList.push(mem.sinkId);
+            }
+        }
+
+
+        var creeploop = Game.cpu.getUsed();
+        for (var dude in Game.creeps) {
+            taskMaster.performTask(Game.creeps[dude]);
+        }
+        //dlog('creep loop: ' + (Game.cpu.getUsed() - creeploop));
+
+        // Need to figure out where the best place to put housekeeping stuff. 
+        if (!(Game.time % 11)) {
+
+            for (var q in Memory.creeps) {
+                if (!Game.creeps[q]) {
+                    delete Memory.creeps[q];
+                }
+            }
+        }
+
+        //// 
+        if (!(Game.time % 300)) {
+
+            for (var r in Memory.rooms) {
+                if (Memory.rooms[r].lastUsed < Game.time - 300 || !util.def(Memory.rooms[r].lastUsed)) {
+                    delete Memory.rooms[r];
+                    dlog('purging memory of ' + r);
+                }
+            }
+        }
+        //   });
     }
     //
 function dlog(msg) {

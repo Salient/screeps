@@ -44,6 +44,7 @@ Room.prototype.needStructure = function(structure) {
 
 Room.prototype.buildRoads = function() {
 
+    // this.log('building roads');
     var maxBuild = 5;
 
     if (this.memory.strategy && this.memory.strategy.construction) {
@@ -85,7 +86,7 @@ Room.prototype.buildRoads = function() {
     if (!util.def(this.memory.trafficMap)) {
         this.memory.trafficMap = {};
     }
-this.log('scoring traffic for road building');
+    this.log('scoring traffic for road building');
     var map = this.memory.trafficMap;
 
     // Remember we can't build roads on the first or last tile (exits)
@@ -453,6 +454,21 @@ Room.prototype.placeStorage = function() {
     }
 }
 
+Room.prototype.checkReserved = function(pos) {
+    //  run through known reserved spots 
+
+
+    if (util.def(this.memory.shafts)) {
+        for (var shaft in this.memory.shafts) {
+            var thisShaft = this.memory.shafts[shaft];
+            if (thisShaft.pos.x == pos.x && thisShaft.pos.y == pos.y) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 Room.prototype.placeExtensions = function() {
     // Compare number allowed at this controller level vs. how many in room
     // Should only be called if room level has changed!
@@ -473,15 +489,15 @@ Room.prototype.placeExtensions = function() {
     while (placeNum > 0) {
         for (var xdelta = -radius + radius % 2; xdelta <= radius; xdelta += 2) {
             for (var ydelta = -radius + radius % 2; ydelta <= radius; ydelta += 2) {
-                var site = new RoomPosition(origin.x + xdelta, origin.y +
-                    ydelta, this.name);
-                var res = this
-                    .createConstructionSite(site, STRUCTURE_EXTENSION);
-                // if (res == ERR_RCL_NOT_ENOUGH){return}
-                dlog('placing extension at ' + (origin.x + xdelta) + ',' +
-                    (origin.y + ydelta) + ' resut: ' + util.getError(res));
-                if (res == OK) {
-                    placeNum--;
+                var site = new RoomPosition(origin.x + xdelta, origin.y + ydelta, this.name);
+                this.log('chck ' + this.checkReserved(site));
+                if (this.checkReserved(site)) {
+                    var res = this.createConstructionSite(site, STRUCTURE_EXTENSION);
+                    // if (res == ERR_RCL_NOT_ENOUGH){return}
+                    dlog('placing extension at ' + (origin.x + xdelta) + ',' + (origin.y + ydelta) + ' resut: ' + util.getError(res));
+                    if (res == OK) {
+                        placeNum--;
+                    }
                 }
             }
         }
@@ -523,7 +539,7 @@ Room.prototype.placeLinks = function() {
     }
 
     if (placeNum == 0) {
-        dlog('decided that I dont want to place anyt links ')
+        this.log('decided that I dont want to place anyt links ')
         return false;
     }
 
@@ -568,8 +584,7 @@ Room.prototype.placeLinks = function() {
             for (var xdelta = -radius + radius % 2 + 1; xdelta <= radius; xdelta += 2) {
                 for (var ydelta = -radius + radius % 2 + 1; ydelta <= radius; ydelta += 2) {
                     dlog(origin.x + ',' + origin.y + ' - ' + this.name);
-                    var site = new RoomPosition(origin.x + xdelta, origin.y +
-                        ydelta, this.name);
+                    var site = new RoomPosition(origin.x + xdelta, origin.y + ydelta, this.name);
                     var res = this.createConstructionSite(site, STRUCTURE_LINK);
                     if (res == OK) {
                         var newSite = site.lookForAt(LOOK_CONSTRUCTION_SITES)[0];
