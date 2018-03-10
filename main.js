@@ -84,10 +84,6 @@ Game.test = function() {
 }
 
 
-Game.sr = function(room) {
-    dlog(overmind.scoreroom(room));
-}
-
 Game.getscore = function(room) {
     if (util.def(Memory.Overmind.globalTerrain[room])) {
         dlog('room score of ' + room + ': ' + Memory.Overmind.globalTerrain[room].score);
@@ -255,6 +251,7 @@ module.exports.loop = function() {
 
             if (Game.time > cache[room].planning.refreshed) {
                 var change = construct.planRoom(thisRoom);
+
                 cache[room].planning.refreshed = Game.time + cache[room].planning.interval + util.getRand(1, cache[room].planning.variability);
 
                 if (change) {

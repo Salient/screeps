@@ -83,7 +83,7 @@ Creep.prototype.updateTraffic = function(boost) {
                 thisSpot.heat = thisSpot.heat + 15;
             }
         }
-        if (util.def(boost)){
+        if (util.def(boost)) {
             thisSpot.heat = thisSpot.heat + boost;
         }
         thisSpot.refreshed = Game.time;
@@ -105,6 +105,11 @@ Object.defineProperty(Creep.prototype, "currentTask", {
     }
 });
 
+Object.defineProperty(Creep.prototype, "role", {
+    get() {
+        return this.memory.role;
+    }
+});
 
 Creep.prototype.changeTask = function(newtask) {
     if (util.def(this.memory.taskList) && this.memory.taskList.length > 0) {
@@ -126,6 +131,10 @@ var performTask = function(creep) {
         return;
     }
 
+    if (!util.def(creep.memory.birthRoom)) {
+        creep.memory.birthRoom = Memory.homeworld;
+        creep.log('corruption')
+    }
     creep.updateTraffic();
     // Two types of tasks: default role task, and special assigned tasks
     // role tasks are search and perform logic, assigned are specific targets
@@ -180,7 +189,8 @@ var performTask = function(creep) {
             jobResult = build.repair(creep);
             break;
         case 'scout':
-            //jobResult = spore.disperse(creep);
+            creep.log('immascout')
+                //jobResult = spore.disperse(creep);
             jobResult = spore.infest(creep);
             break;
         case 'filltank':
@@ -201,7 +211,7 @@ var performTask = function(creep) {
             jobResult = true;
             break;
         default:
-            dlog('Unhandled creep task! (' + taskList[taskList.length - 1] + ')');
+            creep.log('Unhandled creep task! (' + taskList[taskList.length - 1] + ')');
     }
 
     // dlog('jum result is ' + jobResult)
@@ -265,6 +275,10 @@ var getDefaultTask = function(creep) { // What to do if the creep has
 function somethingNeedDoing(creep) {
 
     var role = creep.memory.role;
+    if (!util.def(role)) {
+        creep.log('i have amnesia!');
+        creep.memory.role = 'worker';
+    }
     switch (role) {
         case 'miner':
         case 'scout':
@@ -279,6 +293,7 @@ function somethingNeedDoing(creep) {
             } else if (result <= 9) {
                 return 'technician'
             } else {
+                return 'worker';
                 //                return 'scout'
             }
             break;

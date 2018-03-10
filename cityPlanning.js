@@ -44,7 +44,7 @@ Room.prototype.needStructure = function(structure) {
 
 Room.prototype.buildRoads = function() {
 
-    // this.log('building roads');
+    // this.log(
     var maxBuild = 5;
 
     if (this.memory.strategy && this.memory.strategy.construction) {
@@ -86,7 +86,7 @@ Room.prototype.buildRoads = function() {
     if (!util.def(this.memory.trafficMap)) {
         this.memory.trafficMap = {};
     }
-    this.log('scoring traffic for road building');
+    //this.log('scoring traffic for road building');
     var map = this.memory.trafficMap;
 
     // Remember we can't build roads on the first or last tile (exits)

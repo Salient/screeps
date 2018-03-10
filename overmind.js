@@ -103,7 +103,8 @@ Room.prototype.classify = function() {
 
 Room.prototype.score = function() {
 
-    // dlog('scoring room ' + this.name)
+
+     dlog('scoring room ' + this.name)
     var nmes = this.find(FIND_HOSTILE_CREEPS);
     var srcs = this.find(FIND_SOURCES);
     var anathem = this.find(FIND_HOSTILE_STRUCTURES);
@@ -112,10 +113,11 @@ Room.prototype.score = function() {
     var exits = Game.map.describeExits(this.name);
     var conweight = 1;
 
+    var mapDistance = Game.map.getRoomLinearDistance(Memory.homeworld, this.name);
     var ctrl = this.controller;
 
     if (!util.def(ctrl)) {
-        conweight = 0.1;
+        conweight = 0;
     } else {
         if (ctrl.level > 0) {
             //somebody owns this room
@@ -147,48 +149,9 @@ Room.prototype.score = function() {
     // dlog('exits ' + Object.keys(exits).length)
 
     // dlog('nme' + nmes.length + ', srcs:' + srcs.length + ', anathem: ' + anathem.length+ ' mustdie: ' + mustdie.length + ', ore: ' + ore.length + ', exits:' + Object.keys(exits).length + ', srcDist: ' + srcDist + ', ctrlDist: ' + ctrlDist);
-    var score = ((srcs.length * 30) + (Object.keys(exits).length) * 50 + 100) * conweight- (srcDist + ctrlDist) + ore.length * 10 - (nmes.length * 50 + anathem.length * 100 + mustdie.length * 200);
+    var score = (((srcs.length * 30) + (Object.keys(exits).length) * 50 + 100) * conweight- (srcDist + ctrlDist) + ore.length * 10 - (nmes.length * 50 + anathem.length * 100 + mustdie.length * 200)/mapDistance);
     // this.log("calculating score. variables: "+ 
     // srcs.length  + ' '+ (Object.keys(exits).length + ' ' + conweight+' ' +  srcDist + ' ' + ctrlDist + ' ' +  " " +  ore.length  + ' . ' + nmes.length + ' ' + anathem.length + ' ' + mustdie.length ));
-    // dlog('score is ' + score)
-    return score;
-
-}
-
-module.exports.scoreroom = function(roomname) {
-
-    var room = Game.rooms[roomname];
-    util.dumpObj(room)
-        // dlog('scoring room ' + this.name)
-    var nmes = room.find(FIND_HOSTILE_CREEPS);
-    var srcs = room.find(FIND_SOURCES);
-    var anathem = room.find(FIND_HOSTILE_STRUCTURES);
-    var mustdie = room.find(FIND_HOSTILE_SPAWNS);
-    var ore = room.find(FIND_MINERALS);
-    var exits = room.find(FIND_EXIT);
-
-    if (util.def(room.controller)) {
-        var ctrl = 1;
-    } else {
-        var ctrl = 0;
-    }
-
-    if (srcs.length > 1) {
-        var srcDist = srcs[0].pos.findPathTo(srcs[1]).length;
-        //dlog('srcs dist: ' + srcDist)
-    } else {
-        srcDist = 0;
-    }
-
-    if (srcs.length > 0 && room.controller) {
-        var ctrlDist = srcs[0].pos.findPathTo(room.controller).length;
-        //dlog('ctrl dist: ' + ctrlDist)
-    } else {
-        var ctrlDist = 0;
-    }
-
-    //  dlog('nme' + nmes.length + ', srcs:' + srcs.length + ', anathem: ' + anathem.length+ ' mustdie: ' + mustdie.length + ', ore: ' + ore.length + ', exits:' + exits.length + ', srcDist: ' + srcDist + ', ctrlDist: ' + ctrlDist);
-    var score = (srcs.length * 30) + (exits.length * 3) + 100 * ctrl - (srcDist + ctrlDist) + ore.length * 10 - (nmes.length * 50 + anathem.length * 100 + mustdie.length * 200);
     // dlog('score is ' + score)
     return score;
 

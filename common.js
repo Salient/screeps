@@ -4,11 +4,11 @@
 
 module.exports.myName = Game.spawns[Object.keys(Game.spawns)[0]].owner.username;
 
-Creep.prototype.log = function(msg) { 
+Creep.prototype.log = function(msg) {
     console.log(this.name + '/' + this.room.name + '/' + this.currentTask + ': ' + msg);
 }
 
-Room.prototype.log = function(msg) { 
+Room.prototype.log = function(msg) {
     console.log("(debug) " + this.name + ': ' + msg);
 }
 
@@ -82,10 +82,10 @@ module.exports.dumpObject = dumpObject;
 module.exports.dumpObj = dumpObject;
 
 var def = function(obj) {
-	//  return (obj === false) ? false : !!obj;
-	 return (obj === false) ? true : (obj === undefined || obj === null) ? false : true;
-	
-	return	!!obj;
+    //  return (obj === false) ? false : !!obj;
+    return (obj === false) ? true : (obj === undefined || obj === null) ? false : true;
+
+    return !!obj;
     //	if ((typeof obj !== undefined) || (obj === null)) {
     //		return false;
     //	}
@@ -195,23 +195,24 @@ Creep.prototype.leaveRoom = function(dest = "") {
             //                "exit": null
             //            };
             //
+
+
+            // Workers should prefer higher scored rooms
+            // Scouts should prefer unscored rooms
+            // solders should prefer lower scored rooms
+
             var adjRooms = shuffle(Game.map.describeExits(this.room.name));
             var randomExit = {
                 room: adjRooms[Object.keys(adjRooms)[0]],
                 exit: Object.keys(adjRooms)[0]
             }
-            var score = -999;
 
-            //dumpObject(Memory.Overmind.globalTerrain)
 
             for (var option in adjRooms) {
                 var exit = adjRooms[option];
-                if (Memory.Overmind.globalTerrain[exit]) {
+                if (Memory.Overmind.globalTerrain[exit] && Memory.Overmind.globalTerrain[exit.score] > 0) {
                     var storedScore = Memory.Overmind.globalTerrain[exit].score;
-                    if (!storedScore) {
-                        storedScore = 0;
-                    }
-                    if (storedScore > score) {
+                    if (storedScore > score && this.role == 'worker') {
                         score = storedScore;
 
                         //this.log('testing ' + exit + ' with score ' + score)
@@ -220,8 +221,14 @@ Creep.prototype.leaveRoom = function(dest = "") {
                             exit: option
                         }
                     }
+                } else if (this.role == 'scout') {
+                    randomExit = {
+                        room: exit,
+                        exit: option
+                    }
                 }
             }
+
             //
             //            for (var rr in adjRooms) {
             //                if (Memory.Overmind && Memory.Overmind.globalTerrain && Memory.Overmind.globalTerrain[adjRooms[rr]] && Memory.Overmind.globalTerrain[adjRooms[rr]].score > 0) {
@@ -250,7 +257,12 @@ Creep.prototype.leaveRoom = function(dest = "") {
         //made it to the next room. 
         // need to move away from exit or forever roam the halls of infitite mirrors
         this.moveAwayFromExit();
-        Game.rooms[this.room.name].classify();
+        this.room.classify();
+
+        if (this.role == 'scout') {
+            this.log('eterend room on way to ' + lustRoute[lustRoute.length- 1].room);
+        }
+
         if (lustRoute.length == 1) {
             // this is the destination
             // this.log('at elaveroom dest')
@@ -260,7 +272,9 @@ Creep.prototype.leaveRoom = function(dest = "") {
         } else {
             // this.log(this.name, 'at next hop, currently in ' + lustRoute[0].room + ' on the way to ' + lustRoute[lustRoute.length - 1].room);
             lustRoute.shift();
-            this.addTask('builder'); // stimulate the local economy
+            if (this.memory.role == 'worker') {
+                this.addTask('builder'); // stimulate the local economy
+            }
         }
     }
 

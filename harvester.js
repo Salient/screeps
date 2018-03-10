@@ -34,7 +34,7 @@ Creep.prototype.outsource = function() {
     //  return this.exploreNewRoom();
     // outsourcing disabled
 
-    this.log(' outsourcing')
+    // this.log(' outsourcing')
     if (ovr.length < 2) {
         this.log('derp')
         return false;
@@ -475,7 +475,7 @@ function gatherer(creep) {
     }
 
     // Done dropping off
-    if (creep.carry.energy == 0 && creep.memory.taskState != 'LEAVING') {
+    if (creep.carry.energy == 0 ) {
         if (creep.taskState == 'SINK' && creep.room.memory.nrgReserve == false) {
             // pop job just in case something else needs doing 
             creep.memory.taskState = "SOURCE";
@@ -502,11 +502,7 @@ function gatherer(creep) {
             break;
         case 'SOURCE':
             creep.say('💰');
-            return source();
-            break;
-        case 'LEAVING':
-            // creep.log('leaving?')
-            return creep.outsource();
+            return (source() || creep.outsource());
             break;
         default:
             creep.log('Gather logic fallthru: ' + creep.taskState);
@@ -525,14 +521,14 @@ function gatherer(creep) {
             var rst = findBacon(creep);
             if (!util.def(rst)) {
                 // dlog('mining')
-                var tres = mine(creep);
+                return  mine(creep);
                 //creep.log('tried to mine, result was ' + tres)
-                if (!tres) {
-                    creep.taskState = "LEAVING";
-                    creep.changeTask('builder');
-                    return true;
-                }
-                return tres;
+                // if (!tres) {
+                //     creep.taskState = "LEAVING";
+                //     creep.changeTask('builder');
+                //     return true;
+                // }
+                // return tres;
             } else {
                 targ = Game.getObjectById(rst);
                 creep.memory.eTarget = rst;
@@ -793,8 +789,11 @@ function findSink(creep) {
         //        dlog(creep.name + ': no sink targets in this room, trying origin');
         // dlog(Memory.rooms[creep.memory.birthRoom].spawnId)
         // dlog(creep.name + '/' + creep.room.name + ': fix me sink')
+        creep.log('huh')
+        if (util.def(creep.memory.birthRoom)){
         return Memory.rooms[creep.memory.birthRoom].spawnId;
-        //        return false;
+        }
+                return false;
     }
 
     // dlog('finding sink in ' + creep.room.name + ', targets: ' + targets)

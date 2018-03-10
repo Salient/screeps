@@ -66,7 +66,7 @@ function selectNewRoom(creep) {
         if (Memory.Overmind.globalTerrain && Memory.Overmind.globalTerrain[promised]) {
 
             var type = Memory.Overmind.globalTerrain[promised].class;
-            dlog('type is ' + type);
+            // dlog('type is ' + type);
             if(!util.def(type)) {
                 dlog('type is undef - object dump is ');
             util.dumpObj(Memory.Overmind.globalTerrain[promised]);
