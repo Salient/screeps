@@ -7,21 +7,24 @@ function showFutureRoads(room) {
         return;
     }
 
-    return;
+    // return;
 
     var heatm = room.memory.trafficMap;
 
     if (!util.def(heatm)) {
+        console.log('hwl')
         return
     }
-
+var vis = room.visual;
     for (var xval in heatm) {
         for (var yval in heatm[xval]) {
             var spot = heatm[xval][yval];
             // util.dumpObj(spot)
             if (util.def(spot)) {
+                // room.log(spot)
                 if (spot.heat > 40) {
-                    room.visual.circle(xval, yval, {
+                    // console.log('dddhwl')
+                    vis.circle(xval, yval, {
                         fill: '#2277FF'
                     })
                 }
@@ -29,6 +32,6 @@ function showFutureRoads(room) {
         }
     }
 }
-module.exports = function show(room) {
+module.exports = function(room) {
     showFutureRoads(room);
 }

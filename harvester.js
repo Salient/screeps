@@ -504,6 +504,10 @@ function gatherer(creep) {
             creep.say('💰');
             return (source() || creep.outsource());
             break;
+        case 'SPECIAL': 
+            creep.taskState = 'SINK';
+            return sink();
+            break;
         default:
             creep.log('Gather logic fallthru: ' + creep.taskState);
             return false;
@@ -708,6 +712,7 @@ function findBacon(creep) {
     ];
 
     var storageReserves = 20000;
+    if (!creep.room.memory.strategy){return}
     if (util.def(creep.room.memory.strategy.economy.energyReservePerLevel) && util.def(creep.room.controller)) {
         storageReserves = creep.room.memory.strategy.economy.energyReservePerLevel * creep.room.controller.level;
     }
@@ -789,11 +794,8 @@ function findSink(creep) {
         //        dlog(creep.name + ': no sink targets in this room, trying origin');
         // dlog(Memory.rooms[creep.memory.birthRoom].spawnId)
         // dlog(creep.name + '/' + creep.room.name + ': fix me sink')
-        creep.log('huh')
-        if (util.def(creep.memory.birthRoom)){
         return Memory.rooms[creep.memory.birthRoom].spawnId;
-        }
-                return false;
+        //        return false;
     }
 
     // dlog('finding sink in ' + creep.room.name + ', targets: ' + targets)

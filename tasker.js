@@ -188,6 +188,11 @@ var performTask = function(creep) {
         case 'damageControl':
             jobResult = build.repair(creep);
             break;
+        case 'seedling':
+            creep.log('immaseedling')
+                //jobResult = spore.disperse(creep);
+            jobResult = spore.infest(creep);
+            break;
         case 'scout':
             creep.log('immascout')
                 //jobResult = spore.disperse(creep);
@@ -255,7 +260,7 @@ var getDefaultTask = function(creep) { // What to do if the creep has
     // dlog('assigning default task');
     switch (role) {
         case 'worker':
-        case 'scout':
+        case 'seedling':
         case 'miner':
             return role;
             break;
@@ -280,8 +285,9 @@ function somethingNeedDoing(creep) {
         creep.memory.role = 'worker';
     }
     switch (role) {
-        case 'miner':
         case 'scout':
+        case 'miner':
+        case 'seedling':
             return role;
             break;
         case 'worker':
@@ -294,7 +300,7 @@ function somethingNeedDoing(creep) {
                 return 'technician'
             } else {
                 return 'worker';
-                //                return 'scout'
+                //                return 'seedling'
             }
             break;
 

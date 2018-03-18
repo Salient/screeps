@@ -96,7 +96,7 @@ Room.prototype.classify = function() {
 
     classification.score = this.score();
     // dlog('score for ' + this.name + ': ' + classification.score)
-    classification.revised = Game.time;
+    classification.revised = Game.time + util.getRand(1, 40); // randomize classificaiton calls
     Memory.Overmind.globalTerrain[this.name] = classification;
 }
 
@@ -104,7 +104,6 @@ Room.prototype.classify = function() {
 Room.prototype.score = function() {
 
 
-     dlog('scoring room ' + this.name)
     var nmes = this.find(FIND_HOSTILE_CREEPS);
     var srcs = this.find(FIND_SOURCES);
     var anathem = this.find(FIND_HOSTILE_STRUCTURES);
@@ -149,10 +148,11 @@ Room.prototype.score = function() {
     // dlog('exits ' + Object.keys(exits).length)
 
     // dlog('nme' + nmes.length + ', srcs:' + srcs.length + ', anathem: ' + anathem.length+ ' mustdie: ' + mustdie.length + ', ore: ' + ore.length + ', exits:' + Object.keys(exits).length + ', srcDist: ' + srcDist + ', ctrlDist: ' + ctrlDist);
-    var score = (((srcs.length * 30) + (Object.keys(exits).length) * 50 + 100) * conweight- (srcDist + ctrlDist) + ore.length * 10 - (nmes.length * 50 + anathem.length * 100 + mustdie.length * 200)/mapDistance);
-    // this.log("calculating score. variables: "+ 
-    // srcs.length  + ' '+ (Object.keys(exits).length + ' ' + conweight+' ' +  srcDist + ' ' + ctrlDist + ' ' +  " " +  ore.length  + ' . ' + nmes.length + ' ' + anathem.length + ' ' + mustdie.length ));
+    var score = ((((srcs.length * 30) + (Object.keys(exits).length) * 50 + 100) - (srcDist + ctrlDist)*2 + ore.length * 10) /(mapDistance*2)* conweight- (nmes.length * 50 + anathem.length * 100 + mustdie.length * 200));
+     this.log("calculating score. variables: "+ 
+     srcs.length  + ' '+ (Object.keys(exits).length + ' ' + conweight+' ' +  srcDist + ' ' + ctrlDist + ' ' +  " " +  ore.length  + ' . ' + nmes.length + ' ' + anathem.length + ' ' + mustdie.length  + ' ' + mapDistance));
     // dlog('score is ' + score)
+    dlog('scoring room ' + this.name + ' ' + score)
     return score;
 
 }

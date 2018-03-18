@@ -143,7 +143,7 @@ module.exports.infest = function(creep) {
             return;
         };
         */
-    if (!util.def(creep.room.controller)) {
+    if (!util.def(creep.room.controller) || creep.role == 'scout') {
         var newtarg = selectNewRoom(creep);
         if (newtarg) {
             creep.leaveRoom(newtarg);

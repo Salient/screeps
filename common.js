@@ -168,7 +168,16 @@ Creep.prototype.leaveRoom = function(dest = "") {
                 return false;
             }
 
-            var interRoomRoute = Game.map.findRoute(this.room.name, dest);
+            var interRoomRoute = Game.map.findRoute(this.room.name, dest, {
+                routeCallback(roomName, fromRoomName) {
+                    if (Memory.Overmind.globalTerrain[exit] && Memory.Overmind.globalTerrain[exit].score) {
+                        this.log('route cost of ' + roomName + ': ' + (-Memory.Overmind.globalTerrain[exit].score));
+                        return (-Memory.Overmind.globalTerrain[exit].score);
+                    } else {
+                        return 1
+                    };
+                }
+            });
 
             if (interRoomRoute == ERR_NO_PATH) {
                 //this.memory.taskList.pop();
@@ -198,7 +207,7 @@ Creep.prototype.leaveRoom = function(dest = "") {
 
 
             // Workers should prefer higher scored rooms
-            // Scouts should prefer unscored rooms
+            // seedlings should prefer unscored rooms
             // solders should prefer lower scored rooms
 
             var adjRooms = shuffle(Game.map.describeExits(this.room.name));
@@ -207,10 +216,22 @@ Creep.prototype.leaveRoom = function(dest = "") {
                 exit: Object.keys(adjRooms)[0]
             }
 
+            if (!Memory.Overmind.globalTerrain[randomExit]) {
+                Memory.Overmind.globalTerrain[randomExit] = {
+                    score: 0,
+                    revised: 0
+                }
+            }
+
+            var score = Memory.Overmind.globalTerrain[randomExit].score;
 
             for (var option in adjRooms) {
                 var exit = adjRooms[option];
-                if (Memory.Overmind.globalTerrain[exit] && Memory.Overmind.globalTerrain[exit.score] > 0) {
+                this.log('choosing eit from room. choices: ' + adjRooms);
+                dumpObject(adjRooms)
+                this.log('current choice: ' + exit)
+                if (Memory.Overmind.globalTerrain[exit] && Memory.Overmind.globalTerrain[exit].score > 0 && Memory.Overmind.globalTerrain[exit].revised > Game.time - 300) {
+
                     var storedScore = Memory.Overmind.globalTerrain[exit].score;
                     if (storedScore > score && this.role == 'worker') {
                         score = storedScore;
@@ -221,7 +242,7 @@ Creep.prototype.leaveRoom = function(dest = "") {
                             exit: option
                         }
                     }
-                } else if (this.role == 'scout') {
+                } else if (this.role == 'seedling') {
                     randomExit = {
                         room: exit,
                         exit: option
@@ -253,14 +274,19 @@ Creep.prototype.leaveRoom = function(dest = "") {
     }
     var lustRoute = this.memory.wanderlust.route;
 
+    if (!lustRoute) {
+        delete this.memory.wanderlust;
+        return false;
+    }
+
     if (this.room.name == lustRoute[0].room) {
         //made it to the next room. 
         // need to move away from exit or forever roam the halls of infitite mirrors
         this.moveAwayFromExit();
         this.room.classify();
 
-        if (this.role == 'scout') {
-            this.log('eterend room on way to ' + lustRoute[lustRoute.length- 1].room);
+        if (this.role == 'seedling') {
+            this.log('entered room on way to ' + lustRoute[lustRoute.length - 1].room);
         }
 
         if (lustRoute.length == 1) {
@@ -289,7 +315,7 @@ Creep.prototype.leaveRoom = function(dest = "") {
     var derp = this.moveTo(newRoomPos, {
         reusePath: 15,
         visualizePathStyle: {
-            stroke: '41ff166'
+            stroke: '41ffff'
         }
     });
 
@@ -305,6 +331,13 @@ Creep.prototype.leaveRoom = function(dest = "") {
             break;
         default:
             this.log(' trouble with interrom move : ' + derp + ', dest: ' + nextHop.room);
+
+            this.log('route: ' + dumpObject(lustRoute))
+            this.log('first: ' + dumpObject(lustRoute[0]))
+            dumpObject(lustRoute[0])
+
+            Memory.Overmind.globalTerrain[lustRoute[0].room].score -= 20;
+            delete this.memory.wanderlust;
             //  this.moveAwayFromExit();
             this.moveRandom();
             return true;

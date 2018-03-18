@@ -15,13 +15,47 @@ var debug = false
 // FYI, max call stack size is 4500. ish. it seems to depend
 
 
+Room.prototype.schemaCheck = function() {
+    this.memory.cache = this.memory.cache || {};
+    this.memory.cache.construction = this.memory.cache.construction || {};
 
-Room.prototype.coolTrafficMap = function() {
+    this.memory.trafficMap = this.memory.trafficMap || {};
+    this.memory.infrastructure = this.memory.infrastructure || {};
+    // this.memory.links = this.memory.links || {};
 
-    if (!util.def(this.memory.strategy.construction)) {
-        return;
+    if (!this.memory.links) {
+        this.log('finding and destroying all links present because i forgot i had any')
+        var dat = this.find(FIND_MY_STRUCTURES, {
+            filter: {
+                structureType: STRUCTURE_LINK
+            }
+        });
+
+        if (dat.length > 0) {
+            for (var dit in dat) {
+                dat[dit].destroy();
+            }
+        }
+
+        dat = this.find(FIND_MY_CONSTRUCTION_SITES, {
+            filter: {
+                structureType: STRUCTURE_LINK
+
+            }
+        });
+
+        if (dat.length > 0) {
+            util.dumpObj(dat)
+            for (var dit in dat) {
+                dat[dit].remove();
+            }
+        }
+        this.memory.links = {}
     }
 }
+
+
+
 
 Room.prototype.needStructure = function(structure) {
 
@@ -82,10 +116,6 @@ Room.prototype.buildRoads = function() {
     // Taken care of explicit paths
     // start at the top and look for any tile that has high traffic
 
-    // Measure traffic around the room
-    if (!util.def(this.memory.trafficMap)) {
-        this.memory.trafficMap = {};
-    }
     //this.log('scoring traffic for road building');
     var map = this.memory.trafficMap;
 
@@ -149,9 +179,6 @@ Room.prototype.markExitDoors = function() {
         right[y] = (tileB != 'wall') ? 1 : 0;
     }
 
-    if (!util.def(this.memory.infrastructure)) {
-        this.memory.infrastructure = {}
-    }
 
     var exits = {
         top: top,
@@ -309,7 +336,10 @@ function bootstrap(room) {
     // Stores in room.memory.shafts
     setupSources(room);
 
-    var spwn = room.find(FIND_MY_SPAWNS)[0];
+    // Order array by name in case there is more than one spawn. we want the original
+    var spwn = room.find(FIND_MY_SPAWNS).sort()[0];
+
+
     if (!util.def(spwn)) {
         room.placeSpawn();
         // this is a new room where I don't have a spawn. bail for now.
@@ -530,6 +560,9 @@ Room.prototype.placeContainers = function() {
 
 Room.prototype.placeLinks = function() {
 
+    if (!this.memory.planned) {
+        return false
+    }
     var placeNum = this.needStructure(STRUCTURE_LINK);
     var origin = Game.getObjectById(this.memory.spawnId).pos;
 
@@ -540,32 +573,39 @@ Room.prototype.placeLinks = function() {
 
     if (placeNum == 0) {
         this.log('decided that I dont want to place anyt links ')
-        return false;
+            /// return false;
     }
 
     var linkSet = this.memory.links;
-    if (!util.def(linkSet)) {
-        this.memory.links = {};
-    }
+
 
     // Link memory object structure
     //
+    // key: game object id,
     // obj{
-    // id: game object id,
-    // constructId: game object id for construction site
     // pos: position object,
     // type: prime, source, shuttle
 
-
-    // refresh list 
+    this.log('hmm' + linkSet)
+        // refresh list 
     for (var linkId in linkSet) {
         var link = linkSet[linkId];
 
-        if (!Game.getObjectById(linkId)) {
+        this.log('checking ' + linkId)
+        if (!util.def(linkId) || !util.def(Game.getObjectById(linkId))) {
             // check if it was a construction site 
-            var stuff = link.pos.lookForAt(LOOK_STRUCTURES);
-            for (var thing in stuff) {
-                var newStructure = stuff[thing];
+
+            this.log(linkId + ' is not valid')
+            util.dumpObj(link)
+
+            var site = new RoomPosition(link.pos.x, link.pos.y, link.pos.roomName);
+            var sitestuff = site.lookFor(LOOK_STRUCTURES);
+            if (!sitestuff.length) {
+                var sitestuff = site.lookFor(LOOK_CONSTRUCTION_SITES);
+            }
+            this.log('stuff is ');
+            for (var thing in sitestuff) {
+                var newStructure = sitestuff[thing];
                 if (newStructure.structureType == STRUCTURE_LINK) {
                     linkSet[newStructure.id] = {
                         pos: newStructure.pos,
@@ -573,22 +613,23 @@ Room.prototype.placeLinks = function() {
                     };
                 }
             }
-            delete linkSet.linkId;
+            delete linkSet[linkId];
         }
     }
 
-
     this.placePrimeLink = function() {
-        var radius = 5;
+        var radius = 3;
         dance:
             for (var xdelta = -radius + radius % 2 + 1; xdelta <= radius; xdelta += 2) {
                 for (var ydelta = -radius + radius % 2 + 1; ydelta <= radius; ydelta += 2) {
-                    dlog(origin.x + ',' + origin.y + ' - ' + this.name);
                     var site = new RoomPosition(origin.x + xdelta, origin.y + ydelta, this.name);
                     var res = this.createConstructionSite(site, STRUCTURE_LINK);
                     if (res == OK) {
-                        var newSite = site.lookForAt(LOOK_CONSTRUCTION_SITES)[0];
-                        linkSet[newSite.id] = {
+                        var newSite = site.lookFor(LOOK_CONSTRUCTION_SITES);
+                        this.log('newsite:')
+                        util.dumpObj(newSite);
+
+                        linkSet[util.getRand(1, 5)] = { // assign it some random key for now, can't get game obj id until next tick becuase screw you thats why
                                 pos: site,
                                 type: 'prime'
                             }
@@ -607,9 +648,23 @@ Room.prototype.placeLinks = function() {
 
     this.placeAuxLink = function(srcId) {
         //
+
+        if (!srcId) {
+            if (!this.memory.sources) {
+                return false;
+            }
+
+        }
+        //
+        //
+        //
         // lookforatarea look constant   LOOK_TERRAIN
         var source = Game.getObjectById(srcId);
 
+        if (!source) {
+            this.log('aux link error place');
+            return false
+        }
         //		var epicenter = source.pos;
         var bounds = util.bound(source.pos, 2);
         dlog('----')
@@ -619,11 +674,88 @@ Room.prototype.placeLinks = function() {
         dlog('ooooo')
     }
 
+    // Defines strategy for using links in this room
+    var linkmode = this.memory.strategy.construction.linkmode;
+    if (!util.def(linkmode)) {
+        //TODO - come up with long haul shuttle nodes
+        linkmode = 'normal';
+    }
+
+    switch (linkmode) {
+        case 'normal':
+
+            var haveprime = false;
+            var haveaux = 0;
+
+            for (var node in linkSet) {
+                if (linkSet[node].type == 'prime') {
+                    haveprime = true;
+                    continue;
+                }
+                if (linkSet[node].type == 'aux') {
+                    haveaux++;
+                }
+            }
+
+            if (!haveprime) {
+                return this.placePrimeLink();
+            }
+
+            if (!util.def(this.memory.sources)) {
+                this.log('cant place aux sources, no sources in memory');
+                return false;
+            }
+
+            var numsources = this.memory.sources.length;
+
+            if (haveaux < numsources) {
+                // Check for existing
+                for (var n in this.memory.sources) {
+                    var disrc = this.memory.sources[n];
+
+                    for (var m in this.memory.shafts) {}
+                }
+                if (this.memory.sources.length > 1) {
+                    for (var src in this.memory.sources) {
+                        var asrc = this.memory.sources[src];
+                        if (!util.def(asrc.linkId)) {
+                            var res = this.placeAuxLink(asrc);
+                            if (res) {
+                                placeNum--;
+                            }
+                        }
+                    }
+
+                    if (placeNum > 0) {
+                        for (var src in this.memory.sources) {
+                            var asrc = this.memory.sources[src];
+                            if (!util.def(asrc.linkId)) {
+                                var res = this.placeAuxLink(asrc);
+                                if (res) {
+                                    asrc.linkId = asrc.id;
+                                    placeNum--;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            this.log('link code - nothing more to do here');
+            return true;
+            break;
+            this.log('link code')
+
+        default:
+            this.log('oh...boy. link code mess up big time yo');
+    }
+
+
 
 
     // Two link strategies possible, in room mining, and across room pipelining
     //  if this.memory.strategy)
 
+    this.log('link code')
     return;
 
     // Start sanity checks
@@ -681,37 +813,6 @@ Room.prototype.placeLinks = function() {
 
 
 
-    // Check for existing
-    for (var n in this.memory.sources) {
-        var disrc = this.memory.sources[n];
-
-        for (var m in this.memory.shafts) {}
-    }
-    if (this.memory.sources.length > 1) {
-        for (var src in this.memory.sources) {
-            var asrc = this.memory.sources[src];
-            if (!util.def(asrc.linkId)) {
-                var res = this.placeAuxLink(asrc);
-                if (res) {
-                    placeNum--;
-                }
-            }
-        }
-
-        if (placeNum > 0) {
-            for (var src in this.memory.sources) {
-                var asrc = this.memory.sources[src];
-                if (!util.def(asrc.linkId)) {
-                    var res = this.placeAuxLink(asrc);
-                    if (res) {
-                        asrc.linkId = asrc.id;
-                        placeNum--;
-
-                    }
-                }
-            }
-        }
-    }
 
     // Want to place it within reach of a miner, so behind a mineshaft, but leave room for pathing
 }

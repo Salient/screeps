@@ -5,7 +5,6 @@
 // var population = require('population');
 var planning = require('cityPlanning');
 var util = require('common');
-var tasker = require('tasker')
 var _ = require('lodash');
 
 
@@ -151,7 +150,7 @@ module.exports.strategery = function(room) {
     // Debug
 
     if (!util.def(room.memory.strategy)) {
-        dlog('Bootstrapping!')
+        room.log('Bootstrapping!')
         room.bootstrap();
     }
     var roomConfig = room.memory.strategy;
@@ -188,7 +187,8 @@ Room.prototype.bootstrap = function() {
             "miner": [MOVE, WORK, WORK, WORK, WORK],
             "soldier": [MOVE, ATTACK, TOUGH, ATTACK, TOUGH, MOVE, RANGED_ATTACK, RANGED_ATTACK, TOUGH, MOVE],
             "medic": [MOVE, HEAL, TOUGH],
-            "scout": [MOVE, CLAIM]
+            "seedling": [MOVE, TOUGH, MOVE, CLAIM],
+            "scout": [MOVE]
         },
         curlvl: 0,
         rulesOfEngagement: 'guard',
@@ -238,10 +238,6 @@ var lvl0room = function(room) {
 var lvl2room = function(room) {
 
     var shafts = _.keys(room.memory.shafts).length;
-
-    // Logic in tasker checks if there is something to build before retasking
-    tasker.retask(room, 'gatherer', 'builder')
-        // tasker.retask(room, 'technician', 'builder')
 
     var roomConfig = room.memory.strategy;
     // Setup population goals

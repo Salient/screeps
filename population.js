@@ -7,6 +7,21 @@ var harvest = require('harvester');
 
 
 
+// Add sanity and expected values up here
+
+if (!util.def(Memory.Overmind)) {
+    Memory.Overmind = {}
+}
+
+if (!util.def(Memory.Overmind.globalTerrain)) {
+    Memory.Overmind.globalTerrain = {}
+}
+
+if (!util.def(Memory.Overmind.scoutTimer)) {
+    Memory.Overmind.scoutTimer = Game.time;
+}
+
+
 //Room.prototype.popCount = function() {
 //    return this.find(FIND_MY_CREEPS).length
 //}
@@ -127,15 +142,15 @@ function nextPriority(room) {
     var myGlobalRooms = 0;
     for (var rooms in Game.rooms) {
         if (Game.rooms[rooms].controller && Game.rooms[rooms].controller.my) {
-        myGlobalRooms++;
+            myGlobalRooms++;
         }
     }
 
-    var scoutVeto = 1;
-    if (myGlobalRooms >= Game.gcl.level){ // there should not be a -1 here, but somethign is messed up. remove it later
-        scoutVeto = 0;
+    var seedlingVeto = 1;
+    if (myGlobalRooms >= Game.gcl.level) { // there should not be a -1 here, but somethign is messed up. remove it later
+        seedlingVeto = 0;
     }
-    
+
 
     // How is the Economy? Are there enough workers transporting energy?
     var nrg = room.find(FIND_DROPPED_RESOURCES, {
@@ -162,7 +177,8 @@ function nextPriority(room) {
             popCon.minerWeight * vetoMiner,
         //'soldier': 15 + ((6 - room.memory.strategy.defcon) * 20),
         'medic': ((have.soldier - have.medic) * popCon.medicWeight),
-        'scout': have.miner*(econCon.tankMiss + econCon.gatherMiss) * 4 * scoutVeto// only want to create spores when i'm near full production
+        'seedling': have.miner * (econCon.tankMiss + econCon.gatherMiss) * 4 * seedlingVeto, // only want to create spores when i'm near full production
+        'scout': ((Memory.Overmind.scoutTimer + 300 )< Game.time) ? 500 : 0
     }
     var needsOfTheMany = Object.keys(needsOfTheFew).sort(function(keya, keyb) {
             return needsOfTheFew[keyb] - needsOfTheFew[keya];
@@ -172,10 +188,10 @@ function nextPriority(room) {
     if (needsOfTheFew[needsOfTheMany[0]] > 100) {
         //dlog(room.name + ' Need ' + needsOfTheMany[0] + ' with score ' + needsOfTheFew[needsOfTheMany[0]])
         //dlog(room.name + ' Next ' + needsOfTheMany[1] + ' with score ' + needsOfTheFew[needsOfTheMany[1]])
-                room.memory.nrgReserve = room.energyCapacityAvailable;
+        room.memory.nrgReserve = room.energyCapacityAvailable;
 
         // TODO - put this somewhere more sensible
-        if (needsOfTheMany[0] == 'scout') {
+        if (needsOfTheMany[0] == 'seedling') {
             // reset the economy counters to prevent spawing scouts forever more
             econCon.tankMiss = 0;
             econCon.gatherMiss = 0;
@@ -343,7 +359,7 @@ var spawn = function(room) {
     var counter = 0;
     var cost = 0;
 
-    while (cost <= cap && body.length <51) {
+    while (cost <= cap && body.length < 51) {
         body.push(pattern[counter++ % pattern.length]);
         cost += BODYPART_COST[body[body.length - 1]];
     }
@@ -361,7 +377,7 @@ var spawn = function(room) {
         })
     switch (result) {
         case OK:
-            if (want == 'scout') {
+            if (want == 'seedling') {
                 if (util.def(room.memory.strategy) && util.def(room.memory.strategy.economy)) {
                     room.memory.strategy.economy.gatherMiss = 0;
                     room.memory.strategy.economy.tankMiss = 0;
@@ -387,7 +403,7 @@ var spawn = function(room) {
             // var ddd = util.getError(babyMomma.spawnCreep(body, want + '-' +
             // (Math.floor((Math.random() * 10000))), { memory: {
         case ERR_BUSY:
-           room.log('huh? thats impossiblei');
+            room.log('huh? thats impossiblei');
             room.log('status of util def: ' + util.def(babyMomma.spawning) + ', contents ' + babyMomma.spawning);
 
             break;

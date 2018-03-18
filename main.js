@@ -7,6 +7,19 @@ var taskMaster = require('tasker');
 var baseSupport = require('baseControl');
 var visuals = require('visuals');
 var overmind = require('overmind');
+
+
+
+/// Following code is executed during a global tick. Which means something changed.
+// Which means it should run.
+//
+
+
+for (var room in Game.rooms) {
+    Game.rooms[room].schemaCheck();
+}
+
+
 // const profiler = require('screeps-profiler');
 //dlog("-----------------------\n\n" + 'New Global Tick \nGenesis count ' + Game.cpu.getUsed())
 //Game.f = function() {
@@ -15,132 +28,116 @@ var overmind = require('overmind');
 //    }
 //}
 //
-dlog('global tick')
-    ////Game.fe = function() {
-    ////    for (var ff in Game.rooms) {
-    ////        var res = harvest.freeEnergy(Game.rooms[ff]);
-    ////        dlog('Free energy in room ' + ff);
-    ////        for (var type in res) {
-    ////            dlog(type + ": " + res[type])
-    ////        }
-    ////    }
-    ////}
-    //
-    //Game.p = function() {
-    //        for (var r in Game.rooms) {
-    //            construct.p(Game.rooms[r]);
-    //        }
-    //    }
-    //    //
-    //    //Game.q = function() {
-    //    //    for (var r in Game.rooms) {
-    //        construct.controlLevelChange(Game.rooms[r]);
-    //    }
-    //}
-    //
-function exterminate() {
-    for (var r in Game.rooms) {
-        var room = (Game.rooms[r]);
-        var roads = room.find(FIND_STRUCTURES, {
-            filter: (i) => {
-                i.structureType == STRUCTURE_ROAD
-            }
-        });
-        util.dumpObject(roads);
-        for (var it in roads) {
-            roads[it].destroy();
-        }
-        var roads = room.find(FIND_CONSTRUCTION_SITES, {
-            filter: (i) => {
-                i.structureType == STRUCTURE_ROAD
-            }
-        });
-        for (var it in roads) {
-            roads[it].destroy();
-        }
-    }
-}
-Game.x = exterminate;
-
-Game.pw = function() {
-    for (var r in Game.rooms) {
-        var room = Game.rooms[r];
-        construct.planRoom(room);
-    }
-}
-
-Game.score = function() {
-    dlog(overmind.getPriority());
-}
-
-Game.test = function() {
-    var prime = Game.rooms['W7N4'];
-    var source = Game.getObjectById(prime.memory.sources[0].id);
+// dlog('global tick')
+////Game.fe = function() {
+////    for (var ff in Game.rooms) {
+////        var res = harvest.freeEnergy(Game.rooms[ff]);
+////        dlog('Free energy in room ' + ff);
+////        for (var type in res) {
+////            dlog(type + ": " + res[type])
+////        }
+////    }
+////}
+//
+//Game.p = function() {
+//        for (var r in Game.rooms) {
+//            construct.p(Game.rooms[r]);
+//        }
+//    }
+//    //
+//    //Game.q = function() {
+//    //    for (var r in Game.rooms) {
+//        construct.controlLevelChange(Game.rooms[r]);
+//    }
+//}
+//
 
 
-    //		var epicenter = source.pos;
-    var bounds = util.bound(source.pos, 2);
-    var sourceMap = source.room.lookForAtArea(LOOK_TERRAIN, bounds.top, bounds.left, bounds.bottom, bounds.right);
-}
 
 
-Game.getscore = function(room) {
-    if (util.def(Memory.Overmind.globalTerrain[room])) {
-        dlog('room score of ' + room + ': ' + Memory.Overmind.globalTerrain[room].score);
-    } else {
-        dlog('room not in database')
-    }
 
-}
-Game.rank = function() {
-    var ark = Object.keys(Memory.Overmind.globalTerrain);
-
-    var arr = ark.sort(function(a, b) {
-        var x = Memory.Overmind.globalTerrain[a];
-        var y = Memory.Overmind.globalTerrain[b];
-
-        if (x.score > y.score) {
-            return 1;
-        }
-        if (x.score < y.score) {
-            return -1;
-        }
-        return 0;
-
-    });
-
-    for (var rrr in arr) {
-        dlog(arr[rrr] + ': ' + Memory.Overmind.globalTerrain[arr[rrr]].score);
-    }
-}
-
-
-Game.destroyAll = function(structure) {
-    for (var ff in Game.rooms) {
-        var sits = Game.rooms[ff].find(FIND_STRUCTURES, {
-            filter: (i) => i.structureType == structure
-        });
-        for (var dd in sits) {
-            sits[dd].destroy()
-        }
-    }
-}
-Game.destroySites = function(structure) {
-    for (var ff in Game.rooms) {
-        var sits = Game.rooms[ff].find(FIND_CONSTRUCTION_SITES, {
-            filter: (i) => i.structureType == structure
-        });
-        for (var dd in sits) {
-            sits[dd].remove()
-        }
-    }
-}
-Game.pp = function() {
-    for (var room in Game.rooms) {
-        var thisRoom = Game.rooms[room];
-        construct.x(room);
-    }
-}
+// function exterminate() {
+//     for (var r in Game.rooms) {
+//         var room = (Game.rooms[r]);
+//         var roads = room.find(FIND_STRUCTURES, {
+//             filter: (i) => {
+//                 i.structureType == STRUCTURE_ROAD
+//             }
+//         });
+//         util.dumpObject(roads);
+//         for (var it in roads) {
+//             roads[it].destroy();
+//         }
+//         var roads = room.find(FIND_CONSTRUCTION_SITES, {
+//             filter: (i) => {
+//                 i.structureType == STRUCTURE_ROAD
+//             }
+//         });
+//         for (var it in roads) {
+//             roads[it].destroy();
+//         }
+//     }
+// }
+// Game.x = exterminate;
+// 
+// Game.pw = function() {
+//     for (var r in Game.rooms) {
+//         var room = Game.rooms[r];
+//         construct.planRoom(room);
+//     }
+// }
+// 
+// Game.score = function() {
+//     dlog(overmind.getPriority());
+// }
+// 
+// Game.test = function() {
+//     var prime = Game.rooms['W7N4'];
+//     var source = Game.getObjectById(prime.memory.sources[0].id);
+// 
+// 
+//     //		var epicenter = source.pos;
+//     var bounds = util.bound(source.pos, 2);
+//     var sourceMap = source.room.lookForAtArea(LOOK_TERRAIN, bounds.top, bounds.left, bounds.bottom, bounds.right);
+// }
+// 
+// 
+// Game.getscore = function(room) {
+//     if (util.def(Memory.Overmind.globalTerrain[room])) {
+//         dlog('room score of ' + room + ': ' + Memory.Overmind.globalTerrain[room].score);
+//     } else {
+//         dlog('room not in database')
+//     }
+// 
+// }
+// 
+// 
+// Game.destroyAll = function(structure) {
+//     for (var ff in Game.rooms) {
+//         var sits = Game.rooms[ff].find(FIND_STRUCTURES, {
+//             filter: (i) => i.structureType == structure
+//         });
+//         for (var dd in sits) {
+//             sits[dd].destroy()
+//         }
+//     }
+// }
+// Game.destroySites = function(structure) {
+//     for (var ff in Game.rooms) {
+//         var sits = Game.rooms[ff].find(FIND_CONSTRUCTION_SITES, {
+//             filter: (i) => i.structureType == structure
+//         });
+//         for (var dd in sits) {
+//             sits[dd].remove()
+//         }
+//     }
+// }
+// Game.pp = function() {
+//     for (var room in Game.rooms) {
+//         var thisRoom = Game.rooms[room];
+//         construct.x(room);
+//     }
+// }
 
 
 //
@@ -175,7 +172,46 @@ Game.pp = function() {
 // profiler.enable();
 module.exports.loop = function() {
 
-        // dlog('\n\n New Tick ---' + Game.cpu.getUsed());
+        // console.log('purge in ' + (300 - Game.time % 300));
+
+        Game.rank = function(order) {
+                var ark = Object.keys(Memory.Overmind.globalTerrain);
+
+                var arr = ark.sort(function(a, b) {
+                    var x = Memory.Overmind.globalTerrain[a];
+                    var y = Memory.Overmind.globalTerrain[b];
+
+                    if (x.score > y.score) {
+                        if (!order) {
+                            return 1
+                        } else {
+                            return -1
+                        };
+                    }
+                    if (x.score < y.score) {
+                        if (order) {
+                            return 1
+                        } else {
+                            return -1
+                        };
+                    }
+                    return 0;
+
+                });
+
+                var count = 0;
+                for (var rrr in arr) {
+                    if (count++ > 10) {
+                        break;
+                    }
+                    dlog(arr[rrr] + ': ' + Memory.Overmind.globalTerrain[arr[rrr]].score);
+                }
+            }
+
+    Game.run = function(room) {
+        Game.rooms[room].placeLinks();
+    }
+            // dlog('\n\n New Tick ---' + Game.cpu.getUsed());
         var looptime = Game.cpu.getUsed();
 
         // profiler.wrap(function() {
@@ -196,6 +232,12 @@ module.exports.loop = function() {
 
         for (var room in Game.rooms) {
             var thisRoom = Game.rooms[room];
+            visuals(thisRoom);
+
+
+
+            /// Update schema
+            thisRoom.schemaCheck();
 
             // dlog('main start for ' + room + ', ' + Game.cpu.getUsed());
 
@@ -313,7 +355,15 @@ module.exports.loop = function() {
             for (var r in Memory.rooms) {
                 if (Memory.rooms[r].lastUsed < Game.time - 300 || !util.def(Memory.rooms[r].lastUsed)) {
                     delete Memory.rooms[r];
-                    dlog('purging memory of ' + r);
+                    // dlog('purging memory of ' + r);
+                }
+            }
+            for (var r in Memory.Overmind.globalTerrain) {
+                var rec = Memory.Overmind.globalTerrain[r]; {
+                    if (rec.revised < Game.time - 3600) {
+                        delete rec;
+                        // dlog('purging overmind memory of ' + r);
+                    }
                 }
             }
         }
