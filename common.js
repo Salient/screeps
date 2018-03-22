@@ -157,22 +157,25 @@ Creep.prototype.leaveRoom = function(dest = "") {
     // Check if already set up
     //     this.log(this.name + '/' + this.room.name, ' leave room called, dest: ' + dest);
 
-    if (!def(this.memory.wanderlust)) {
+    if (!def(this.memory.wanderlust) || !def(this.memory.wanderlust.route)) {
         if (dest) {
             // New pilrgimage starting
 
             if (this.room.name == dest) {
                 ///uhh guess i'm already here? what?
-                this.log(this.name + 'wants to leave to the room its already in');
+                this.log('wants to leave to the room its already in');
                 //  this.memory.taskList.pop();
                 return false;
             }
 
             var interRoomRoute = Game.map.findRoute(this.room.name, dest, {
                 routeCallback(roomName, fromRoomName) {
-                    if (Memory.Overmind.globalTerrain[exit] && Memory.Overmind.globalTerrain[exit].score) {
-                        this.log('route cost of ' + roomName + ': ' + (-Memory.Overmind.globalTerrain[exit].score));
-                        return (-Memory.Overmind.globalTerrain[exit].score);
+                    if (Memory.Overmind.globalTerrain[roomName] && Memory.Overmind.globalTerrain[roomName].score) {
+                        if (Memory.Overmind.globalTerrain[roomName].score > 0) {
+                            return 1;
+                        } else {
+                            return (-Memory.Overmind.globalTerrain[roomName].score);
+                        }
                     } else {
                         return 1
                     };
@@ -227,9 +230,9 @@ Creep.prototype.leaveRoom = function(dest = "") {
 
             for (var option in adjRooms) {
                 var exit = adjRooms[option];
-                this.log('choosing eit from room. choices: ' + adjRooms);
-                dumpObject(adjRooms)
-                this.log('current choice: ' + exit)
+                // this.log('choosing eit from room. choices: ' + adjRooms);
+                // dumpObject(adjRooms)
+                // this.log('current choice: ' + exit)
                 if (Memory.Overmind.globalTerrain[exit] && Memory.Overmind.globalTerrain[exit].score > 0 && Memory.Overmind.globalTerrain[exit].revised > Game.time - 300) {
 
                     var storedScore = Memory.Overmind.globalTerrain[exit].score;
@@ -265,10 +268,11 @@ Creep.prototype.leaveRoom = function(dest = "") {
             //                roomChoice.name = adjRooms[Object.keys(adjRooms)[0]];
             //            }
             //
-            this.log(' selecting new exit from room. (' + randomExit.room + '), score:' + score);
+            // this.log(' selecting new exit from room. (' + randomExit.room + '), score:' + score);
             //            dumpObject(randomExit);
             this.memory.wanderlust = {
-                route: [randomExit]
+                route: [randomExit],
+                trail: [this.room.name]
             }
         }
     }
@@ -280,6 +284,11 @@ Creep.prototype.leaveRoom = function(dest = "") {
     }
 
     if (this.room.name == lustRoute[0].room) {
+        if (!this.memory.wanderlust.trail) {
+            this.memory.wanderlust.trail = [];
+        }
+
+        this.memory.wanderlust.trail.push(this.room.name);
         //made it to the next room. 
         // need to move away from exit or forever roam the halls of infitite mirrors
         this.moveAwayFromExit();
@@ -293,13 +302,13 @@ Creep.prototype.leaveRoom = function(dest = "") {
             // this is the destination
             // this.log('at elaveroom dest')
             this.memory.taskList.pop();
-            delete this.memory.wanderlust;
+            delete this.memory.wanderlust.route;
             return false;
         } else {
-            // this.log(this.name, 'at next hop, currently in ' + lustRoute[0].room + ' on the way to ' + lustRoute[lustRoute.length - 1].room);
+            // this.log('at next hop, currently in ' + lustRoute[0].room + ' on the way to ' + lustRoute[lustRoute.length - 1].room);
             lustRoute.shift();
             if (this.memory.role == 'worker') {
-                this.addTask('builder'); // stimulate the local economy
+                this.changeTask('builder'); // stimulate the local economy
             }
         }
     }
@@ -315,7 +324,8 @@ Creep.prototype.leaveRoom = function(dest = "") {
     var derp = this.moveTo(newRoomPos, {
         reusePath: 15,
         visualizePathStyle: {
-            stroke: '41ffff'
+            stroke: '#FFFFFF',
+            opacity: 1
         }
     });
 
@@ -329,13 +339,23 @@ Creep.prototype.leaveRoom = function(dest = "") {
             this.suicide();
             return false;
             break;
+        case ERR_NO_PATH:
+            this.log('hrm, so i have a problem here. destination is ' + lustRoute[lustRoute.length - 1].room);
+            this.log('my current room is ' + this.room.name)
+                // force reroute 
+            var finalDest = lustRoute[lustRoute.length - 1].room;
+            delete this.memory.wanderlust;
+            // return this.leaveRoom(finalDest);
+            this.log('lollddorcopter')
         default:
             this.log(' trouble with interrom move : ' + derp + ', dest: ' + nextHop.room);
 
-            this.log('route: ' + dumpObject(lustRoute))
-            this.log('first: ' + dumpObject(lustRoute[0]))
-            dumpObject(lustRoute[0])
-
+            // this.log('route: ' + dumpObject(lustRoute))
+            // this.log('first: ' + dumpObject(lustRoute[0]))
+            // dumpObject(lustRoute[0])
+            if (!Memory.Overmind.globalTerrain[lustRoute[0].room] && Game.rooms[lustRoute[0].room]) {
+                Game.rooms[lustRout[0].room].classify();
+            }
             Memory.Overmind.globalTerrain[lustRoute[0].room].score -= 20;
             delete this.memory.wanderlust;
             //  this.moveAwayFromExit();
@@ -345,3 +365,58 @@ Creep.prototype.leaveRoom = function(dest = "") {
     }
     return false;
 }
+
+
+
+module.exports.spiral = function (n) {
+    // given n an index in the squared spiral
+    // p the sum of point in inner square
+    // a the position on the current square
+    // n = p + a
+
+    var r = Math.floor((Math.sqrt(n + 1) - 1) / 2) + 1;
+
+    // compute radius : inverse arithmetic sum of 8+16+24+...=
+    var p = (8 * r * (r - 1)) / 2;
+    // compute total point on radius -1 : arithmetic sum of 8+16+24+...
+
+    var en = r * 2;
+    // points by face
+
+    var a = (1 + n - p) % (r * 8);
+    // compute de position and shift it so the first is (-r,-r) but (-r+1,-r)
+    // so square can connect
+
+    var pos = [0, 0, r];
+    switch (Math.floor(a / (r * 2))) {
+        // find the face : 0 top, 1 right, 2, bottom, 3 left
+        case 0:
+            {
+                pos[0] = a - r;
+                pos[1] = -r;
+            }
+            break;
+        case 1:
+            {
+                pos[0] = r;
+                pos[1] = (a % en) - r;
+
+            }
+            break;
+        case 2:
+            {
+                pos[0] = r - (a % en);
+                pos[1] = r;
+            }
+            break;
+        case 3:
+            {
+                pos[0] = -r;
+                pos[1] = r - (a % en);
+            }
+            break;
+    }
+    // console.log("n : ", n, " r : ", r, " p : ", p, " a : ", a, "  -->  ", pos);
+    return pos;
+}
+

@@ -231,7 +231,7 @@ function repairRoads(support) {
 function towerControl(room) {
 
 
-    if (!Game.rooms[room.name]) {
+    if (!Game.rooms[room.name] || !Game.rooms[room.name].controller) {
         return false;
     }
 

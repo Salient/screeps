@@ -16,15 +16,19 @@ var debug = false
 
 
 Room.prototype.schemaCheck = function() {
-    this.memory.cache = this.memory.cache || {};
-    this.memory.cache.construction = this.memory.cache.construction || {};
 
     this.memory.trafficMap = this.memory.trafficMap || {};
+
+    if (!this.controller || !this.controller.my) {
+        return;
+    }
+
     this.memory.infrastructure = this.memory.infrastructure || {};
     // this.memory.links = this.memory.links || {};
 
+    this.memory.cache = this.memory.cache || {};
+    this.memory.cache.construction = this.memory.cache.construction || {};
     if (!this.memory.links) {
-        this.log('finding and destroying all links present because i forgot i had any')
         var dat = this.find(FIND_MY_STRUCTURES, {
             filter: {
                 structureType: STRUCTURE_LINK
@@ -107,6 +111,7 @@ Room.prototype.buildRoads = function() {
                 var st = hwy[sq];
                 var res = this.createConstructionSite(st.x, st.y, STRUCTURE_ROAD);
                 if (!res) {
+                    this.log('placed road')
                     have++;
                 }
             }
@@ -119,31 +124,34 @@ Room.prototype.buildRoads = function() {
     //this.log('scoring traffic for road building');
     var map = this.memory.trafficMap;
 
+    // this.log('poop')
     // Remember we can't build roads on the first or last tile (exits)
     for (var x = 1; x < 49; x++) {
-        if (!util.def(map[x])) {
-            map[x] = {};
-        }
+        //if (!util.def(map[x])) {
+        //map[x] = {};
+        //}
 
         for (var y = 1; y < 49; y++) {
 
-            if (!util.def(map[x][y])) {
-                map[x][y] = {
-                    heat: 0,
-                    refreshed: 0
-                }
+            if (!map[x] || !map[x][y]) {
+                continue;
             }
+
             var thisSpot = map[x][y];
 
             thisSpot.heat = thisSpot.heat - (Game.time - thisSpot.refreshed);
             thisSpot.heat = (thisSpot.heat < 0) ? 0 : thisSpot.heat;
             thisSpot.refreshed = Game.time;
+            if (thisSpot.heat == 0) {
+                delete thisSpot;
+            }
             if (thisSpot.heat > 25) {
                 if (have >= maxBuild) {
                     return true;
                 }; // Let's not get carried away
                 var res = this.createConstructionSite(x, y, STRUCTURE_ROAD);
                 if (!res) {
+                this.log('placing road')
                     have++;
                 }
 
@@ -266,9 +274,19 @@ function placeDefenses(room) {
 //
 // May be obviated down the road if I can calculate how many miners I need
 var setupSources = function(room) {
-
+    // if (!room.controller) {
+    //     return false;
+    // }
     var sources = room.find(FIND_SOURCES);
-    room.memory.sources = sources;
+    if (sources.length == 0){
+        return false;
+    } 
+    
+    room.memory.sources = {};
+    for (var src in sources) {
+        room.memory.sources[sources[src].id] = {};
+    }
+    // room.memory.sources = sources;
     var shafts = {};
     var count = 0;
 
@@ -301,6 +319,7 @@ var setupSources = function(room) {
     // Assign it to memory and be done
     room.memory.shafts = shafts;
 }
+module.exports.setupSources = setupSources;
 
 function refInfra(room) {
     placeContainers(room);
@@ -586,7 +605,7 @@ Room.prototype.placeLinks = function() {
     // pos: position object,
     // type: prime, source, shuttle
 
-    this.log('hmm' + linkSet)
+    this.log('linkset' + linkSet)
         // refresh list 
     for (var linkId in linkSet) {
         var link = linkSet[linkId];
@@ -820,7 +839,7 @@ Room.prototype.placeLinks = function() {
 
 Room.prototype.placeSpawn = function() {
 
-    if (!this.controller || !this.controller.level) {
+    if (!this.controller || !this.controller.my || !this.controller.level) {
         return false;
     }
 

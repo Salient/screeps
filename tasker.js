@@ -22,7 +22,7 @@ module.exports.taskMinions = function(room) {
             }
             if (util.def(test) && test.room.name != creep.room.name) {
                 dlog('boosting')
-                room.memory.heatmap[x][y] += 50; // interroom paths are traveled less often but just as important
+                    //         room.memory.heatmap[x][y] += 50; // interroom paths are traveled less often but just as important
             }
 
             // minions[dude].say(minions[dude].memory.role);
@@ -87,6 +87,7 @@ Creep.prototype.updateTraffic = function(boost) {
             thisSpot.heat = thisSpot.heat + boost;
         }
         thisSpot.refreshed = Game.time;
+        this.room.memory.lastUsed = Game.time;
     }
 }
 
@@ -101,7 +102,9 @@ Object.defineProperty(Creep.prototype, "taskState", {
 
 Object.defineProperty(Creep.prototype, "currentTask", {
     get() {
-        return this.memory.taskList[this.memory.taskList.length - 1];
+        if (this.memory.taskList) {
+            return this.memory.taskList[this.memory.taskList.length - 1];
+        }
     }
 });
 
@@ -189,13 +192,13 @@ var performTask = function(creep) {
             jobResult = build.repair(creep);
             break;
         case 'seedling':
-            creep.log('immaseedling')
-                //jobResult = spore.disperse(creep);
+            //    creep.log('immaseedling')
+            //jobResult = spore.disperse(creep);
             jobResult = spore.infest(creep);
             break;
         case 'scout':
-            creep.log('immascout')
-                //jobResult = spore.disperse(creep);
+            //creep.log('immascout')
+            //jobResult = spore.disperse(creep);
             jobResult = spore.infest(creep);
             break;
         case 'filltank':
@@ -291,8 +294,18 @@ function somethingNeedDoing(creep) {
             return role;
             break;
         case 'worker':
+            // var result = (creep.room.energyCapacity / creep.room.energyCapacityAvailable) < 0.75 ? 1 :  Math.floor((Math.random() * 10));
+            // Force gather if there is not at least 3/4 capacity energy in the room
+            if ((creep.room.energyAvailable / creep.room.energyCapacityAvailable) < 0.75) {
+                //creep.log('low energy in this room. gathering');
+                return 'gatherer';
+            }
             var result = Math.floor((Math.random() * 10));
+
+            //creep.log('i guess there is energy in this room. result is ' + result);
+            //creep.log('energy capacity is ' + creep.room.energyAvailable+ ', available is ' + creep.room.energyCapacityAvailable);
             if (result < 5) {
+                // creep.log('i gather')
                 return 'gatherer'
             } else if (result < 8) {
                 return 'builder'

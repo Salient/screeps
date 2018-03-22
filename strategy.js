@@ -149,10 +149,11 @@ module.exports.strategery = function(room) {
     // //////////////
     // Debug
 
-    if (!util.def(room.memory.strategy)) {
+    if (!util.def(room.memory.strategy) && room.controller && room.controller.my) {
         room.log('Bootstrapping!')
         room.bootstrap();
     }
+    else { return false;}
     var roomConfig = room.memory.strategy;
 
     // /////////////
@@ -187,8 +188,8 @@ Room.prototype.bootstrap = function() {
             "miner": [MOVE, WORK, WORK, WORK, WORK],
             "soldier": [MOVE, ATTACK, TOUGH, ATTACK, TOUGH, MOVE, RANGED_ATTACK, RANGED_ATTACK, TOUGH, MOVE],
             "medic": [MOVE, HEAL, TOUGH],
-            "seedling": [MOVE, TOUGH, MOVE, CLAIM],
-            "scout": [MOVE]
+            "seedling": [CLAIM, MOVE, TOUGH, MOVE],
+            "scout": [MOVE, MOVE, MOVE, MOVE, MOVE, "end"]
         },
         curlvl: 0,
         rulesOfEngagement: 'guard',

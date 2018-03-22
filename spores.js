@@ -48,6 +48,39 @@ Creep.prototype.appropriate = function(ctrlId) {
 
 function selectNewRoom(creep) {
 
+
+    // start with a spiral out from current room looking for unscored rooms
+    // otherwise, hit up global hitlist
+
+    var x = 1,
+        rx = creep.room.name[1], // W component of current room
+        ry = creep.room.name[3], // N component of current room
+        vector = util.spiral(x);
+
+    // return; 
+    while (vector[2] <= 2) {
+        var nx = +rx + +vector[0],
+            ny = +ry + +vector[1];
+        
+        vector = util.spiral(++x);
+
+        if (nx <= 0 || nx >= 10) {
+            continue;
+        }
+        if (ny <= 0 || ny >= 10) {
+            continue;
+        }
+
+        var nn = 'W' + nx + 'N' + ny;
+        
+        if (!Memory.Overmind.globalTerrain[nn] || !Memory.Overmind.globalTerrain[nn].score){
+            dlog(nn + ' is unscored');
+            // util.dumpObj(Memory.Overmind.globalTerrain[nn])
+
+            return nn;
+        }
+    }
+    
     var targetList = ovrmnd.getPriority();
     if (!targetList || targetList.length == 0) {
         dlog('no target in new room celect list');
@@ -58,6 +91,8 @@ function selectNewRoom(creep) {
     var score = 0;
     var best = null;
 
+    util.dumpObj(targetList);
+
     for (var land in targetList) {
         var promised = targetList[land];
         if (promised == creep.room.name) {
@@ -67,18 +102,21 @@ function selectNewRoom(creep) {
 
             var type = Memory.Overmind.globalTerrain[promised].class;
             // dlog('type is ' + type);
-            if(!util.def(type)) {
+            if (!util.def(type)) {
                 dlog('type is undef - object dump is ');
-            util.dumpObj(Memory.Overmind.globalTerrain[promised]);
+                util.dumpObj(Memory.Overmind.globalTerrain[promised]);
             }
         }
         // if (util.def(null))
 
         var range = Game.map.getRoomLinearDistance(creep.room.name, promised);
         var prophecy = Memory.Overmind.globalTerrain[promised];
+
+        creep.log('select ddebug. target: ' + promised + ', range: ' + range + ', score' + prophecy.score)
         if (!util.def(prophecy.score)) {
             // hmmm
-            creep.leaveRoom(prophecy); // go score it
+            creep.log('scoring unscored room ' + promised)
+            creep.leaveRoom(promised); // go score it
             //prophecy.score = 1;
         }
 
@@ -88,10 +126,15 @@ function selectNewRoom(creep) {
         }
     }
 
-    if (util.def(best)) {
+    if (best) {
+        if (creep.memory.wanderlust) {
+
+        }
         objective = best
         return best;
     } else {
+
+        // creep.room.score();
         dlog('some bad error here');
         return false;
     }
@@ -144,6 +187,7 @@ module.exports.infest = function(creep) {
         };
         */
     if (!util.def(creep.room.controller) || creep.role == 'scout') {
+        creep.log('derp')
         var newtarg = selectNewRoom(creep);
         if (newtarg) {
             creep.leaveRoom(newtarg);

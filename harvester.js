@@ -19,7 +19,7 @@ Creep.prototype.outsource = function() {
     if (util.def(srcs)) {
         for (var thing in srcs) {
             var realthing = Game.getObjectById(srcs[thing].id);
-            if (realthing.ticksToRegeneration < 80) {
+            if (realthing && realthing.ticksToRegeneration < 80) {
                 // no need to leave room, more is on the way soon
                 return true;
             }
@@ -102,6 +102,9 @@ Room.prototype.needMiner = function() {
         filter: (i) => i.memory.role == 'miner' && i.ticksToLive > 300
     });
 
+    if (!this.memory.sources) {
+        planning.setupSources(this);
+    }
     // Should at least have a miner for every source...
     // At least, below level 6 or so
     if (miner.length < this.memory.sources.length && this.controller.level < 6) {
@@ -128,7 +131,7 @@ function mine(creep) {
     // Two scenarios - mining by worker, and mining by miner
     if (!util.def(creep.memory.mTarget)) {
         // Will return a mineshaft object or false if none available
-        var post= findSource(creep);
+        var post = findSource(creep);
         if (!util.def(post) || !post) {
             return false;
         }
@@ -144,6 +147,7 @@ function mine(creep) {
 
     if (!util.def(srcObj)) {
         creep.log('this is very strange')
+        util.dumpObj(posting)
         delete creep.memory.mTarget;
         return false;
     }
@@ -255,7 +259,7 @@ module.exports.fillTank = function(creep) {
             break;
         case ERR_NOT_IN_RANGE:
             var pap = creep.moveTo(targ, {
-                reusePath: 5,
+                reusePath: 15,
                 visualizePathStyle: {
                     stroke: '1ffaa00',
                     opacity: 1,
@@ -304,7 +308,15 @@ function findContainer(creep) {
 
         // var path = creep.pos.findPathTo(candidate, { ignoreCreeps: true});
         var path = creep.pos.findPathTo(candidate);
-        if (!util.def(path) || path.length == 0 || creep.moveTo(candidate)) {
+        if (!util.def(path) || path.length == 0 ||
+            creep.moveTo(candidate, {
+                reusePath: 15,
+                visualizePathStyle: {
+                    opacity: 0.9,
+                    stroke: '#aa11aa'
+                }
+            })
+        ) {
             creep.log('oh')
             continue;
         }
@@ -419,7 +431,16 @@ function findEnergy(creep) {
         totalE += candidate.amount;
         // var path = creep.pos.findPathTo(candidate, { ignoreCreeps: true});
         var path = creep.pos.findPathTo(candidate);
-        if (!util.def(path) || path.length == 0 || creep.moveTo(candidate) || candidate.amount < 75) {
+        if (!util.def(path) || path.length == 0 || 
+            
+            creep.moveTo(candidate, {
+                reusePath: 15,
+                visualizePathStyle: {
+                    opacity: 0.9,
+                    stroke: '#cc8800'
+                }})
+ 
+             || candidate.amount < 75) {
             continue;
         }
 
@@ -475,7 +496,7 @@ function gatherer(creep) {
     }
 
     // Done dropping off
-    if (creep.carry.energy == 0 ) {
+    if (creep.carry.energy == 0) {
         if (creep.taskState == 'SINK' && creep.room.memory.nrgReserve == false) {
             // pop job just in case something else needs doing 
             creep.memory.taskState = "SOURCE";
@@ -504,7 +525,7 @@ function gatherer(creep) {
             creep.say('💰');
             return (source() || creep.outsource());
             break;
-        case 'SPECIAL': 
+        case 'SPECIAL':
             creep.taskState = 'SINK';
             return sink();
             break;
@@ -525,7 +546,7 @@ function gatherer(creep) {
             var rst = findBacon(creep);
             if (!util.def(rst)) {
                 // dlog('mining')
-                return  mine(creep);
+                return mine(creep);
                 //creep.log('tried to mine, result was ' + tres)
                 // if (!tres) {
                 //     creep.taskState = "LEAVING";
@@ -550,7 +571,7 @@ function gatherer(creep) {
                 break;
             case ERR_NOT_IN_RANGE:
                 var pap = creep.moveTo(targ, {
-                    reusePath: 5,
+                    reusePath: 15,
                     visualizePathStyle: {
                         opacity: 0.9,
 
@@ -712,7 +733,9 @@ function findBacon(creep) {
     ];
 
     var storageReserves = 20000;
-    if (!creep.room.memory.strategy){return}
+    if (!creep.room.memory.strategy) {
+        return
+    }
     if (util.def(creep.room.memory.strategy.economy.energyReservePerLevel) && util.def(creep.room.controller)) {
         storageReserves = creep.room.memory.strategy.economy.energyReservePerLevel * creep.room.controller.level;
     }
@@ -768,22 +791,36 @@ function findSink(creep) {
     }
 
     var cache = creep.room.memory.cache;
-    if (!util.def(cache.structures) || cache.structuresTimer + 200 < Game.time) {
-        cache.structures = creep.room.find(FIND_MY_STRUCTURES);
-        cache.structuresTimer = Game.time;
+    if (!util.def(cache.sinkStructures) || !cache.sinkStructures.expires || cache.sinkStructures.expires < Game.time) {
+        cache.sinkStructures = {};
+        // refresh sink structure cache
+        var aptStructures = creep.room.find(FIND_MY_STRUCTURES, {
+            filter: (i) => (sinkPriority.indexOf(i.structureType) > -1)
+        });
+
+        cache.sinkStructures.ids = [];
+
+        for (var struct in aptStructures) {
+            cache.sinkStructures.ids.push(aptStructures[struct].id);
+        }
+        cache.sinkStructures.expires = Game.time + 200 + util.getRand(1, 20);
     }
 
-    var targets = cache.structures;
+    var targets = cache.sinkStructures.ids;
 
     var distance = {};
 
-
     for (var x in targets) {
-        if (!targets[x].my) {
+        var target = Game.getObjectById(targets[x]);
+        if (!target) {
+            continue;
+        }
+
+        if (!target.my) {
             dlog('smeep')
             continue
         }
-        distance[targets[x].id] = creep.pos.getRangeTo(Game.getObjectById(targets[x].id));
+        distance[targets[x]] = creep.pos.getRangeTo(target);
     }
 
     var keysSorted = Object.keys(distance).sort(function(a, b) {
@@ -821,7 +858,13 @@ function findSink(creep) {
                                 continue dance;
                             }
                         }
-                        var pew = creep.moveTo(potential);
+                        var pew = creep.moveTo(potential, {
+                            reusePath: 15,
+                            visualizePathStyle: {
+                                opacity: 0.9,
+                                stroke: '#22FF10'
+                            }
+                        });
                         if (pew == OK || pew == ERR_TIRED) {
                             return potential.id;
                         } else {
@@ -955,7 +998,7 @@ function findSource(creep) {
         return false;
     }
 
-    if (!util.def(recall.lastAssignedSrc)) {
+    if (!util.def(recall.lastAssignedSrc) && recall.sources[0]) {
         recall.lastAssignedSrc = sources[0].id;
     }
 

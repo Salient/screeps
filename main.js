@@ -5,7 +5,7 @@ var util = require('common');
 var harvest = require('harvester');
 var taskMaster = require('tasker');
 var baseSupport = require('baseControl');
-var visuals = require('visuals');
+// var visuals = require('visuals');
 var overmind = require('overmind');
 
 
@@ -175,42 +175,42 @@ module.exports.loop = function() {
         // console.log('purge in ' + (300 - Game.time % 300));
 
         Game.rank = function(order) {
-                var ark = Object.keys(Memory.Overmind.globalTerrain);
+            var ark = Object.keys(Memory.Overmind.globalTerrain);
 
-                var arr = ark.sort(function(a, b) {
-                    var x = Memory.Overmind.globalTerrain[a];
-                    var y = Memory.Overmind.globalTerrain[b];
+            var arr = ark.sort(function(a, b) {
+                var x = Memory.Overmind.globalTerrain[a];
+                var y = Memory.Overmind.globalTerrain[b];
 
-                    if (x.score > y.score) {
-                        if (!order) {
-                            return 1
-                        } else {
-                            return -1
-                        };
-                    }
-                    if (x.score < y.score) {
-                        if (order) {
-                            return 1
-                        } else {
-                            return -1
-                        };
-                    }
-                    return 0;
-
-                });
-
-                var count = 0;
-                for (var rrr in arr) {
-                    if (count++ > 10) {
-                        break;
-                    }
-                    dlog(arr[rrr] + ': ' + Memory.Overmind.globalTerrain[arr[rrr]].score);
+                if (x.score > y.score) {
+                    if (!order) {
+                        return 1
+                    } else {
+                        return -1
+                    };
                 }
-            }
+                if (x.score < y.score) {
+                    if (order) {
+                        return 1
+                    } else {
+                        return -1
+                    };
+                }
+                return 0;
 
-    Game.run = function(room) {
-        Game.rooms[room].placeLinks();
-    }
+            });
+
+            var count = 0;
+            for (var rrr in arr) {
+                if (count++ > 10) {
+                    break;
+                }
+                dlog(arr[rrr] + ': ' + Memory.Overmind.globalTerrain[arr[rrr]].score);
+            }
+        }
+
+        Game.run = function(room) {
+                Game.rooms[room].placeLinks();
+            }
             // dlog('\n\n New Tick ---' + Game.cpu.getUsed());
         var looptime = Game.cpu.getUsed();
 
@@ -218,6 +218,24 @@ module.exports.loop = function() {
         ///////////////////////////////////
         // Main loops start
         //
+
+        if (!(Game.time % 60 )) {
+
+            for (var r in Memory.rooms) {
+                if (Memory.rooms[r].lastUsed + 300 < Game.time || !util.def(Memory.rooms[r].lastUsed)) {
+                    delete Memory.rooms[r];
+                    dlog('purging memory of ' + r);
+                }
+            }
+            for (var r in Memory.Overmind.globalTerrain) {
+                var rec = Memory.Overmind.globalTerrain[r]; {
+                    if (rec.revised < Game.time - 3600) {
+                        delete rec;
+                        // dlog('purging overmind memory of ' + r);
+                    }
+                }
+            }
+        }
 
         if (!util.def(Memory.loopcache)) {
             Memory.loopcache = {};
@@ -232,9 +250,41 @@ module.exports.loop = function() {
 
         for (var room in Game.rooms) {
             var thisRoom = Game.rooms[room];
-            visuals(thisRoom);
+            // visuals(thisRoom);
 
+            if (!thisRoom.controller) {
+                if (thisRoom.memory.trafficMap) {
+                    // dlog('boom baby')
+                    // delete thisRoom.memory.trafficMap
+                }
+                if (thisRoom.memory.strategy) {
+                    dlog('bam baby strat')
+                    delete thisRoom.memory.strategy;
+                }
+                if (thisRoom.memory.sources) {
+                    dlog('bam baby sources')
+                    delete thisRoom.memory.sources;
+                }
+                if (thisRoom.memory.shafts) {
+                    dlog('bam baby shafts')
+                    delete thisRoom.memory.shafts;
+                }
+            }
 
+            if (thisRoom.memory.heatmap) {
+                dlog('booo')
+                delete thisRoom.memory.heatmap
+            }
+
+            if (thisRoom.memory.cache) {
+                // dlog('booo')
+                // delete thisRoom.memory.cache
+            }
+
+            if (thisRoom.memory.sources) {
+                //dlog('booo')
+                // delete thisRoom.memory.sources
+            }
 
             /// Update schema
             thisRoom.schemaCheck();
@@ -244,8 +294,6 @@ module.exports.loop = function() {
             if (!util.def(cache[room])) {
                 cache[room] = {};
             }
-
-            thisRoom.memory.lastUsed = Game.time;
 
             // Pretty diagnostic information
             //  visuals(thisRoom);
@@ -350,23 +398,6 @@ module.exports.loop = function() {
         }
 
         //// 
-        if (!(Game.time % 300)) {
-
-            for (var r in Memory.rooms) {
-                if (Memory.rooms[r].lastUsed < Game.time - 300 || !util.def(Memory.rooms[r].lastUsed)) {
-                    delete Memory.rooms[r];
-                    // dlog('purging memory of ' + r);
-                }
-            }
-            for (var r in Memory.Overmind.globalTerrain) {
-                var rec = Memory.Overmind.globalTerrain[r]; {
-                    if (rec.revised < Game.time - 3600) {
-                        delete rec;
-                        // dlog('purging overmind memory of ' + r);
-                    }
-                }
-            }
-        }
         //   });
     }
     //

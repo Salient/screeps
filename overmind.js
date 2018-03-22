@@ -53,7 +53,7 @@ Creep.prototype.exploreNewRoom = function() {
         return true;
     }
 
-    //dlog(this.name + '(' + this.room.name + ')  wants to explore new room, but no adjacent room is unexplored. going to move to ' + fallback + ' and then try again');
+    dlog(this.name + '(' + this.room.name + ')  wants to explore new room, but no adjacent room is unexplored. going to move to ' + fallback + ' and then try again');
     //this.addTask('explore');
     this.leaveRoom(fallback);
     return true;
@@ -113,6 +113,9 @@ Room.prototype.score = function() {
     var conweight = 1;
 
     var mapDistance = Game.map.getRoomLinearDistance(Memory.homeworld, this.name);
+    if (mapDistance == 0) { // This is the home world
+        mapDistance = 1;
+    }
     var ctrl = this.controller;
 
     if (!util.def(ctrl)) {
@@ -124,7 +127,7 @@ Room.prototype.score = function() {
         } else if (ctrl.reservation) {
             var res = ctrl.reservation.username;
             if (res == util.myName) {
-                conweight = 1 - (5000 / ctrl.reservation.ticksToEnd);
+                conweight = 1 - (ctrl.reservation.ticksToEnd / 5000);
             } else {
                 conweight = 0.75;
             }
@@ -145,14 +148,18 @@ Room.prototype.score = function() {
         var ctrlDist = 0;
     }
 
+    var bonus = 0;
+    if (conweight == 0) { // linear offset
+        bonus = 100
+    };
     // dlog('exits ' + Object.keys(exits).length)
 
     // dlog('nme' + nmes.length + ', srcs:' + srcs.length + ', anathem: ' + anathem.length+ ' mustdie: ' + mustdie.length + ', ore: ' + ore.length + ', exits:' + Object.keys(exits).length + ', srcDist: ' + srcDist + ', ctrlDist: ' + ctrlDist);
-    var score = ((((srcs.length * 30) + (Object.keys(exits).length) * 50 + 100) - (srcDist + ctrlDist)*2 + ore.length * 10) /(mapDistance*2)* conweight- (nmes.length * 50 + anathem.length * 100 + mustdie.length * 200));
-     this.log("calculating score. variables: "+ 
-     srcs.length  + ' '+ (Object.keys(exits).length + ' ' + conweight+' ' +  srcDist + ' ' + ctrlDist + ' ' +  " " +  ore.length  + ' . ' + nmes.length + ' ' + anathem.length + ' ' + mustdie.length  + ' ' + mapDistance));
+    var score = ((((srcs.length * 30) + (Object.keys(exits).length) * 50 + 100) - (srcDist + ctrlDist) * 2 + ore.length * 10) / (mapDistance * 2) * conweight - (nmes.length * 50 + anathem.length * 100 + mustdie.length * 200)) + bonus;
+    this.log("calculating score. variables: " +
+        'sources: ' + srcs.length + ', exits: ' + (Object.keys(exits).length + ', conweight: ' + conweight + ', srcdist: ' + srcDist + ', ctrldist: ' + ctrlDist + ', ore: ' + ore.length + ', nmes:  ' + nmes.length + ', anathem: ' + anathem.length + ', mustdie: ' + mustdie.length + ', mapdist ' + mapDistance) + ', bonus: ' + bonus + '. final score ' + score);
     // dlog('score is ' + score)
-    dlog('scoring room ' + this.name + ' ' + score)
+    // dlog('scoring room ' + this.name + ' ' + score)
     return score;
 
 }
@@ -178,8 +185,7 @@ module.exports.getPriority = function() {
         }
 
         var score = overmind.globalTerrain[r];
-        if (!score || score.revised < Game.time + 300) {
-            room.log("classifying")
+        if (!score || score.revised < (Game.time - 300)) {
             room.classify();
         }
 
