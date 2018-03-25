@@ -17,17 +17,30 @@ var debug = false
 
 Room.prototype.schemaCheck = function() {
 
+    // this.log('started schema update')
+
     this.memory.trafficMap = this.memory.trafficMap || {};
 
+    // this.memory.links = this.memory.links || {};
+
+    if (!util.def(this.memory.cache)) {
+    this.memory.cache = {}
+        // this.log('created memory cache')
+    }
+    // this.memory.cache = this.memory.cache || {};
+    if (!util.def(this.memory.cache.construction)){
+        this.memory.cache.construction = {};
+        // this.log('created constuction object')
+    }
+
+    // start special chaches
+    
     if (!this.controller || !this.controller.my) {
         return;
     }
 
     this.memory.infrastructure = this.memory.infrastructure || {};
-    // this.memory.links = this.memory.links || {};
-
-    this.memory.cache = this.memory.cache || {};
-    this.memory.cache.construction = this.memory.cache.construction || {};
+    // this.memory.cache.construction = this.memory.cache.construction || {};
     if (!this.memory.links) {
         var dat = this.find(FIND_MY_STRUCTURES, {
             filter: {
@@ -56,6 +69,7 @@ Room.prototype.schemaCheck = function() {
         }
         this.memory.links = {}
     }
+    this.log('Schema updated');
 }
 
 
@@ -151,7 +165,7 @@ Room.prototype.buildRoads = function() {
                 }; // Let's not get carried away
                 var res = this.createConstructionSite(x, y, STRUCTURE_ROAD);
                 if (!res) {
-                this.log('placing road')
+                    this.log('placing road')
                     have++;
                 }
 
@@ -278,10 +292,10 @@ var setupSources = function(room) {
     //     return false;
     // }
     var sources = room.find(FIND_SOURCES);
-    if (sources.length == 0){
+    if (sources.length == 0) {
         return false;
-    } 
-    
+    }
+
     room.memory.sources = {};
     for (var src in sources) {
         room.memory.sources[sources[src].id] = {};
@@ -393,6 +407,15 @@ function planRoom(room) {
     // 3, ramparts around base perimeter, and
     // 4, walls around exits
     // Sanity Checks
+
+    // Track number of construction sites active
+    //
+    if (!room.memory.cache || !room.memory.cache.construction) {
+        // room.log('wtf')
+        room.schemaCheck()
+    }
+
+    room.memory.cache.construction.active = room.find(FIND_MY_CONSTRUCTION_SITES).length;
 
     // should do this even if room isn't owned
     room.buildRoads();
@@ -591,8 +614,8 @@ Room.prototype.placeLinks = function() {
     }
 
     if (placeNum == 0) {
-        this.log('decided that I dont want to place anyt links ')
-            /// return false;
+        // this.log('decided that I dont want to place anyt links ')
+        /// return false;
     }
 
     var linkSet = this.memory.links;
@@ -605,12 +628,12 @@ Room.prototype.placeLinks = function() {
     // pos: position object,
     // type: prime, source, shuttle
 
-    this.log('linkset' + linkSet)
-        // refresh list 
+    //this.log('linkset' + linkSet)
+    // refresh list 
     for (var linkId in linkSet) {
         var link = linkSet[linkId];
 
-        this.log('checking ' + linkId)
+        // this.log('checking ' + linkId)
         if (!util.def(linkId) || !util.def(Game.getObjectById(linkId))) {
             // check if it was a construction site 
 

@@ -103,6 +103,9 @@ Room.prototype.classify = function() {
 
 Room.prototype.score = function() {
 
+    if (!Memory.homeworld) {
+        Memory.homeworld = this.name;
+    }
 
     var nmes = this.find(FIND_HOSTILE_CREEPS);
     var srcs = this.find(FIND_SOURCES);
@@ -156,8 +159,7 @@ Room.prototype.score = function() {
 
     // dlog('nme' + nmes.length + ', srcs:' + srcs.length + ', anathem: ' + anathem.length+ ' mustdie: ' + mustdie.length + ', ore: ' + ore.length + ', exits:' + Object.keys(exits).length + ', srcDist: ' + srcDist + ', ctrlDist: ' + ctrlDist);
     var score = ((((srcs.length * 30) + (Object.keys(exits).length) * 50 + 100) - (srcDist + ctrlDist) * 2 + ore.length * 10) / (mapDistance * 2) * conweight - (nmes.length * 50 + anathem.length * 100 + mustdie.length * 200)) + bonus;
-    this.log("calculating score. variables: " +
-        'sources: ' + srcs.length + ', exits: ' + (Object.keys(exits).length + ', conweight: ' + conweight + ', srcdist: ' + srcDist + ', ctrldist: ' + ctrlDist + ', ore: ' + ore.length + ', nmes:  ' + nmes.length + ', anathem: ' + anathem.length + ', mustdie: ' + mustdie.length + ', mapdist ' + mapDistance) + ', bonus: ' + bonus + '. final score ' + score);
+    //this.log("calculating score. variables: " +    'sources: ' + srcs.length + ', exits: ' + (Object.keys(exits).length + ', conweight: ' + conweight + ', srcdist: ' + srcDist + ', ctrldist: ' + ctrlDist + ', ore: ' + ore.length + ', nmes:  ' + nmes.length + ', anathem: ' + anathem.length + ', mustdie: ' + mustdie.length + ', mapdist ' + mapDistance) + ', bonus: ' + bonus + '. final score ' + score);
     // dlog('score is ' + score)
     // dlog('scoring room ' + this.name + ' ' + score)
     return score;
@@ -207,10 +209,10 @@ module.exports.getPriority = function() {
 
     //dlog('global survey - GCL:' + level + ' owned rooms: ' + myRooms + ', reservations: ' + myRes);
 
+        var candidates = [];
     if (level > myRooms) {
         // target a new room
         //TODO - modify some metric here to dcreate more scouts 
-        var candidates = [];
 
         var selectList = ["annexed", "freerange", "threat"];
 

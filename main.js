@@ -224,7 +224,7 @@ module.exports.loop = function() {
             for (var r in Memory.rooms) {
                 if (Memory.rooms[r].lastUsed + 300 < Game.time || !util.def(Memory.rooms[r].lastUsed)) {
                     delete Memory.rooms[r];
-                    dlog('purging memory of ' + r);
+                    // dlog('purging memory of ' + r);
                 }
             }
             for (var r in Memory.Overmind.globalTerrain) {
@@ -286,8 +286,6 @@ module.exports.loop = function() {
                 // delete thisRoom.memory.sources
             }
 
-            /// Update schema
-            thisRoom.schemaCheck();
 
             // dlog('main start for ' + room + ', ' + Game.cpu.getUsed());
 

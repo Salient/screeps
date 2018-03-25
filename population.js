@@ -147,10 +147,9 @@ function nextPriority(room) {
     }
 
     var seedlingVeto = 1;
-    if (have.seedling >= Game.gcl.level * 2) { // there should not be a -1 here, but somethign is messed up. remove it later
+    if (have.seedling >= Game.gcl.level * 2) {
         seedlingVeto = 0;
     }
-
 
     // How is the Economy? Are there enough workers transporting energy?
     var nrg = room.find(FIND_DROPPED_RESOURCES, {
@@ -178,7 +177,7 @@ function nextPriority(room) {
         //'soldier': 15 + ((6 - room.memory.strategy.defcon) * 20),
         'medic': ((have.soldier - have.medic) * popCon.medicWeight),
         'seedling': have.miner * (econCon.tankMiss + econCon.gatherMiss) * 4 * seedlingVeto, // only want to create spores when i'm near full production
-        'scout': ((Memory.Overmind.scoutTimer + 300) < Game.time) ? 500 : 0
+        'scout': (((Memory.Overmind.scoutTimer + 300) < Game.time) ? 500 : 0) * seedlingVeto
     }
     var needsOfTheMany = Object.keys(needsOfTheFew).sort(function(keya, keyb) {
             return needsOfTheFew[keyb] - needsOfTheFew[keya];

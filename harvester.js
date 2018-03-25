@@ -609,7 +609,7 @@ function gatherer(creep) {
             if (!util.def(test) || !test) {
                 // creep.log('unable to acquire new sink.');
                 if (!creep.room.memory.nrgReserve) {
-                    creep.log(creep.name + ' invalid sink target, returned ' + test);
+                    // creep.log(creep.name + ' invalid sink target, returned ' + test);
                 }
                 //        creep.memory.taskList.pop();
 
@@ -918,8 +918,7 @@ function checkSourceMiners(creep) {
 
     for (var thisSource in sources) {
 
-        var thisSrcId = sources[thisSource].id;
-        var srcObj = Game.getObjectById(thisSrcId);
+        var srcObj = Game.getObjectById(thisSource);
         if (srcObj.energy < 100) {
             continue;
         }
@@ -940,7 +939,7 @@ function checkSourceMiners(creep) {
                 continue;
             }
 
-            if (thisShaftId == thisSrcId && assigneeRole == 'miner' && shafts[thisShaft].assignedTo != creep.name) {
+            if (thisShaftId == thisSource && assigneeRole == 'miner' && shafts[thisShaft].assignedTo != creep.name) {
                 found = true;
                 break;
             }

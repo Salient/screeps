@@ -84,7 +84,7 @@ function selectNewRoom(creep) {
     var targetList = ovrmnd.getPriority();
     if (!targetList || targetList.length == 0) {
         dlog('no target in new room celect list');
-        //            creep.leaveRoom();
+                    creep.leaveRoom();
         return false;;
     }
 
@@ -187,7 +187,7 @@ module.exports.infest = function(creep) {
         };
         */
     if (!util.def(creep.room.controller) || creep.role == 'scout') {
-        creep.log('derp')
+        // creep.log('derp')
         var newtarg = selectNewRoom(creep);
         if (newtarg) {
             creep.leaveRoom(newtarg);

@@ -158,6 +158,7 @@ var performTask = function(creep) {
 
         //dlog('assinged ' + taskList[0] + ' to ' + creep.name);
 
+        // creep.log('my curjob is now ' +  taskList[taskList.length - 1]);
     }
     // if ((taskList.length > 1) && !(Game.time % 10)) // Periodically refresh
     // // temporary tasksf
@@ -226,7 +227,7 @@ var performTask = function(creep) {
 
     //	dlog(creep.name + ' did ' + curJob + ' and his aim was ' + jobResult);
     if (!jobResult) {
-
+        // dlog('type: ' + typeof jobResult)
         var count = creep.memory.taskSpinCount;
         if (!util.def(count)) {
             creep.memory.taskSpinCount = 1;
@@ -246,36 +247,36 @@ var performTask = function(creep) {
 }
 module.exports.performTask = performTask;
 
-var getDefaultTask = function(creep) { // What to do if the creep has
-    // nothing to do
-
-    var role = Memory.creeps[creep.name].role; // Access memory like this in
-    // case creep is still spawning.
-
-    if (!util.def(role)) {
-        dlog(creep.name + ' some serious shisnit here')
-        role = 'worker'
-    }
-    // dlog('found a ' + creep.memory.role + ' needing a job')
-
-
-
-    // dlog('assigning default task');
-    switch (role) {
-        case 'worker':
-        case 'seedling':
-        case 'miner':
-            return role;
-            break;
-        case 'soldier':
-        case 'medic':
-            return 'military';
-            break;
-        default:
-            console.log('unmatched unit found!');
-            return role;
-    }
-}
+//var getDefaultTask = function(creep) { // What to do if the creep has
+//    // nothing to do
+//
+//    var role = Memory.creeps[creep.name].role; // Access memory like this in
+//    // case creep is still spawning.
+//
+//    if (!util.def(role)) {
+//        dlog(creep.name + ' some serious shisnit here')
+//        role = 'worker'
+//    }
+//    // dlog('found a ' + creep.memory.role + ' needing a job')
+//
+//
+//
+//    // dlog('assigning default task');
+//    switch (role) {
+//        case 'worker':
+//        case 'seedling':
+//        case 'miner':
+//            return role;
+//            break;
+//        case 'soldier':
+//        case 'medic':
+//            return 'military';
+//            break;
+//        default:
+//            console.log('unmatched unit found!');
+//            return role;
+//    }
+//}
 
 
 // TODO - make the weights used below dynamic
@@ -300,20 +301,28 @@ function somethingNeedDoing(creep) {
                 //creep.log('low energy in this room. gathering');
                 return 'gatherer';
             }
-            var result = Math.floor((Math.random() * 10));
 
+            // Weight priorities
+            //
+            //
+            var gatherWeight = 5 * Math.floor((Math.random() * 10));
+            var buildWeight = creep.room.memory.cache.construction.active * Math.floor((Math.random() * 10));
+            var techWeight = 3 * Math.floor((Math.random() * 10));
+
+            // creep.log('choosing new job. gather: ' + gatherWeight + ', builder: ' + buildWeight + ', tech: ' + techWeight )
             //creep.log('i guess there is energy in this room. result is ' + result);
             //creep.log('energy capacity is ' + creep.room.energyAvailable+ ', available is ' + creep.room.energyCapacityAvailable);
-            if (result < 5) {
-                // creep.log('i gather')
-                return 'gatherer'
-            } else if (result < 8) {
-                return 'builder'
-            } else if (result <= 9) {
-                return 'technician'
+            var winner = Math.max(gatherWeight, buildWeight, techWeight);
+
+            if (winner == gatherWeight) {
+                dlog('x')
+                return 'gatherer';
+            } else if (winner == buildWeight) {
+                dlog('y')
+                return 'builder';
             } else {
-                return 'worker';
-                //                return 'seedling'
+                dlog('z')
+                return 'technician';
             }
             break;
 
