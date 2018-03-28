@@ -24,7 +24,7 @@ var vis = room.visual;
                 // room.log(spot)
                 if (spot.heat > 40) {
                     // console.log('dddhwl')
-                    vis.circle(xval, yval, {
+                    vis.circle(+xval, +yval, {
                         fill: '#2277FF'
                     })
                 }

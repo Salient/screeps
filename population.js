@@ -83,6 +83,21 @@ function census(room) {
 
 // TODO change mining logic to only assign shafts to 'miner' class
 
+function globalCensus() {
+
+    var globalRoles = {}
+    for (var unit in Game.creeps) {
+        var dude = Game.creeps[unit];
+        var duderole = Memory.creeps[dude.name].role;
+
+        if (!duderole) {
+            continue;
+        }
+        globalRoles[duderole] = globalRoles[duderole]++ || 1;
+    }
+    return globalRoles;
+}
+
 function nextPriority(room) {
     // Check if room setup
     if (!room.memory.planned) {
@@ -119,6 +134,7 @@ function nextPriority(room) {
 
 
     var have = census(room);
+    var globalhave = globalCensus();
     var totalPop = 0;
     for (var i in have) {
         totalPop += have[i];
@@ -151,6 +167,11 @@ function nextPriority(room) {
         seedlingVeto = 0;
     }
 
+    var scoutVeto = 1;
+    if (have.scout >= Game.gcl.level * 2) {
+        scoutVeto = 0;
+    }
+
     // How is the Economy? Are there enough workers transporting energy?
     var nrg = room.find(FIND_DROPPED_RESOURCES, {
         filter: {
@@ -177,7 +198,7 @@ function nextPriority(room) {
         //'soldier': 15 + ((6 - room.memory.strategy.defcon) * 20),
         'medic': ((have.soldier - have.medic) * popCon.medicWeight),
         'seedling': have.miner * (econCon.tankMiss + econCon.gatherMiss) * 4 * seedlingVeto, // only want to create spores when i'm near full production
-        'scout': (((Memory.Overmind.scoutTimer + 300) < Game.time) ? 500 : 0) * seedlingVeto
+        'scout': (globalhave.scout < Game.gcl.level * 2) ? (((Memory.Overmind.scoutTimer + 300) < Game.time) ? 500 : 0) : 0
     }
     var needsOfTheMany = Object.keys(needsOfTheFew).sort(function(keya, keyb) {
             return needsOfTheFew[keyb] - needsOfTheFew[keya];

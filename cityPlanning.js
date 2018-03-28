@@ -24,17 +24,17 @@ Room.prototype.schemaCheck = function() {
     // this.memory.links = this.memory.links || {};
 
     if (!util.def(this.memory.cache)) {
-    this.memory.cache = {}
-        // this.log('created memory cache')
+        this.memory.cache = {}
+            // this.log('created memory cache')
     }
     // this.memory.cache = this.memory.cache || {};
-    if (!util.def(this.memory.cache.construction)){
+    if (!util.def(this.memory.cache.construction)) {
         this.memory.cache.construction = {};
         // this.log('created constuction object')
     }
 
     // start special chaches
-    
+
     if (!this.controller || !this.controller.my) {
         return;
     }
@@ -125,7 +125,6 @@ Room.prototype.buildRoads = function() {
                 var st = hwy[sq];
                 var res = this.createConstructionSite(st.x, st.y, STRUCTURE_ROAD);
                 if (!res) {
-                    this.log('placed road')
                     have++;
                 }
             }
@@ -398,7 +397,7 @@ function refreshRoom(room) {
 }
 
 
-function planRoom(room) {
+Room.prototype.gentrify = function() {
     // Take a look around, see what needs doing
 
     // Priorities
@@ -410,27 +409,27 @@ function planRoom(room) {
 
     // Track number of construction sites active
     //
-    if (!room.memory.cache || !room.memory.cache.construction) {
-        // room.log('wtf')
-        room.schemaCheck()
+    if (!this.memory.cache || !this.memory.cache.construction) {
+        // this.log('wtf')
+        this.schemaCheck()
     }
 
-    room.memory.cache.construction.active = room.find(FIND_MY_CONSTRUCTION_SITES).length;
+    this.memory.cache.construction.active = this.find(FIND_MY_CONSTRUCTION_SITES).length;
 
-    // should do this even if room isn't owned
-    room.buildRoads();
+    // should do this even if this isn't owned
+    this.buildRoads();
 
-    if (!util.def(room.memory.planned)) {
-        if (!bootstrap(room)) {
+    if (!util.def(this.memory.planned)) {
+        if (!bootstrap(this)) {
             return false; // bail for now
         }
     }
-    room.placeExtensions();
-    room.placeContainers()
-    room.placeTower();
-    room.placeStorage();
-    room.placeLinks();
-    // room.placeSpawn();
+    this.placeExtensions();
+    this.placeContainers()
+    this.placeTower();
+    this.placeStorage();
+    this.placeLinks();
+    // this.placeSpawn();
 
     //if (!(Game.time % 17)) {
     // }
@@ -438,7 +437,9 @@ function planRoom(room) {
 }
 
 
-module.exports.planRoom = planRoom;
+module.exports.planRoom = function(room){
+    room.gentrify();
+} 
 
 
 function placeAdjacent(room, pos, structure) {
@@ -479,18 +480,25 @@ Room.prototype.placeTower = function() {
         dlog('big bad voodoo');
         return false;
     }
-
     // Placement plan for towers - place close, but not too close, to the spawn
 
     var radius = 3;
-    while (placeNum > 0) {
-        for (var xdelta = -radius + radius % 2 + 1; xdelta <= radius; xdelta += 2) {
+    while (placeNum > 0 && radius < 6) {
+        dance: for (var xdelta = -radius + radius % 2 + 1; xdelta <= radius; xdelta += 2) {
             for (var ydelta = -radius + radius % 2 + 1; ydelta <= radius; ydelta += 2) {
                 var site = new RoomPosition(origin.x + xdelta, origin.y +
                     ydelta, this.name);
                 var res = this.createConstructionSite(site, STRUCTURE_TOWER);
-                if (res == OK) {
-                    placeNum--;;
+                switch (res) {
+                    case OK:
+                        placeNum--;
+                        break dance;
+                        break;
+                    case ERR_FULL:
+                        util.purgeOldConstruction();
+                        break;
+                    default:
+                        this.log('placing tower, result: ' + util.getError(res))
                 }
             }
         }
@@ -558,7 +566,10 @@ Room.prototype.placeExtensions = function() {
     var radius = 2;
     // start at spawn +/- 2 squares
     // spiral out
-    while (placeNum > 0) {
+    // return
+
+    while (placeNum > 0 && radius < 10) {
+        dance:
         for (var xdelta = -radius + radius % 2; xdelta <= radius; xdelta += 2) {
             for (var ydelta = -radius + radius % 2; ydelta <= radius; ydelta += 2) {
                 var site = new RoomPosition(origin.x + xdelta, origin.y + ydelta, this.name);
@@ -567,9 +578,17 @@ Room.prototype.placeExtensions = function() {
                     var res = this.createConstructionSite(site, STRUCTURE_EXTENSION);
                     // if (res == ERR_RCL_NOT_ENOUGH){return}
                     dlog('placing extension at ' + (origin.x + xdelta) + ',' + (origin.y + ydelta) + ' resut: ' + util.getError(res));
-                    if (res == OK) {
+                switch (res) {
+                    case OK:
                         placeNum--;
-                    }
+                        break dance;
+                        break;
+                    case ERR_FULL:
+                        util.purgeOldConstruction();
+                        break;
+                    default:
+                        this.log('placing road, result: ' + util.getError(res))
+                }
                 }
             }
         }
@@ -615,7 +634,7 @@ Room.prototype.placeLinks = function() {
 
     if (placeNum == 0) {
         // this.log('decided that I dont want to place anyt links ')
-        /// return false;
+        return false;
     }
 
     var linkSet = this.memory.links;

@@ -5,7 +5,7 @@ var util = require('common');
 var harvest = require('harvester');
 var taskMaster = require('tasker');
 var baseSupport = require('baseControl');
-// var visuals = require('visuals');
+ var visuals = require('visuals');
 var overmind = require('overmind');
 
 
@@ -250,7 +250,7 @@ module.exports.loop = function() {
 
         for (var room in Game.rooms) {
             var thisRoom = Game.rooms[room];
-            // visuals(thisRoom);
+             visuals(thisRoom);
 
             if (!thisRoom.controller) {
                 if (thisRoom.memory.trafficMap) {

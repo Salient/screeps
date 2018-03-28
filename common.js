@@ -2,6 +2,15 @@
  * 
  */
 
+module.exports.purgeOldConstruction = function() {
+    for (var site in Game.constructionSites) {
+        var thisSite = Game.getObjectById(site);
+        if (!thisSite.room){
+            thisSite.remove();
+        }
+    }
+}
+
 module.exports.myName = Game.spawns[Object.keys(Game.spawns)[0]].owner.username;
 
 Creep.prototype.log = function(msg) {
@@ -245,7 +254,7 @@ Creep.prototype.leaveRoom = function(dest = "") {
                             exit: option
                         }
                     }
-                } else if (this.role == 'seedling') {
+                } else if (this.role == 'seedling' || this.role == 'scout') {
                     randomExit = {
                         room: exit,
                         exit: option

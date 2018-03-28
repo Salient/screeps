@@ -158,7 +158,7 @@ var performTask = function(creep) {
 
         //dlog('assinged ' + taskList[0] + ' to ' + creep.name);
 
-        // creep.log('my curjob is now ' +  taskList[taskList.length - 1]);
+        // creep.log('New job');
     }
     // if ((taskList.length > 1) && !(Game.time % 10)) // Periodically refresh
     // // temporary tasksf
@@ -315,13 +315,10 @@ function somethingNeedDoing(creep) {
             var winner = Math.max(gatherWeight, buildWeight, techWeight);
 
             if (winner == gatherWeight) {
-                dlog('x')
                 return 'gatherer';
             } else if (winner == buildWeight) {
-                dlog('y')
                 return 'builder';
             } else {
-                dlog('z')
                 return 'technician';
             }
             break;
