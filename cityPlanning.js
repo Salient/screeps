@@ -13,34 +13,32 @@ var debug = false
 // find two independent paths to each and mark those tiles as roads
 
 // FYI, max call stack size is 4500. ish. it seems to depend
+Room.prototype.planRoom = function() {
+    planRoom(this);
+}
 
+Room.prototype.purgeSites = function() {
+    return
+    dat = this.find(FIND_CONSTRUCTION_SITES);
+    this.log('urging ' + dat.length + ' sites ')
+    for (var s in dat) {
+        dat[s].remove();
+    }
+}
 
 Room.prototype.schemaCheck = function() {
 
-    // this.log('started schema update')
-
     this.memory.trafficMap = this.memory.trafficMap || {};
-
-    // this.memory.links = this.memory.links || {};
-
-    if (!util.def(this.memory.cache)) {
-        this.memory.cache = {}
-            // this.log('created memory cache')
-    }
-    // this.memory.cache = this.memory.cache || {};
-    if (!util.def(this.memory.cache.construction)) {
-        this.memory.cache.construction = {};
-        // this.log('created constuction object')
-    }
-
-    // start special chaches
 
     if (!this.controller || !this.controller.my) {
         return;
     }
 
     this.memory.infrastructure = this.memory.infrastructure || {};
-    // this.memory.cache.construction = this.memory.cache.construction || {};
+    // this.memory.links = this.memory.links || {};
+
+    this.memory.cache = this.memory.cache || {};
+    this.memory.cache.construction = this.memory.cache.construction || {};
     if (!this.memory.links) {
         var dat = this.find(FIND_MY_STRUCTURES, {
             filter: {
@@ -69,7 +67,6 @@ Room.prototype.schemaCheck = function() {
         }
         this.memory.links = {}
     }
-    this.log('Schema updated');
 }
 
 
@@ -95,9 +92,14 @@ Room.prototype.needStructure = function(structure) {
 }
 
 Room.prototype.buildRoads = function() {
+    // try to cut down on the number of construction sites,
 
+    if (!Game.rooms[this.name]) {
+        this.log('ohi see there');
+
+    }
     // this.log(
-    var maxBuild = 5;
+    var maxBuild = 2;
 
     if (this.memory.strategy && this.memory.strategy.construction) {
         maxBuild = this.memory.strategy.construction.maxBuildSites;
@@ -110,6 +112,7 @@ Room.prototype.buildRoads = function() {
     }).length;
 
     if (have >= maxBuild) {
+        //this.log('ack road overload')
         return false;
     }
 
@@ -136,38 +139,52 @@ Room.prototype.buildRoads = function() {
 
     //this.log('scoring traffic for road building');
     var map = this.memory.trafficMap;
-
-    // this.log('poop')
-    // Remember we can't build roads on the first or last tile (exits)
-    for (var x = 1; x < 49; x++) {
+    this.log('road have ' + have + ', max: ' + maxBuild)
+        // this.log('poop')
+        // Remember we can't build roads on the first or last tile (exits)
+    for (var x in map) {
+        if (x == 0 || x == 49) {
+            continue;
+        }
         //if (!util.def(map[x])) {
         //map[x] = {};
         //}
 
-        for (var y = 1; y < 49; y++) {
-
-            if (!map[x] || !map[x][y]) {
+        for (var y in map[x]) {
+            if (y == 0 || y == 49) {
                 continue;
             }
-
             var thisSpot = map[x][y];
 
+
             thisSpot.heat = thisSpot.heat - (Game.time - thisSpot.refreshed);
-            thisSpot.heat = (thisSpot.heat < 0) ? 0 : thisSpot.heat;
+            thisSpot.heat = (thisSpot.heat <= 0) ? 0 : thisSpot.heat;
             thisSpot.refreshed = Game.time;
             if (thisSpot.heat == 0) {
                 delete thisSpot;
+                continue;
             }
-            if (thisSpot.heat > 25) {
+
+            if (+thisSpot.heat > 25) {
                 if (have >= maxBuild) {
                     return true;
                 }; // Let's not get carried away
-                var res = this.createConstructionSite(x, y, STRUCTURE_ROAD);
-                if (!res) {
-                    this.log('placing road')
-                    have++;
+                var res = this.createConstructionSite(+x, +y, STRUCTURE_ROAD);
+                switch (res) {
+                    case OK:
+                        this.log('placing road')
+                        have++;
+                        break;
+                    case ERR_FULL:
+                        dlog('Too many construction sites! we must PUUURGE');
+                        for (var gr in Game.rooms) {
+                            Game.rooms[gr].purgeSites();
+                        }
+                        return false;
+                        break;
+                    default:
+                        this.log('Error placing road site, ' + util.getError(res) + '; ' + x + ',' + y);
                 }
-
             }
         }
     }
@@ -397,7 +414,7 @@ function refreshRoom(room) {
 }
 
 
-Room.prototype.gentrify = function() {
+function planRoom(room) {
     // Take a look around, see what needs doing
 
     // Priorities
@@ -407,29 +424,20 @@ Room.prototype.gentrify = function() {
     // 4, walls around exits
     // Sanity Checks
 
-    // Track number of construction sites active
-    //
-    if (!this.memory.cache || !this.memory.cache.construction) {
-        // this.log('wtf')
-        this.schemaCheck()
-    }
+    // should do this even if room isn't owned
+    room.buildRoads();
 
-    this.memory.cache.construction.active = this.find(FIND_MY_CONSTRUCTION_SITES).length;
-
-    // should do this even if this isn't owned
-    this.buildRoads();
-
-    if (!util.def(this.memory.planned)) {
-        if (!bootstrap(this)) {
+    if (!util.def(room.memory.planned)) {
+        if (!bootstrap(room)) {
             return false; // bail for now
         }
     }
-    this.placeExtensions();
-    this.placeContainers()
-    this.placeTower();
-    this.placeStorage();
-    this.placeLinks();
-    // this.placeSpawn();
+    room.placeExtensions();
+    room.placeContainers()
+    room.placeTower();
+    room.placeStorage();
+    room.placeLinks();
+    // room.placeSpawn();
 
     //if (!(Game.time % 17)) {
     // }
@@ -437,9 +445,7 @@ Room.prototype.gentrify = function() {
 }
 
 
-module.exports.planRoom = function(room){
-    room.gentrify();
-} 
+module.exports.planRoom = planRoom;
 
 
 function placeAdjacent(room, pos, structure) {
@@ -480,25 +486,18 @@ Room.prototype.placeTower = function() {
         dlog('big bad voodoo');
         return false;
     }
+
     // Placement plan for towers - place close, but not too close, to the spawn
 
     var radius = 3;
-    while (placeNum > 0 && radius < 6) {
-        dance: for (var xdelta = -radius + radius % 2 + 1; xdelta <= radius; xdelta += 2) {
+    while (placeNum > 0) {
+        for (var xdelta = -radius + radius % 2 + 1; xdelta <= radius; xdelta += 2) {
             for (var ydelta = -radius + radius % 2 + 1; ydelta <= radius; ydelta += 2) {
                 var site = new RoomPosition(origin.x + xdelta, origin.y +
                     ydelta, this.name);
                 var res = this.createConstructionSite(site, STRUCTURE_TOWER);
-                switch (res) {
-                    case OK:
-                        placeNum--;
-                        break dance;
-                        break;
-                    case ERR_FULL:
-                        util.purgeOldConstruction();
-                        break;
-                    default:
-                        this.log('placing tower, result: ' + util.getError(res))
+                if (res == OK) {
+                    placeNum--;;
                 }
             }
         }
@@ -566,10 +565,7 @@ Room.prototype.placeExtensions = function() {
     var radius = 2;
     // start at spawn +/- 2 squares
     // spiral out
-    // return
-
-    while (placeNum > 0 && radius < 10) {
-        dance:
+    while (placeNum > 0) {
         for (var xdelta = -radius + radius % 2; xdelta <= radius; xdelta += 2) {
             for (var ydelta = -radius + radius % 2; ydelta <= radius; ydelta += 2) {
                 var site = new RoomPosition(origin.x + xdelta, origin.y + ydelta, this.name);
@@ -578,17 +574,9 @@ Room.prototype.placeExtensions = function() {
                     var res = this.createConstructionSite(site, STRUCTURE_EXTENSION);
                     // if (res == ERR_RCL_NOT_ENOUGH){return}
                     dlog('placing extension at ' + (origin.x + xdelta) + ',' + (origin.y + ydelta) + ' resut: ' + util.getError(res));
-                switch (res) {
-                    case OK:
+                    if (res == OK) {
                         placeNum--;
-                        break dance;
-                        break;
-                    case ERR_FULL:
-                        util.purgeOldConstruction();
-                        break;
-                    default:
-                        this.log('placing road, result: ' + util.getError(res))
-                }
+                    }
                 }
             }
         }
@@ -633,8 +621,8 @@ Room.prototype.placeLinks = function() {
     }
 
     if (placeNum == 0) {
-        // this.log('decided that I dont want to place anyt links ')
-        return false;
+        this.log('decided that I dont want to place anyt links ')
+            /// return false;
     }
 
     var linkSet = this.memory.links;
@@ -647,13 +635,15 @@ Room.prototype.placeLinks = function() {
     // pos: position object,
     // type: prime, source, shuttle
 
-    //this.log('linkset' + linkSet)
+    // this.log('linkset' + linkSet)
+    // util.dumpObj(linkSet)
     // refresh list 
     for (var linkId in linkSet) {
         var link = linkSet[linkId];
+        var linkObj = Game.getObjectById(linkId);
 
-        // this.log('checking ' + linkId)
-        if (!util.def(linkId) || !util.def(Game.getObjectById(linkId))) {
+        this.log('checking ' + linkId)
+        if (!util.def(linkObj)) {
             // check if it was a construction site 
 
             this.log(linkId + ' is not valid')
@@ -675,6 +665,14 @@ Room.prototype.placeLinks = function() {
                 }
             }
             delete linkSet[linkId];
+        } else {
+            if (link.type == 'aux' && linkObj.hitsMax) {
+                for (var sr in this.memory.sources) {
+                    if (this.memory.sources[sr].id == srcId && !this.memory.sources[sr].link) {
+                        this.memory.sources[sr].link = linkObj.id;
+                    }
+                }
+            }
         }
     }
 
@@ -686,11 +684,7 @@ Room.prototype.placeLinks = function() {
                     var site = new RoomPosition(origin.x + xdelta, origin.y + ydelta, this.name);
                     var res = this.createConstructionSite(site, STRUCTURE_LINK);
                     if (res == OK) {
-                        var newSite = site.lookFor(LOOK_CONSTRUCTION_SITES);
-                        this.log('newsite:')
-                        util.dumpObj(newSite);
-
-                        linkSet[util.getRand(1, 5)] = { // assign it some random key for now, can't get game obj id until next tick becuase screw you thats why
+                        this.memory.linkSet[site.x + ',' + site.y] = { // assign it some random key for now, can't get game obj id until next tick becuase screw you thats why
                                 pos: site,
                                 type: 'prime'
                             }
@@ -708,31 +702,85 @@ Room.prototype.placeLinks = function() {
     }
 
     this.placeAuxLink = function(srcId) {
-        //
+        // sanity check    
+        var targetSource = Game.getObjectById(srcId);
 
-        if (!srcId) {
-            if (!this.memory.sources) {
-                return false;
-            }
-
+        if (!targetSource) {
+            return false;
         }
-        //
-        //
-        //
-        // lookforatarea look constant   LOOK_TERRAIN
-        var source = Game.getObjectById(srcId);
 
-        if (!source) {
-            this.log('aux link error place');
+        if (!this.memory.sources) {
             return false
         }
-        //		var epicenter = source.pos;
-        var bounds = util.bound(source.pos, 2);
-        dlog('----')
-        util.dumpObj(bounds)
-        var sourceMap = source.room.lookForAt(LOOK_TERRAIN, bounds.top, bounds.left, bounds.bottom, bounds.right);
-        util.dumpObj(sourceMap);
-        dlog('ooooo')
+
+        var memSrc = false;
+        for (var s in this.memory.sources) {
+            if (this.memory.sources[s].id == thisSrcId) {
+                memSrc = this.memory.sources[s];
+            }
+        }
+
+        if (!memSrc) {
+            this.log('could not place aux link, no mem source record');
+            return false;
+        }
+        // check for defined shafts
+        var shafts = this.memory.shafts;
+        if (!shafts) {
+            this.log('aux link error, no shafts in room');
+            return false;
+        }
+
+        // spiral out from each shaft for looking for clear adjacent
+
+        for (var ind in shafts) {
+            var thisShaft = shafts[ind];
+            if (thisShaft.srcId != srcId) {
+                continue;
+            }
+
+
+            var x = 1,
+                rx = thisShaft.pos.x, // W component of current room
+                ry = thisShaft.pos.y, // N component of current room
+                vector = util.spiral(x);
+
+            // return; 
+            while (vector[2] <= 2) {
+                var nx = +rx + +vector[0],
+                    ny = +ry + +vector[1];
+
+                vector = util.spiral(++x);
+
+                if (nx <= 0 || nx >= 49) {
+                    continue;
+                }
+                if (ny <= 0 || ny >= 49) {
+                    continue;
+
+                    var testSite = {
+                        x: nx,
+                        y: ny
+                    }
+                    if (isAdjacentClear(testSite)) {
+
+                        var site = new RoomPosition(nx, ny, this.name);
+                        var res = this.createConstructionSite(site, STRUCTURE_LINK);
+                        if (res == OK) {
+                            //        memSrc.link = {id: false,
+                            //            x:nx,
+                            //            y:ny
+                            //        }
+
+                            linkSet[site.x + ',' + site.y] = { // assign it some random key for now, can't get game obj id until next tick becuase screw you thats why
+                                pos: site,
+                                type: 'aux'
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     // Defines strategy for using links in this room
@@ -745,6 +793,7 @@ Room.prototype.placeLinks = function() {
     switch (linkmode) {
         case 'normal':
 
+            // this.log('im normal link')
             var haveprime = false;
             var haveaux = 0;
 
@@ -774,7 +823,12 @@ Room.prototype.placeLinks = function() {
                 for (var n in this.memory.sources) {
                     var disrc = this.memory.sources[n];
 
-                    for (var m in this.memory.shafts) {}
+                    for (var m in this.memory.shafts) {
+                        var dishft = this.memory.shafts[m];
+                        if (dishft.srcId == disrc.id) {
+
+                        }
+                    }
                 }
                 if (this.memory.sources.length > 1) {
                     for (var src in this.memory.sources) {
@@ -907,7 +961,8 @@ Room.prototype.placeSpawn = function() {
     for (var poor in Game.creeps) {
         var soul = Game.creeps[poor];
         if (soul.taskState != "SPECIAL") {
-            Game.creeps[poor].focusBuild("dc284fb70fd9707");
+            dlog('ackkkk bad boy')
+                //Game.creeps[poor].focusBuild("dc284fb70fd9707");
         }
     }
 
