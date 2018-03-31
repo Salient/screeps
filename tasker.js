@@ -158,7 +158,7 @@ var performTask = function(creep) {
 
         //dlog('assinged ' + taskList[0] + ' to ' + creep.name);
 
-        // creep.log('New job');
+        creep.log('New job');
     }
     // if ((taskList.length > 1) && !(Game.time % 10)) // Periodically refresh
     // // temporary tasksf
@@ -306,10 +306,11 @@ function somethingNeedDoing(creep) {
             //
             //
             var gatherWeight = 5 * Math.floor((Math.random() * 10));
-            var buildWeight = creep.room.memory.cache.construction.active * Math.floor((Math.random() * 10));
+			var buildWeight = creep.room.memory.cache.construction.active * Math.floor((Math.random() * 10));
+			// var buildWeight = 4 * Math.floor((Math.random() * 10));
             var techWeight = 3 * Math.floor((Math.random() * 10));
 
-            // creep.log('choosing new job. gather: ' + gatherWeight + ', builder: ' + buildWeight + ', tech: ' + techWeight )
+             creep.log('choosing new job. gather: ' + gatherWeight + ', builder: ' + buildWeight + ', tech: ' + techWeight )
             //creep.log('i guess there is energy in this room. result is ' + result);
             //creep.log('energy capacity is ' + creep.room.energyAvailable+ ', available is ' + creep.room.energyCapacityAvailable);
             var winner = Math.max(gatherWeight, buildWeight, techWeight);

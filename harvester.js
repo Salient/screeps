@@ -129,7 +129,7 @@ function mine(creep) {
     // TODO - clean this crap up
 
     // Two scenarios - mining by worker, and mining by miner
-    if (!util.def(creep.memory.mTarget)) {
+    if (!util.def(creep.memory.mTarget) || !Game.getObjectById(creep.memory.mTarget)) {
         // Will return a mineshaft object or false if none available
         var post = findSource(creep);
         if (!util.def(post) || !post) {
@@ -143,11 +143,11 @@ function mine(creep) {
     }
 
     var posting = creep.memory.mTarget;
-    var srcObj = Game.getObjectById(posting.srcId);
+    var srcObj = Game.getObjectById(creep.memory.mTarget.srcId);
 
     if (!util.def(srcObj)) {
-        creep.log('this is very strange')
-        util.dumpObj(posting)
+		// creep.log('this is very strange')
+		// util.dumpObj(posting)
         delete creep.memory.mTarget;
         return false;
     }
@@ -235,16 +235,17 @@ module.exports.fillTank = function(creep) {
         var res = findCashMoney(creep);
         if (!res) {
             if (creep.getActiveBodyparts(WORK) > 0) {
-                return mine(creep);
+                if (mine(creep)){
+                    return true;
+                }
+                creep.room.tankMiss();
+                return false;
             }
-            creep.log('tank miss')
-            creep.room.tankMiss();
 
             //            dlog('no available energy')
             // TODO - add storage check here?
             // TODO - use this situation to modify some behavior coefficients
             // dlog(creep.name + ' out shuttle');
-            return false;
         }
         creep.memory.eTarget = res;
         targ = Game.getObjectById(res);
@@ -431,16 +432,18 @@ function findEnergy(creep) {
         totalE += candidate.amount;
         // var path = creep.pos.findPathTo(candidate, { ignoreCreeps: true});
         var path = creep.pos.findPathTo(candidate);
-        if (!util.def(path) || path.length == 0 || 
-            
+        if (!util.def(path) || path.length == 0 ||
+
             creep.moveTo(candidate, {
                 reusePath: 15,
                 visualizePathStyle: {
                     opacity: 0.9,
                     stroke: '#cc8800'
-                }})
- 
-             || candidate.amount < 75) {
+                }
+            })
+
+            ||
+            candidate.amount < 75) {
             continue;
         }
 
@@ -535,18 +538,26 @@ function gatherer(creep) {
     }
 
     function source() {
+        
+        // check if already mining
         var targ = Game.getObjectById(creep.memory.mTarget);
-        if (util.def(targ)) {
-            return mine(creep);
+        if (util.def(targ) && mine(creep)) {
+            return true;
         }
 
+        // find energy
         targ = Game.getObjectById(creep.memory.eTarget);
         if (!util.def(targ)) {
             delete creep.memory.eTarget;
             var rst = findBacon(creep);
             if (!util.def(rst)) {
                 // dlog('mining')
-                return mine(creep);
+                if (mine(creep)) {
+                    return true;
+                }
+
+                creep.room.tankMiss();
+                return false;
                 //creep.log('tried to mine, result was ' + tres)
                 // if (!tres) {
                 //     creep.taskState = "LEAVING";
@@ -958,10 +969,11 @@ function checkSourceMiners(creep) {
             }
 
             for (var old in shafts) {
-                if (shafts[old].srcId == thisSrcId) {
-                    if ((shafts[old].assignedTo == creep.name) || (shafts[old].assignedTo == 'unassigned') || (Game.creeps[shafts[old].assignedTo].memory.role != 'miner')) {
+                if (shafts[old].srcId == thisSource) {
+                    if ((shafts[old].assignedTo == 'unassigned') || (Game.creeps[shafts[old].assignedTo].memory.role != 'miner')) {
                         shafts[old].assignedTo = creep.name;
                         creep.memory.mTarget = shafts[old];
+						return true;
                     }
                 }
             }
@@ -969,6 +981,7 @@ function checkSourceMiners(creep) {
         }
 
     }
+	return false;
 
 }
 
