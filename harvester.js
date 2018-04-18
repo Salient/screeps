@@ -25,13 +25,13 @@ Creep.prototype.outsource = function() {
             }
         }
         // nothing coming soon. leave room.
-        //   this.leaveRoom();
-        //  return true;
+        // this.leaveRoom();
+        // return true;
     }
-    //shoulding get here
+    // shoulding get here
     //
     // return false;
-    //  return this.exploreNewRoom();
+    // return this.exploreNewRoom();
     // outsourcing disabled
 
     // this.log(' outsourcing')
@@ -41,7 +41,8 @@ Creep.prototype.outsource = function() {
     };
 
     var score = 0;
-    //    var best = (Object.keys(ovr)[0] == this.room.name) ? Object.keys(ovr)[1] : Object.keys(ovr)[0]; 
+    // var best = (Object.keys(ovr)[0] == this.room.name) ? Object.keys(ovr)[1]
+	// : Object.keys(ovr)[0];
     var best = null;
 
     for (var land in ovr) {
@@ -118,7 +119,7 @@ Room.prototype.needMiner = function() {
     }
     // WORK parts harvest 2 nrg per tick
 
-    if (horsepower * 2 < 30) { // max useful is 20. added some margin;
+    if (horsepower * 2 < 20) { // max useful is 20. added some margin;
         return true
     } else {
         return false
@@ -166,18 +167,24 @@ function mine(creep) {
         var result = creep.harvest(srcObj);
         switch (result) {
             case OK:
+                if (!creep.room.controller.my){
+                    Memory.Overmind.globalTerrain[creep.room.name].lastHarvest = Game.time;
+                    Memory.Overmind.globalTerrain[creep.room.name].score++;
+                }
                 return true;
                 break;
             case ERR_NOT_ENOUGH_RESOURCES:
                 if (creep.memory.role != 'miner') {
                     creep.memory.mTarget = null;
                 } else {
-                    //Check if any other sources in the room do not have a miner already assigned.
+                    // Check if any other sources in the room do not have a
+					// miner already assigned.
                     checkSourceMiners(creep)
                 }
-                // we don't want to return false when a miner does it's job too well
+                // we don't want to return false when a miner does it's job too
+				// well
                 return true;
-                //                return false;
+                // return false;
                 break;
             case ERR_TIRED:
                 creep.log('tire')
@@ -242,7 +249,7 @@ module.exports.fillTank = function(creep) {
                 return false;
             }
 
-            //            dlog('no available energy')
+            // dlog('no available energy')
             // TODO - add storage check here?
             // TODO - use this situation to modify some behavior coefficients
             // dlog(creep.name + ' out shuttle');
@@ -252,8 +259,8 @@ module.exports.fillTank = function(creep) {
     }
 
     var res = creep.hitUp(targ);
-    //    dlog("hitting up " + targ.pos.x + ',' + targ.pos.y + ' - ' +
-    //        util.getError(res))
+    // dlog("hitting up " + targ.pos.x + ',' + targ.pos.y + ' - ' +
+    // util.getError(res))
     switch (res) {
         case OK:
             return true;
@@ -264,7 +271,7 @@ module.exports.fillTank = function(creep) {
                 visualizePathStyle: {
                     stroke: '1ffaa00',
                     opacity: 1,
-                    //    strokeWidth: 1
+                    // strokeWidth: 1
                 }
             });
             if (pap == OK || pap == ERR_TIRED) {
@@ -351,67 +358,67 @@ function findContainer(creep) {
 
 module.exports.findContainer = findContainer;
 
-//function shuttle(creep) {
-//    // Get energy from containers and move it to spawn
-//    // dlog(creep.name + ' in shuttle')
+// function shuttle(creep) {
+// // Get energy from containers and move it to spawn
+// // dlog(creep.name + ' in shuttle')
 //
-//    if (!util.def(creep.memory.sinkId) ||
-//        !util.def(Game.getObjectById(creep.memory.sinkId))) { // in case it's
-//        // been
-//        // destroyed
-//        creep.memory.sinkId = findSink(creep);
-//    }
+// if (!util.def(creep.memory.sinkId) ||
+// !util.def(Game.getObjectById(creep.memory.sinkId))) { // in case it's
+// // been
+// // destroyed
+// creep.memory.sinkId = findSink(creep);
+// }
 //
-//    var mySink = Game.getObjectById(creep.memory.sinkId);
+// var mySink = Game.getObjectById(creep.memory.sinkId);
 //
-//    if (!util.def(creep.memory.eTarget)) {
-//        // ?? var result =
-//        var res = findCashMoney(creep);
-//        if (!res) {
-//            // dlog(creep.name + ' out shuttle');
-//            return false;
-//        }
-//        creep.memory.eTarget = res;
-//    }
-//    dlog('shuttle')
-//    var target = Game.getObjectById(creep.memory.eTarget);
-//    // util.dumpObject(target)
-//    if (!util.def(target)) {
-//        dlog('zomg')
+// if (!util.def(creep.memory.eTarget)) {
+// // ?? var result =
+// var res = findCashMoney(creep);
+// if (!res) {
+// // dlog(creep.name + ' out shuttle');
+// return false;
+// }
+// creep.memory.eTarget = res;
+// }
+// dlog('shuttle')
+// var target = Game.getObjectById(creep.memory.eTarget);
+// // util.dumpObject(target)
+// if (!util.def(target)) {
+// dlog('zomg')
 //
-//        delete creep.memory.eTarget;
-//        return false;
-//    }
+// delete creep.memory.eTarget;
+// return false;
+// }
 //
-//    var res = creep.hitUp(target);
-//    // TODO: possibly reuse path found earlier for more efficiency
-//    switch (res) {
-//        case OK:
-//        case ERR_FULL:
-//            return true;
-//            break;
-//        case ERR_NOT_ENOUGH_RESOURCES:
-//            delete creep.memory.eTarget;
-//            return false;
-//            break;
-//        case ERR_NOT_IN_RANGE:
-//            var move = creep.moveTo(target, {
-//                reusePath: 15,
-//                visualizePathStyle: {
-//                    stroke: 'fffaaf0'
-//                }
-//            });
-//            if (move == ERR_NO_PATH) {
-//                delete creep.memory.cTarget;
-//                dlog('hmm');
-//                return false;
-//            }
-//            return true;
-//            break;
-//    }
-//}
+// var res = creep.hitUp(target);
+// // TODO: possibly reuse path found earlier for more efficiency
+// switch (res) {
+// case OK:
+// case ERR_FULL:
+// return true;
+// break;
+// case ERR_NOT_ENOUGH_RESOURCES:
+// delete creep.memory.eTarget;
+// return false;
+// break;
+// case ERR_NOT_IN_RANGE:
+// var move = creep.moveTo(target, {
+// reusePath: 15,
+// visualizePathStyle: {
+// stroke: 'fffaaf0'
+// }
+// });
+// if (move == ERR_NO_PATH) {
+// delete creep.memory.cTarget;
+// dlog('hmm');
+// return false;
+// }
+// return true;
+// break;
+// }
+// }
 //
-//module.exports.shuttle = shuttle;
+// module.exports.shuttle = shuttle;
 
 function findEnergy(creep) {
 
@@ -480,7 +487,8 @@ module.exports.findEnergy = findEnergy;
 
 function gatherer(creep) {
 
-    // TODO - add a mode where they search for energy outside the room. like a scout, but without claim part
+    // TODO - add a mode where they search for energy outside the room. like a
+	// scout, but without claim part
 
     // Priorities are:
     // 1. Pickup any free energy laying on the ground.
@@ -501,7 +509,7 @@ function gatherer(creep) {
     // Done dropping off
     if (creep.carry.energy == 0) {
         if (creep.taskState == 'SINK' && creep.room.memory.nrgReserve == false) {
-            // pop job just in case something else needs doing 
+            // pop job just in case something else needs doing
             creep.memory.taskState = "SOURCE";
             return false;
         }
@@ -534,6 +542,7 @@ function gatherer(creep) {
             break;
         default:
             creep.log('Gather logic fallthru: ' + creep.taskState);
+        creep.taskState = 'SOURCE'; // default to something
             return false;
     }
 
@@ -558,11 +567,11 @@ function gatherer(creep) {
 
                 creep.room.tankMiss();
                 return false;
-                //creep.log('tried to mine, result was ' + tres)
+                // creep.log('tried to mine, result was ' + tres)
                 // if (!tres) {
-                //     creep.taskState = "LEAVING";
-                //     creep.changeTask('builder');
-                //     return true;
+                // creep.taskState = "LEAVING";
+                // creep.changeTask('builder');
+                // return true;
                 // }
                 // return tres;
             } else {
@@ -620,9 +629,10 @@ function gatherer(creep) {
             if (!util.def(test) || !test) {
                 // creep.log('unable to acquire new sink.');
                 if (!creep.room.memory.nrgReserve) {
-                    // creep.log(creep.name + ' invalid sink target, returned ' + test);
+                    // creep.log(creep.name + ' invalid sink target, returned '
+					// + test);
                 }
-                //        creep.memory.taskList.pop();
+                // creep.memory.taskList.pop();
 
                 return false;
             } else {
@@ -631,7 +641,7 @@ function gatherer(creep) {
             }
         }
         var res = creep.transfer(mySink, RESOURCE_ENERGY);
-        //        return
+        // return
         switch (res) {
             case OK:
                 return true;
@@ -674,7 +684,8 @@ function distance(p1, p2) {
 
 function findCashMoney(creep) {
 
-    // Shouldn't be any workers sniffing around if we don't have a controller in this room yet
+    // Shouldn't be any workers sniffing around if we don't have a controller in
+	// this room yet
     if (!util.def(creep.room.controller)) {
         return false;
     }
@@ -753,11 +764,8 @@ function findBacon(creep) {
 
     // Special case
     if (creep.room.memory.nrgReserve) {
-        var storage = creep.pos.findClosestByRange(FIND_STRUCTURES, {
-            filter: (i) => i.structureType == STRUCTURE_STORAGE &&
-                i.store[RESOURCE_ENERGY] > storageReserves
-        });
-        if (util.def(storage)) {
+        var storage = creep.room.storage;
+        if (util.def(storage) && storage.store[RESOURCE_ENERGY] > storageReserves) {
             cash.push(storage);
         }
     }
@@ -790,11 +798,13 @@ function findBacon(creep) {
 function findSink(creep) {
 
 
-    //var sinkPriority = [STRUCTURE_LINK, STRUCTURE_SPAWN, STRUCTURE_EXTENSION, STRUCTURE_TOWER, STRUCTURE_POWER_SPAWN, STRUCTURE_STORAGE];
+    // var sinkPriority = [STRUCTURE_LINK, STRUCTURE_SPAWN, STRUCTURE_EXTENSION,
+	// STRUCTURE_TOWER, STRUCTURE_POWER_SPAWN, STRUCTURE_STORAGE];
     var sinkPriority = [STRUCTURE_LINK, STRUCTURE_SPAWN, STRUCTURE_EXTENSION, STRUCTURE_TOWER, STRUCTURE_STORAGE];
 
     if (creep.room.memory.nrgReserve) {
-        sinkPriority.pop(); // Pop off storage, lest we get into a loop sourcing and sinking back to storage
+        sinkPriority.pop(); // Pop off storage, lest we get into a loop sourcing
+							// and sinking back to storage
     }
 
     if (!util.def(creep.room.memory.cache)) {
@@ -839,11 +849,11 @@ function findSink(creep) {
     });
 
     if (Object.keys(distance).length == 0) {
-        //        dlog(creep.name + ': no sink targets in this room, trying origin');
+        // dlog(creep.name + ': no sink targets in this room, trying origin');
         // dlog(Memory.rooms[creep.memory.birthRoom].spawnId)
         // dlog(creep.name + '/' + creep.room.name + ': fix me sink')
         return Memory.rooms[creep.memory.birthRoom].spawnId;
-        //        return false;
+        // return false;
     }
 
     // dlog('finding sink in ' + creep.room.name + ', targets: ' + targets)
@@ -886,12 +896,15 @@ function findSink(creep) {
             }
     }
 
-    // don't want to error completely just because somebody else is headed to the same place
+    // don't want to error completely just because somebody else is headed to
+	// the same place
     if (backup != false) {
         return backup;
     }
 
-    //    dlog('no sinks in ' + creep.room.name + ', backup is ' + backup + ', priority is ' + priority + ', and reserve is ' + creep.room.memory.nrgReserve);
+    // dlog('no sinks in ' + creep.room.name + ', backup is ' + backup + ',
+	// priority is ' + priority + ', and reserve is ' +
+	// creep.room.memory.nrgReserve);
     return false;
 }
 
@@ -1051,7 +1064,7 @@ function findSource(creep) {
     }
 
     // Whelp...i guess nothing is available
-    //    dlog('No mineshafts available...');
+    // dlog('No mineshafts available...');
     creep.taskState = 'LEAVING'
     return false;
 }
@@ -1065,8 +1078,8 @@ function isFull(sink) {
         // "/"+sink.energyCapacity);
         return sink.energy == sink.energyCapacity;
     } else if (sink.structureType == 'storage') {
-        //        console.log(sink.structureType + ": " + sink.store +
-        //   "/" + sink.storeCapacity);
+        // console.log(sink.structureType + ": " + sink.store +
+        // "/" + sink.storeCapacity);
         return sink.store[RESOURCE_ENERGY] == sink.storeCapacity;
     }
 }

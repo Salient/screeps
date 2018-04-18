@@ -206,7 +206,7 @@ function repairRoads(support) {
             var decrement = road.heat - (Game.time - road.refereshed);
             road.heat = (decrement > road.heat) ? 0 : road.heat - decrement;
             road.refereshed = Game.time;
-            if (road.heat < 30) {
+            if (road.heat < 75) {
                 spin++;
                 continue;
             }

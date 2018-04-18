@@ -59,11 +59,16 @@ module.exports.getError = function(result) {
 module.exports.getRand = function getRandomIntInclusive(min, max) {
     min = Math.ceil(min);
     max = Math.floor(max);
-    return Math.floor(Math.random() * (max - min + 1)) + min; //The maximum is inclusive and the minimum is inclusive 
+    return Math.floor(Math.random() * (max - min + 1)) + min; // The maximum
+																// is inclusive
+																// and the
+																// minimum is
+																// inclusive
 }
 
 
-// Return object with top,left,bottom,right properties a la  room position index within boundaries up to [margin] away
+// Return object with top,left,bottom,right properties a la room position index
+// within boundaries up to [margin] away
 module.exports.bound = function bound(pos, margin = 1) {
     return {
         top: (pos.y < margin) ? 1 : pos.y - margin,
@@ -91,14 +96,14 @@ module.exports.dumpObject = dumpObject;
 module.exports.dumpObj = dumpObject;
 
 var def = function(obj) {
-    //  return (obj === false) ? false : !!obj;
+    // return (obj === false) ? false : !!obj;
     return (obj === false) ? true : (obj === undefined || obj === null) ? false : true;
 
     return !!obj;
-    //	if ((typeof obj !== undefined) || (obj === null)) {
-    //		return false;
-    //	}
-    //    return true 
+    // if ((typeof obj !== undefined) || (obj === null)) {
+    // return false;
+    // }
+    // return true
 }
 
 module.exports.def = def;
@@ -146,12 +151,14 @@ Creep.prototype.moveAwayFromExit = function() {
     if (!movedir) {
         this.log('stf');
     }
-    var res = this.move(movedir);
+   return this.move(movedir);
     // this.log(this.name + ' moved away, res: ' + res)
 }
 
 Creep.prototype.moveRandom = function() {
-    this.move(Math.floor(Math.random() * (8) + 1)); //The maximum is inclusive and the minimum is inclusive 
+    this.move(Math.floor(Math.random() * (8) + 1)); // The maximum is inclusive
+													// and the minimum is
+													// inclusive
 }
 
 Creep.prototype.leaveRoom = function(dest = "") {
@@ -164,16 +171,13 @@ Creep.prototype.leaveRoom = function(dest = "") {
     }
 
     // Check if already set up
-    //     this.log(this.name + '/' + this.room.name, ' leave room called, dest: ' + dest);
+    // this.log(this.name + '/' + this.room.name, ' leave room called, dest: ' +
+	// dest);
 
-    if (!def(this.memory.wanderlust) || !def(this.memory.wanderlust.route)) {
+    if (!def(this.memory.wanderlust) || !def(this.memory.wanderlust.route)) { 
         if (dest) {
-            // New pilrgimage starting
-
             if (this.room.name == dest) {
-                ///uhh guess i'm already here? what?
                 this.log('wants to leave to the room its already in');
-                //  this.memory.taskList.pop();
                 return false;
             }
 
@@ -192,13 +196,12 @@ Creep.prototype.leaveRoom = function(dest = "") {
             });
 
             if (interRoomRoute == ERR_NO_PATH) {
-                //this.memory.taskList.pop();
+                // this.memory.taskList.pop();
                 this.log('interroom routing error, trying to leave,  no path?');
                 return false;
             }
 
             if (interRoomRoute.length > 0) {
-
                 this.memory.wanderlust = {
                     route: interRoomRoute
                 }
@@ -207,14 +210,14 @@ Creep.prototype.leaveRoom = function(dest = "") {
                 return false;
             }
         } else {
-            //             return false;
+            // return false;
             // Supposed to pick a random exit
 
-            //            var roomChoice = {
-            //                "name": null,
-            //                "score": 0,
-            //                "exit": null
-            //            };
+            // var roomChoice = {
+            // "name": null,
+            // "score": 0,
+            // "exit": null
+            // };
             //
 
 
@@ -248,7 +251,7 @@ Creep.prototype.leaveRoom = function(dest = "") {
                     if (storedScore > score && this.role == 'worker') {
                         score = storedScore;
 
-                        //this.log('testing ' + exit + ' with score ' + score)
+                        // this.log('testing ' + exit + ' with score ' + score)
                         randomExit = {
                             room: exit,
                             exit: option
@@ -263,22 +266,25 @@ Creep.prototype.leaveRoom = function(dest = "") {
             }
 
             //
-            //            for (var rr in adjRooms) {
-            //                if (Memory.Overmind && Memory.Overmind.globalTerrain && Memory.Overmind.globalTerrain[adjRooms[rr]] && Memory.Overmind.globalTerrain[adjRooms[rr]].score > 0) {
-            //                    var option = Memory.Overmind.globalTerrain[adjRooms[rr]].score;
-            //                    if (option > roomChoice.score) {
-            //                        roomChoice.name = adjRooms[rr];
-            //                        roomChoice.score = option;
-            //                        roomChoice.exit = rr;
-            //                    }
-            //                }
-            //            }
-            //            if (!roomChoice.name) {
-            //                roomChoice.name = adjRooms[Object.keys(adjRooms)[0]];
-            //            }
+            // for (var rr in adjRooms) {
+            // if (Memory.Overmind && Memory.Overmind.globalTerrain &&
+			// Memory.Overmind.globalTerrain[adjRooms[rr]] &&
+			// Memory.Overmind.globalTerrain[adjRooms[rr]].score > 0) {
+            // var option = Memory.Overmind.globalTerrain[adjRooms[rr]].score;
+            // if (option > roomChoice.score) {
+            // roomChoice.name = adjRooms[rr];
+            // roomChoice.score = option;
+            // roomChoice.exit = rr;
+            // }
+            // }
+            // }
+            // if (!roomChoice.name) {
+            // roomChoice.name = adjRooms[Object.keys(adjRooms)[0]];
+            // }
             //
-            // this.log(' selecting new exit from room. (' + randomExit.room + '), score:' + score);
-            //            dumpObject(randomExit);
+            // this.log(' selecting new exit from room. (' + randomExit.room +
+			// '), score:' + score);
+            // dumpObject(randomExit);
             this.memory.wanderlust = {
                 route: [randomExit],
                 trail: [this.room.name]
@@ -288,18 +294,20 @@ Creep.prototype.leaveRoom = function(dest = "") {
     var lustRoute = this.memory.wanderlust.route;
 
     if (!lustRoute) {
+    	this.log('oh snappaderp')
         delete this.memory.wanderlust;
         return false;
     }
 
     if (this.room.name == lustRoute[0].room) {
-        if (!this.memory.wanderlust.trail) {
-            this.memory.wanderlust.trail = [];
-        }
-
-        this.memory.wanderlust.trail.push(this.room.name);
-        //made it to the next room. 
-        // need to move away from exit or forever roam the halls of infitite mirrors
+// if (!this.memory.wanderlust.trail) {
+// this.memory.wanderlust.trail = [];
+// }
+//
+// this.memory.wanderlust.trail.push(this.room.name);
+        // made it to the next room.
+        // need to move away from exit or forever roam the halls of infitite
+		// mirrors
         this.moveAwayFromExit();
         this.room.classify();
 
@@ -314,7 +322,8 @@ Creep.prototype.leaveRoom = function(dest = "") {
             delete this.memory.wanderlust.route;
             return false;
         } else {
-            // this.log('at next hop, currently in ' + lustRoute[0].room + ' on the way to ' + lustRoute[lustRoute.length - 1].room);
+            // this.log('at next hop, currently in ' + lustRoute[0].room + ' on
+			// the way to ' + lustRoute[lustRoute.length - 1].room);
             lustRoute.shift();
             if (this.memory.role == 'worker') {
                 this.changeTask('builder'); // stimulate the local economy
@@ -351,7 +360,7 @@ Creep.prototype.leaveRoom = function(dest = "") {
         case ERR_NO_PATH:
             this.log('hrm, so i have a problem here. destination is ' + lustRoute[lustRoute.length - 1].room);
             this.log('my current room is ' + this.room.name)
-                // force reroute 
+                // force reroute
             var finalDest = lustRoute[lustRoute.length - 1].room;
             delete this.memory.wanderlust;
             // return this.leaveRoom(finalDest);
@@ -367,7 +376,7 @@ Creep.prototype.leaveRoom = function(dest = "") {
             }
             Memory.Overmind.globalTerrain[lustRoute[0].room].score -= 20;
             delete this.memory.wanderlust;
-            //  this.moveAwayFromExit();
+            // this.moveAwayFromExit();
             this.moveRandom();
             return true;
             // delete this.memory.wanderlust;
@@ -425,7 +434,7 @@ module.exports.spiral = function (n) {
             }
             break;
     }
-    // console.log("n : ", n, " r : ", r, " p : ", p, " a : ", a, "  -->  ", pos);
+    // console.log("n : ", n, " r : ", r, " p : ", p, " a : ", a, " --> ", pos);
     return pos;
 }
 

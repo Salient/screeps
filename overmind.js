@@ -207,74 +207,95 @@ module.exports.getPriority = function() {
         }
     }
 
-    //dlog('global survey - GCL:' + level + ' owned rooms: ' + myRooms + ', reservations: ' + myRes);
 
-    var candidates = [];
-    // target a new room
-    //TODO - modify some metric here to dcreate more scouts 
+    var ark = Object.keys(Memory.Overmind.globalTerrain);
+    var arr = ark.sort(function(a, b) {
+        var x = Memory.Overmind.globalTerrain[a];
+        var y = Memory.Overmind.globalTerrain[b];
 
-    var selectList = ["annexed", "freerange", "threat"];
-
-    for (var rclass in selectList) {
-        var targets = roomSelect(selectList[rclass]);
-        if (targets) {
-            for (var ind in targets) {
-                candidates.push(targets[ind]);
-            }
+        if (x.score > y.score) {
+            return -1
         }
-        if (candidates.length > 3) {
-            break;
+        if (x.score < y.score) {
+            return 1
         }
-    }
+        return 0;
+    });
 
-    //dlog("c3" + candidates);
-    candidates
-        .sort(function(a, b) {
-            if (a.score > b.score) {
-                return 1;
-            }
-            if (a.score < b.score) {
-                return -1;
-            }
-            return 0;
-        });
 
-    //dlog("c4" + candidates);
-
-    if (candidates.length == 0) {
-        return false;
-    }
-
-    var limit = (candidates.length > 3) ? 3 : candidates.length;
+    var limit = (ark.length > 3) ? 3 : ark.length;
     // dlog('priority returns ');
     // util.dumpObj(candidates.slice(0, limit))
-    return candidates.slice(0, limit);
+    return ark.slice(0, limit);
 
+    //dlog('global survey - GCL:' + level + ' owned rooms: ' + myRooms + ', reservations: ' + myRes);
 
-    // if (myRes < 3) {
-    // go reaserve a new room
-
-
-    dlog('getpri' + candidates.length)
-    if (candidates.length < 3) {
-        candidates.concat(roomSelect("freerange"));
-    }
-
-    if (candidates.length < 3) {
-        candidates.concat(roomSelect("threat"));
-    }
-
-
-    candidates
-        .sort(function(a, b) {
-            if (a.score > b.score) {
-                return 1;
-            }
-            if (a.score < b.score) {
-                return -1;
-            }
-            return 0;
-        });
+    //    var candidates = [];
+    //    // target a new room
+    //    //TODO - modify some metric here to dcreate more scouts 
+    //
+    //    var selectList = ["annexed", "freerange", "threat"];
+    //
+    //    for (var rclass in selectList) {
+    //        var targets = roomSelect(selectList[rclass]);
+    //        if (targets) {
+    //            for (var ind in targets) {
+    //                candidates.push(targets[ind]);
+    //            }
+    //        }
+    //        if (candidates.length > 3) {
+    //            break;
+    //        }
+    //    }
+    //
+    //    //dlog("c3" + candidates);
+    //    candidates
+    //        .sort(function(a, b) {
+    //            if (a.score > b.score) {
+    //                return 1;
+    //            }
+    //            if (a.score < b.score) {
+    //                return -1;
+    //            }
+    //            return 0;
+    //        });
+    //
+    //    //dlog("c4" + candidates);
+    //
+    //    if (candidates.length == 0) {
+    //        return false;
+    //    }
+    //
+    //    var limit = (candidates.length > 3) ? 3 : candidates.length;
+    //    // dlog('priority returns ');
+    //    // util.dumpObj(candidates.slice(0, limit))
+    //    return candidates.slice(0, limit);
+    //
+    //
+    //    // if (myRes < 3) {
+    //    // go reaserve a new room
+    //
+    //
+    //    dlog('getpri' + candidates.length)
+    //    if (candidates.length < 3) {
+    //        candidates.concat(roomSelect("freerange"));
+    //    }
+    //
+    //    if (candidates.length < 3) {
+    //        candidates.concat(roomSelect("threat"));
+    //    }
+    //
+    //
+    //    candidates
+    //        .sort(function(a, b) {
+    //            if (a.score > b.score) {
+    //                return 1;
+    //            }
+    //            if (a.score < b.score) {
+    //                return -1;
+    //            }
+    //            return 0;
+    //        });
 
     // }
 

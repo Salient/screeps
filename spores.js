@@ -12,7 +12,7 @@ Creep.prototype.appropriate = function(ctrlId) {
     }
 
     if (ctrl.level > 0) {
-        //somebody owns this room
+        // somebody owns this room
         if (ctrl.my) {
             return ERR_FULL;
         } else {
@@ -57,7 +57,7 @@ function selectNewRoom(creep) {
         ry = creep.room.name[3], // N component of current room
         vector = util.spiral(x);
 
-    // return; 
+    // return;
     while (vector[2] <= 2) {
         var nx = +rx + +vector[0],
             ny = +ry + +vector[1];
@@ -91,6 +91,7 @@ function selectNewRoom(creep) {
     var score = 0;
     var best = null;
 
+    creep.log('new room dump')
     util.dumpObj(targetList);
 
     for (var land in targetList) {
@@ -117,7 +118,7 @@ function selectNewRoom(creep) {
             // hmmm
             creep.log('scoring unscored room ' + promised)
             creep.leaveRoom(promised); // go score it
-            //prophecy.score = 1;
+            // prophecy.score = 1;
         }
 
         if (prophecy.score / range > score) {
@@ -143,49 +144,41 @@ function selectNewRoom(creep) {
 
 module.exports.infest = function(creep) {
 
-    //for (var flag in Game.flags) {
-    //        var thisFlag = Game.flags[flag];
-    //        // util.dumpObj(thisFlag
-    //        if (thisFlag.room.name != creep.room.name) {
-    //            creep.log("moving to flag");
-    //            creep.log(util.getError(creep.moveTo(thisFlag)));
-    //            return true;
-    //        }
-    //    }
+    // for (var flag in Game.flags) {
+    // var thisFlag = Game.flags[flag];
+    // // util.dumpObj(thisFlag
+    // if (thisFlag.room.name != creep.room.name) {
+    // creep.log("moving to flag");
+    // creep.log(util.getError(creep.moveTo(thisFlag)));
+    // return true;
+    // }
+    // }
     //
 
 
     // return true;
 
     /*
-    var objective = creep.memory.rTarget;
-    if (!objective) {
-        objective = selectNewRoom(creep);
-        if (!objective) {
-            dlog('cant infest, no new rooms given. exploring');
-            creep.exploreNewRoom();
-            return;
-        }
-        dlog(creep.name + '(' + creep.room.name + '): has new room to infest. leaving to ' + objective)
-
-        creep.leaveRoom(objective);
-        return true;
-    }
-    */
+	 * var objective = creep.memory.rTarget; if (!objective) { objective =
+	 * selectNewRoom(creep); if (!objective) { dlog('cant infest, no new rooms
+	 * given. exploring'); creep.exploreNewRoom(); return; } dlog(creep.name +
+	 * '(' + creep.room.name + '): has new room to infest. leaving to ' +
+	 * objective)
+	 * 
+	 * creep.leaveRoom(objective); return true; }
+	 */
 
     creep.say('🔱');
-    //        dlog(this.name, 'at next hop, currently in ' + lustRoute[0].room + ' on the way to ' +  lustRoute[lustRoute.length -1].room );
-    //   dlog(this.name, 'at next hop, currently in ' + lustRoute[0].room + ' on the way to ' +  lustRoute[lustRoute.length -1].room );
+    // dlog(this.name, 'at next hop, currently in ' + lustRoute[0].room + ' on
+	// the way to ' + lustRoute[lustRoute.length -1].room );
+    // dlog(this.name, 'at next hop, currently in ' + lustRoute[0].room + ' on
+	// the way to ' + lustRoute[lustRoute.length -1].room );
 
-    /* if (objective == creep.room.name) {
-        // we have arrived
-        if (!creep.room.controller) {
-            dlog('target room has no controller. exploring.');
-            creep.exploreNewRoom();
-            delete objective;
-            return;
-        };
-        */
+    /*
+	 * if (objective == creep.room.name) { // we have arrived if
+	 * (!creep.room.controller) { dlog('target room has no controller.
+	 * exploring.'); creep.exploreNewRoom(); delete objective; return; };
+	 */
     if (!util.def(creep.room.controller) || creep.role == 'scout') {
         // creep.log('derp')
         var newtarg = selectNewRoom(creep);
@@ -217,10 +210,29 @@ module.exports.infest = function(creep) {
                     stroke: '#ffffff'
                 }
             });
+            switch(res){
+            case OK:
+            case ERR_TIRED:
+            	return true;
+            	break;
+            case ERR_NO_PATH: var ovrRoom = Memory.Overmind.globalTerrain[creep.room.name];
+            if (util.def(ovrRoom)) {
+            	ovrRoom.score = ovrRoom.score - 10;
+            	creep.log("decrementing " + creep.room.name + ', score now ' + ovrRoom.score);
+                var newtarg = selectNewRoom(creep);
+                if (newtarg) {
+                    creep.leaveRoom(newtarg);
+                } else {
+                    creep.leaveRoom();
+                }
+            	
+            }
+            	default: creep.log('error moving to controller: ' + util.getError(res));
+            }
             break;
-            //case ERR_GCL_NOT_ENOUGH:
+            // case ERR_GCL_NOT_ENOUGH:
         default:
-            creep.log('error infesting, ' + util.getError(res)); //util.getError(res));
+            creep.log('error infesting, ' + util.getError(res)); // util.getError(res));
             return false;
             // }
     }
@@ -228,146 +240,153 @@ module.exports.infest = function(creep) {
 
 
 
-//module.exports.disperse = function(creep) {
-//    return;
-//    creep.say('🔱');
-//    if (!util.def(creep.memory.wanderlust)) {
-//        creep.memory.wanderlust = {
-//            sporeFrom: creep.room.name
-//        };
-//    }
+// module.exports.disperse = function(creep) {
+// return;
+// creep.say('🔱');
+// if (!util.def(creep.memory.wanderlust)) {
+// creep.memory.wanderlust = {
+// sporeFrom: creep.room.name
+// };
+// }
 //
-//    //    if (creep.getActiveBodyparts(CLAIM) == 0) {
-//    //        //        creep.memory.role = 'worker'; return false;
-//    //        dlog(creep.name + ' scout identity crisis')
-//    //        creep.memory.role = 'worker';
-//    //        return false;
-//    //    }
+// // if (creep.getActiveBodyparts(CLAIM) == 0) {
+// // // creep.memory.role = 'worker'; return false;
+// // dlog(creep.name + ' scout identity crisis')
+// // creep.memory.role = 'worker';
+// // return false;
+// // }
 //
-//    if (util.def(creep.room.nrgReserve) && creep.room.nrgReserve != false) {
-//        creep.changeTask('gatherrrer');
-//        return true;
-//    }
+// if (util.def(creep.room.nrgReserve) && creep.room.nrgReserve != false) {
+// creep.changeTask('gatherrrer');
+// return true;
+// }
 //
-//    var wander = creep.memory.wanderlust;
+// var wander = creep.memory.wanderlust;
 //
-//    // Determine initial state
-//    if (creep.room.name == wander.sporeFrom && creep.carry.energy < creep.energyCapacity) { // Still in origin room. Fill up and head out. 
-//        creep.taskState = 'SOURCE';
-//        creep.addTask('fillup');
-//        return true;
-//    }
+// // Determine initial state
+// if (creep.room.name == wander.sporeFrom && creep.carry.energy <
+// creep.energyCapacity) { // Still in origin room. Fill up and head out.
+// creep.taskState = 'SOURCE';
+// creep.addTask('fillup');
+// return true;
+// }
 //
-//    if (creep.room.name == wander.sporeFrom) { //Still in origin room. Head out.
-//        if (util.def(wander.nextPortal)) {
-//            var portal = new RoomPosition(wander.nextPortal.x, wander.nextPortal.y, wander.nextPortal.roomName);
-//            var res = creep.moveTo(portal, {
-//                reusePath: 5,
-//                visualizePathStyle: {
-//                    stroke: '61f22ff',
-//                    opacity: 1
-//                }
-//            });
-//            switch (res) {
-//                case OK:
-//                case ERR_TIRED:
-//                    return true;
-//                    break;
-//                default:
-//                    dlog('error moving to exit: ' + util.getError(res));
-//                    delete wander.nextPortal;
-//                    return false;
-//            }
-//        } else {
-//            creep.say("that's it, i'm outta here");
-//            var exits = creep.room.find(FIND_EXIT);
-//            if (exits[0] != null) {
-//                var portal = exits[Math.floor(Math.random() * exits.length)];
-//                // Should be a RoomPosition object
-//                wander.nextPortal = portal;
-//                return true;
-//            } else {
-//                dlog('serious problem here')
-//                return false;
-//            }
-//        }
+// if (creep.room.name == wander.sporeFrom) { //Still in origin room. Head out.
+// if (util.def(wander.nextPortal)) {
+// var portal = new RoomPosition(wander.nextPortal.x, wander.nextPortal.y,
+// wander.nextPortal.roomName);
+// var res = creep.moveTo(portal, {
+// reusePath: 5,
+// visualizePathStyle: {
+// stroke: '61f22ff',
+// opacity: 1
+// }
+// });
+// switch (res) {
+// case OK:
+// case ERR_TIRED:
+// return true;
+// break;
+// default:
+// dlog('error moving to exit: ' + util.getError(res));
+// delete wander.nextPortal;
+// return false;
+// }
+// } else {
+// creep.say("that's it, i'm outta here");
+// var exits = creep.room.find(FIND_EXIT);
+// if (exits[0] != null) {
+// var portal = exits[Math.floor(Math.random() * exits.length)];
+// // Should be a RoomPosition object
+// wander.nextPortal = portal;
+// return true;
+// } else {
+// dlog('serious problem here')
+// return false;
+// }
+// }
 //
-//    }
+// }
 //
-//    if (!util.def(creep.room.controller)) {
-//        creep.leaveRoom();
-//        return true;
-//    }
+// if (!util.def(creep.room.controller)) {
+// creep.leaveRoom();
+// return true;
+// }
 //
-//    // So I've made it to  another room. 
-//    if (util.def(creep.room.controller && creep.room.controller.level != 0)) {
-//        // this room is already claimed. mosey on.
-//        dlog(creep.name + ' in ' + creep.room.name + ' moving on')
-//        creep.leaveRoom();
-//        // creep.changeTask('technician')
-//        return true;
-//    }
+// // So I've made it to another room.
+// if (util.def(creep.room.controller && creep.room.controller.level != 0)) {
+// // this room is already claimed. mosey on.
+// dlog(creep.name + ' in ' + creep.room.name + ' moving on')
+// creep.leaveRoom();
+// // creep.changeTask('technician')
+// return true;
+// }
 //
 //
-//    //	if (creep.carry.energy != creep.carryCapacity && creep.taskState != 'IN_WORK') {
-//    //        creep.addTask('filltank'); // We want to load up for the long journey ahead
-//    //        return true;
-//    //	}
-//    //
-//    if (creep.carry.energy == 0) {
-//        creep.taskState = 'SOURCE'
-//        creep.addTask('filltank');
-//        return true;
-//    }
+// // if (creep.carry.energy != creep.carryCapacity && creep.taskState !=
+// 'IN_WORK') {
+// // creep.addTask('filltank'); // We want to load up for the long journey
+// ahead
+// // return true;
+// // }
+// //
+// if (creep.carry.energy == 0) {
+// creep.taskState = 'SOURCE'
+// creep.addTask('filltank');
+// return true;
+// }
 //
-//    if (creep.taskState == 'SINK') {
-//        var ctrl = creep.room.controller;
+// if (creep.taskState == 'SINK') {
+// var ctrl = creep.room.controller;
 //
-//        var res = creep.claimController(ctrl);
-//        switch (res) {
-//            case OK:
-//            case ERR_TIRED:
-//                dlog('derrp')
-//                return true;
-//                break;
-//            case ERR_NOT_IN_RANGE:
-//                creep.moveTo(ctrl);
-//                break;
-//            case ERR_GCL_NOT_ENOUGH:
-//                var res = creep.reserveController(ctrl);
-//                switch (res) {
-//                    case OK:
-//                    case ERR_TIRED:
-//                        return true;
-//                        break;
-//                    case ERR_NOT_IN_RANGE:
-//                        var res = creep.moveTo(ctrl);
-//                        switch (res) {
-//                            case OK:
-//                            case ERR_TIRED:
-//                                return true;
-//                                break;
-//                            default:
-//                                dlog('error reserving instead of claiming because GCL ' + util.getError(res));
-//                                return false;
-//                        }
+// var res = creep.claimController(ctrl);
+// switch (res) {
+// case OK:
+// case ERR_TIRED:
+// dlog('derrp')
+// return true;
+// break;
+// case ERR_NOT_IN_RANGE:
+// creep.moveTo(ctrl);
+// break;
+// case ERR_GCL_NOT_ENOUGH:
+// var res = creep.reserveController(ctrl);
+// switch (res) {
+// case OK:
+// case ERR_TIRED:
+// return true;
+// break;
+// case ERR_NOT_IN_RANGE:
+// var res = creep.moveTo(ctrl);
+// switch (res) {
+// case OK:
+// case ERR_TIRED:
+// return true;
+// break;
+// default:
+// dlog('error reserving instead of claiming because GCL ' +
+// util.getError(res));
+// return false;
+// }
 //
-//                        break;
-//                    default:
-//                        dlog(creep.name + '(' + creep.room.name + ')  error reserving ' + util.getError(res));
+// break;
+// default:
+// dlog(creep.name + '(' + creep.room.name + ') error reserving ' +
+// util.getError(res));
 //
-//                }
-//            default:
-//                dlog(creep.name + '(' + creep.room.name + ' error claiming ' + util.getError(res));
+// }
+// default:
+// dlog(creep.name + '(' + creep.room.name + ' error claiming ' +
+// util.getError(res));
 //
-//        }
+// }
 //
-//    }
+// }
 //
-//    dlog('spore catch')
-//    creep.taskState = 'SINK';
-//    return false;
-//}
+// dlog('spore catch')
+// creep.taskState = 'SINK';
+// return false;
+// }
 
 function dlog(msg) {
     util.dlog('SPORES', msg);

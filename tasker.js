@@ -15,14 +15,16 @@ module.exports.taskMinions = function(room) {
         if (room.memory.planned &&
             creep.memory.taskList[creep.memory.taskList.length - 1] != 'builder') {
 
-            //            if (creep.taskState = 'RETURNING' || creep.taskState == 'LEAVING') {
+            // if (creep.taskState = 'RETURNING' || creep.taskState ==
+			// 'LEAVING') {
             var test = Game.getObjectById(creep.memory.eTarget);
             if (!test) {
                 test = Game.getObjectById(creep.memory.sinkId);
             }
             if (util.def(test) && test.room.name != creep.room.name) {
                 dlog('boosting')
-                    //         room.memory.heatmap[x][y] += 50; // interroom paths are traveled less often but just as important
+                    // room.memory.heatmap[x][y] += 50; // interroom paths are
+					// traveled less often but just as important
             }
 
             // minions[dude].say(minions[dude].memory.role);
@@ -31,15 +33,15 @@ module.exports.taskMinions = function(room) {
     }
 }
 
-//if (!util.def(this.memory) || this.memory == {}) {
-//    dlog('CREEP ' + this.name + ' HAS AMNESIA');
-//    this.memory = {
-//        role: 'worker',
-//        birthRoom: this.room,
-//        taskList: ['gatherer'],
-//        taskState: 'SOURCE'
-//    }
-//}
+// if (!util.def(this.memory) || this.memory == {}) {
+// dlog('CREEP ' + this.name + ' HAS AMNESIA');
+// this.memory = {
+// role: 'worker',
+// birthRoom: this.room,
+// taskList: ['gatherer'],
+// taskState: 'SOURCE'
+// }
+// }
 
 Creep.prototype.updateTraffic = function(boost) {
     if (!util.def(this.room.memory.trafficMap)) {
@@ -56,6 +58,14 @@ Creep.prototype.updateTraffic = function(boost) {
 
     var myX = this.pos.x;
     var myY = this.pos.y;
+    
+    if (!(myX + myY) % 2) {
+    	return; // only build on odd totals to cut down on waste
+    }
+    
+//    if (myX % 2 || myY % 2) {
+//    	return;
+//    }
 
     if (!util.def(map[myX])) {
         map[myX] = {};
@@ -73,7 +83,14 @@ Creep.prototype.updateTraffic = function(boost) {
     var thisSpot = map[myX][myY];
     if (this.memory.taskList.length > 0) {
 
-        thisSpot.heat = thisSpot.heat - (Game.time - thisSpot.refreshed); // decrement value 1 per tick since last updated
+        thisSpot.heat = thisSpot.heat - (Game.time - thisSpot.refreshed); // decrement
+																			// value
+																			// 1
+																			// per
+																			// tick
+																			// since
+																			// last
+																			// updated
         if (thisSpot.heat < 0) {
             thisSpot.heat = 15
         } else {
@@ -152,13 +169,13 @@ var performTask = function(creep) {
 
     if (taskList.length == 0) {
         // Add default task, and then busy work
-        //        dlog('Empty task list found: ' + creep.name);
+        // dlog('Empty task list found: ' + creep.name);
         taskList.push(somethingNeedDoing(creep));
-        //         taskList.push(getDefaultTask(creep));
+        // taskList.push(getDefaultTask(creep));
 
-        //dlog('assinged ' + taskList[0] + ' to ' + creep.name);
+        // dlog('assinged ' + taskList[0] + ' to ' + creep.name);
 
-        creep.log('New job');
+        // creep.log('New job');
     }
     // if ((taskList.length > 1) && !(Game.time % 10)) // Periodically refresh
     // // temporary tasksf
@@ -193,13 +210,13 @@ var performTask = function(creep) {
             jobResult = build.repair(creep);
             break;
         case 'seedling':
-            //    creep.log('immaseedling')
-            //jobResult = spore.disperse(creep);
+            // creep.log('immaseedling')
+            // jobResult = spore.disperse(creep);
             jobResult = spore.infest(creep);
             break;
         case 'scout':
-            //creep.log('immascout')
-            //jobResult = spore.disperse(creep);
+            // creep.log('immascout')
+            // jobResult = spore.disperse(creep);
             jobResult = spore.infest(creep);
             break;
         case 'filltank':
@@ -216,7 +233,8 @@ var performTask = function(creep) {
             creep.memory.taskList.pop();
             var busywork = somethingNeedDoing(creep);
             creep.memory.taskList.push(busywork);
-            // dlog('Assigning ' + creep.name + ' busy work...(' + busywork + ')');
+            // dlog('Assigning ' + creep.name + ' busy work...(' + busywork +
+			// ')');
             jobResult = true;
             break;
         default:
@@ -225,7 +243,7 @@ var performTask = function(creep) {
 
     // dlog('jum result is ' + jobResult)
 
-    //	dlog(creep.name + ' did ' + curJob + ' and his aim was ' + jobResult);
+    // dlog(creep.name + ' did ' + curJob + ' and his aim was ' + jobResult);
     if (!jobResult) {
         // dlog('type: ' + typeof jobResult)
         var count = creep.memory.taskSpinCount;
@@ -242,41 +260,49 @@ var performTask = function(creep) {
         if (creep.memory.taskList.length > 10) {
             dlog(creep.name + " popped job, was: " + creep.memory.taskList[creep.memory.taskList.length - 1] + ', task queue length: ' + creep.memory.taskList.length);
         }
+        
+        if (creep.memory.taskList.length == 1) {
+        	var oldtask = creep.currentTask;
+        	creep.changeTask(somethingNeedDoing(creep));
+        	var newTask = creep.currentTask;
+        	if (oldtask == newTask) {
+        // 	creep.log("Changing task from " + oldtask + " to " + newTask + " (spinning)");
+        }}
         creep.memory.taskList.pop();
     }
 }
 module.exports.performTask = performTask;
 
-//var getDefaultTask = function(creep) { // What to do if the creep has
-//    // nothing to do
+// var getDefaultTask = function(creep) { // What to do if the creep has
+// // nothing to do
 //
-//    var role = Memory.creeps[creep.name].role; // Access memory like this in
-//    // case creep is still spawning.
+// var role = Memory.creeps[creep.name].role; // Access memory like this in
+// // case creep is still spawning.
 //
-//    if (!util.def(role)) {
-//        dlog(creep.name + ' some serious shisnit here')
-//        role = 'worker'
-//    }
-//    // dlog('found a ' + creep.memory.role + ' needing a job')
+// if (!util.def(role)) {
+// dlog(creep.name + ' some serious shisnit here')
+// role = 'worker'
+// }
+// // dlog('found a ' + creep.memory.role + ' needing a job')
 //
 //
 //
-//    // dlog('assigning default task');
-//    switch (role) {
-//        case 'worker':
-//        case 'seedling':
-//        case 'miner':
-//            return role;
-//            break;
-//        case 'soldier':
-//        case 'medic':
-//            return 'military';
-//            break;
-//        default:
-//            console.log('unmatched unit found!');
-//            return role;
-//    }
-//}
+// // dlog('assigning default task');
+// switch (role) {
+// case 'worker':
+// case 'seedling':
+// case 'miner':
+// return role;
+// break;
+// case 'soldier':
+// case 'medic':
+// return 'military';
+// break;
+// default:
+// console.log('unmatched unit found!');
+// return role;
+// }
+// }
 
 
 // TODO - make the weights used below dynamic
@@ -295,24 +321,33 @@ function somethingNeedDoing(creep) {
             return role;
             break;
         case 'worker':
-            // var result = (creep.room.energyCapacity / creep.room.energyCapacityAvailable) < 0.75 ? 1 :  Math.floor((Math.random() * 10));
-            // Force gather if there is not at least 3/4 capacity energy in the room
+            // var result = (creep.room.energyCapacity /
+			// creep.room.energyCapacityAvailable) < 0.75 ? 1 :
+			// Math.floor((Math.random() * 10));
+            // Force gather if there is not at least 3/4 capacity energy in the
+			// room
             if ((creep.room.energyAvailable / creep.room.energyCapacityAvailable) < 0.75) {
-                //creep.log('low energy in this room. gathering');
+                // creep.log('low energy in this room. gathering');
                 return 'gatherer';
             }
 
             // Weight priorities
             //
             //
+
             var gatherWeight = 5 * Math.floor((Math.random() * 10));
-			var buildWeight = creep.room.memory.cache.construction.active * Math.floor((Math.random() * 10));
-			// var buildWeight = 4 * Math.floor((Math.random() * 10));
+			var buildWeight = 4 * Math.floor((Math.random() * 10));
+if (creep.room.memory.cache.construction && creep.room.memory.cache.construction.active) {
+             buildWeight = creep.room.memory.cache.construction.active * Math.floor((Math.random() * 10));
+}
             var techWeight = 3 * Math.floor((Math.random() * 10));
 
-             creep.log('choosing new job. gather: ' + gatherWeight + ', builder: ' + buildWeight + ', tech: ' + techWeight )
-            //creep.log('i guess there is energy in this room. result is ' + result);
-            //creep.log('energy capacity is ' + creep.room.energyAvailable+ ', available is ' + creep.room.energyCapacityAvailable);
+             // creep.log('choosing new job. gather: ' + gatherWeight + ',
+				// builder: ' + buildWeight + ', tech: ' + techWeight )
+            // creep.log('i guess there is energy in this room. result is ' +
+			// result);
+            // creep.log('energy capacity is ' + creep.room.energyAvailable+ ',
+			// available is ' + creep.room.energyCapacityAvailable);
             var winner = Math.max(gatherWeight, buildWeight, techWeight);
 
             if (winner == gatherWeight) {
@@ -349,7 +384,7 @@ function colonyOverseer(creep) {
         return 'gatherer';
     }
 
-    //    if (roo)
+    // if (roo)
 
 
 }
