@@ -91,8 +91,8 @@ function selectNewRoom(creep) {
     var score = 0;
     var best = null;
 
-    creep.log('new room dump')
-    util.dumpObj(targetList);
+    // creep.log('new room dump')
+    // util.dumpObj(targetList);
 
     for (var land in targetList) {
         var promised = targetList[land];
@@ -113,7 +113,7 @@ function selectNewRoom(creep) {
         var range = Game.map.getRoomLinearDistance(creep.room.name, promised);
         var prophecy = Memory.Overmind.globalTerrain[promised];
 
-        creep.log('select ddebug. target: ' + promised + ', range: ' + range + ', score' + prophecy.score)
+        // creep.log('select ddebug. target: ' + promised + ', range: ' + range + ', score' + prophecy.score)
         if (!util.def(prophecy.score)) {
             // hmmm
             creep.log('scoring unscored room ' + promised)
@@ -132,6 +132,7 @@ function selectNewRoom(creep) {
 
         }
         objective = best
+        creep.log('selecting ' + best)
         return best;
     } else {
 
@@ -221,15 +222,18 @@ module.exports.infest = function(creep) {
             	creep.log("decrementing " + creep.room.name + ', score now ' + ovrRoom.score);
                 var newtarg = selectNewRoom(creep);
                 if (newtarg) {
-                    creep.leaveRoom(newtarg);
+                    creep.log('leaving to ' + newtarg)
+                    return creep.leaveRoom(newtarg);
                 } else {
-                    creep.leaveRoom();
+                    creep.log('leaving')
+                    return creep.leaveRoom();
                 }
             	
             }
             	default: creep.log('error moving to controller: ' + util.getError(res));
             }
             break;
+            case ERR_NO_BODYPART: creep.suicide(); break;
             // case ERR_GCL_NOT_ENOUGH:
         default:
             creep.log('error infesting, ' + util.getError(res)); // util.getError(res));

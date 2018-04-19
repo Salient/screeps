@@ -42,7 +42,7 @@ Creep.prototype.outsource = function() {
 
     var score = 0;
     // var best = (Object.keys(ovr)[0] == this.room.name) ? Object.keys(ovr)[1]
-	// : Object.keys(ovr)[0];
+    // : Object.keys(ovr)[0];
     var best = null;
 
     for (var land in ovr) {
@@ -147,8 +147,8 @@ function mine(creep) {
     var srcObj = Game.getObjectById(creep.memory.mTarget.srcId);
 
     if (!util.def(srcObj)) {
-		// creep.log('this is very strange')
-		// util.dumpObj(posting)
+        // creep.log('this is very strange')
+        // util.dumpObj(posting)
         delete creep.memory.mTarget;
         return false;
     }
@@ -167,7 +167,7 @@ function mine(creep) {
         var result = creep.harvest(srcObj);
         switch (result) {
             case OK:
-                if (!creep.room.controller.my){
+                if (!creep.room.controller.my) {
                     Memory.Overmind.globalTerrain[creep.room.name].lastHarvest = Game.time;
                     Memory.Overmind.globalTerrain[creep.room.name].score++;
                 }
@@ -178,11 +178,11 @@ function mine(creep) {
                     creep.memory.mTarget = null;
                 } else {
                     // Check if any other sources in the room do not have a
-					// miner already assigned.
+                    // miner already assigned.
                     checkSourceMiners(creep)
                 }
                 // we don't want to return false when a miner does it's job too
-				// well
+                // well
                 return true;
                 // return false;
                 break;
@@ -242,7 +242,7 @@ module.exports.fillTank = function(creep) {
         var res = findCashMoney(creep);
         if (!res) {
             if (creep.getActiveBodyparts(WORK) > 0) {
-                if (mine(creep)){
+                if (mine(creep)) {
                     return true;
                 }
                 creep.room.tankMiss();
@@ -488,7 +488,7 @@ module.exports.findEnergy = findEnergy;
 function gatherer(creep) {
 
     // TODO - add a mode where they search for energy outside the room. like a
-	// scout, but without claim part
+    // scout, but without claim part
 
     // Priorities are:
     // 1. Pickup any free energy laying on the ground.
@@ -542,12 +542,12 @@ function gatherer(creep) {
             break;
         default:
             creep.log('Gather logic fallthru: ' + creep.taskState);
-        creep.taskState = 'SOURCE'; // default to something
+            creep.taskState = 'SOURCE'; // default to something
             return false;
     }
 
     function source() {
-        
+
         // check if already mining
         var targ = Game.getObjectById(creep.memory.mTarget);
         if (util.def(targ) && mine(creep)) {
@@ -630,7 +630,7 @@ function gatherer(creep) {
                 // creep.log('unable to acquire new sink.');
                 if (!creep.room.memory.nrgReserve) {
                     // creep.log(creep.name + ' invalid sink target, returned '
-					// + test);
+                    // + test);
                 }
                 // creep.memory.taskList.pop();
 
@@ -685,7 +685,7 @@ function distance(p1, p2) {
 function findCashMoney(creep) {
 
     // Shouldn't be any workers sniffing around if we don't have a controller in
-	// this room yet
+    // this room yet
     if (!util.def(creep.room.controller)) {
         return false;
     }
@@ -745,14 +745,26 @@ module.exports.findCashMoney = findCashMoney;
 
 function findBacon(creep) {
 
-    var cash = [creep.pos.findClosestByRange(FIND_DROPPED_RESOURCES, {
-            filter: (i) => i.amount > 50 && i.resourceType == RESOURCE_ENERGY
-        }),
-        creep.pos.findClosestByRange(FIND_STRUCTURES, {
-            filter: (i) => i.structureType == STRUCTURE_CONTAINER &&
-                i.store[RESOURCE_ENERGY] > 50
-        })
-    ];
+    var cash = [];
+
+    for (var lnk in creep.room.memory.links) {
+        if (creep.room.memory.links[lnk].dir == "source") {
+            var linkobj = Game.getObjectById(lnk);
+            if (linkobj) {
+                cash.push(linkobj);
+            }
+        }
+    }
+
+    cash.push(creep.pos.findClosestByRange(FIND_DROPPED_RESOURCES, {
+        filter: (i) => i.amount > 50 && i.resourceType == RESOURCE_ENERGY
+    }));
+
+    cash.push(creep.pos.findClosestByRange(FIND_STRUCTURES, {
+        filter: (i) => i.structureType == STRUCTURE_CONTAINER &&
+            i.store[RESOURCE_ENERGY] > 50
+    }));
+
 
     var storageReserves = 20000;
     if (!creep.room.memory.strategy) {
@@ -799,12 +811,12 @@ function findSink(creep) {
 
 
     // var sinkPriority = [STRUCTURE_LINK, STRUCTURE_SPAWN, STRUCTURE_EXTENSION,
-	// STRUCTURE_TOWER, STRUCTURE_POWER_SPAWN, STRUCTURE_STORAGE];
-    var sinkPriority = [STRUCTURE_LINK, STRUCTURE_SPAWN, STRUCTURE_EXTENSION, STRUCTURE_TOWER, STRUCTURE_STORAGE];
+    // STRUCTURE_TOWER, STRUCTURE_POWER_SPAWN, STRUCTURE_STORAGE];
+    var sinkPriority = [STRUCTURE_SPAWN, STRUCTURE_EXTENSION, STRUCTURE_TOWER, STRUCTURE_STORAGE];
 
     if (creep.room.memory.nrgReserve) {
         sinkPriority.pop(); // Pop off storage, lest we get into a loop sourcing
-							// and sinking back to storage
+        // and sinking back to storage
     }
 
     if (!util.def(creep.room.memory.cache)) {
@@ -820,6 +832,15 @@ function findSink(creep) {
         });
 
         cache.sinkStructures.ids = [];
+
+        if (creep.room.memory.links) {
+            var linkSet = creep.room.memory.links;
+            for (var linkid in linkSet) {
+                if (linkSet[linkid].dir == 'sink') {
+                    cache.sinkStructures.ids.push(linkid);
+                }
+            }
+        }
 
         for (var struct in aptStructures) {
             cache.sinkStructures.ids.push(aptStructures[struct].id);
@@ -897,14 +918,14 @@ function findSink(creep) {
     }
 
     // don't want to error completely just because somebody else is headed to
-	// the same place
+    // the same place
     if (backup != false) {
         return backup;
     }
 
     // dlog('no sinks in ' + creep.room.name + ', backup is ' + backup + ',
-	// priority is ' + priority + ', and reserve is ' +
-	// creep.room.memory.nrgReserve);
+    // priority is ' + priority + ', and reserve is ' +
+    // creep.room.memory.nrgReserve);
     return false;
 }
 
@@ -986,7 +1007,7 @@ function checkSourceMiners(creep) {
                     if ((shafts[old].assignedTo == 'unassigned') || (Game.creeps[shafts[old].assignedTo].memory.role != 'miner')) {
                         shafts[old].assignedTo = creep.name;
                         creep.memory.mTarget = shafts[old];
-						return true;
+                        return true;
                     }
                 }
             }
@@ -994,7 +1015,7 @@ function checkSourceMiners(creep) {
         }
 
     }
-	return false;
+    return false;
 
 }
 
