@@ -45,6 +45,8 @@ function attackHostiles(support) {
             return true;
             break;
         case ERR_NOT_ENOUGH_ENERGY:
+            return true; // this gun is out, but others might not be
+            break;
         case ERR_RCL_NOT_ENOUGH:
             return false;
             break;
@@ -98,9 +100,8 @@ function healTroops(support) {
             return true;
             break;
         case ERR_NOT_ENOUGH_ENERGY:
-            return false;
+            return true; // this gun is out, but others might not be
             break;
-        default:
             dlog('Heal Error -  ' + util.getError(res));
             return false;
             break;
@@ -150,6 +151,8 @@ function repairBase(support) {
             return true;
             break;
         case ERR_NOT_ENOUGH_ENERGY:
+            return true; // this gun is out, but others might not be
+            break;
         case ERR_RCL_NOT_ENOUGH:
             return false;
             break;
@@ -217,6 +220,8 @@ function repairRoads(support) {
                 return true;
                 break;
             case ERR_NOT_ENOUGH_ENERGY:
+            return true; // this gun is out, but others might not be
+            break;
             case ERR_RCL_NOT_ENOUGH:
                 return false;
                 break;
@@ -277,7 +282,7 @@ function towerControl(room) {
 
     for (var gun in towers.assets) {
         var thisTower = Game.getObjectById(towers.assets[gun]);
-        if (!thisTower) {
+        if (!thisTower || thisTower.energy == 0) {
             continue
         }
 

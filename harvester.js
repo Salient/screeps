@@ -750,7 +750,7 @@ function findBacon(creep) {
     for (var lnk in creep.room.memory.links) {
         if (creep.room.memory.links[lnk].dir == "source") {
             var linkobj = Game.getObjectById(lnk);
-            if (linkobj) {
+            if (linkobj && !util.def(linkobj.progress)) {
                 cash.push(linkobj);
             }
         }
@@ -791,6 +791,7 @@ function findBacon(creep) {
         }
 
         var option = cash[money];
+        // util.dumpObj(option);
         var size = (util.def(option.amount) ? option.amount : (util.def(option.energy) ? option.energy : option.store[RESOURCE_ENERGY]));
         var range = creep.pos.getRangeTo(option);
 

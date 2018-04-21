@@ -736,86 +736,79 @@ Room.prototype.placeLinks = function() {
 
         // this.log('placing aux link')
 
-        dance:
-            for (var cand in this.memory.sources) {
-                // check if there is already one assigned
+        dance: for (var cand in this.memory.sources) {
+            // check if there is already one assigned
 
-                for (var chk in this.memory.links) {
-                    var chklink = this.memory.links[chk];
-                    if (chklink.type == 'aux' && chklink.srcId == cand) {
-                        continue dance;
-                    }
+            for (var chk in this.memory.links) {
+                var chklink = this.memory.links[chk];
+                if (chklink.type == 'aux' && chklink.srcId == cand) {
+                    this.log(cand + 'already linked');
+                    continue dance;
                 }
-
-                var srcId = cand;
-                break;
             }
+
+
+            var srcId = cand;
+            break;
+        }
 
         // sanity check
 
-        if (!srcId) {
-            this.log('unable to find source with no link')
-            return false;
-        }
-
-        // check for defined shafts
-        var shafts = this.memory.shafts;
-        if (!shafts) {
-            this.log('aux link error, no shafts in room');
-            return false;
-        }
-
-        // spiral out from each shaft for looking for clear adjacent
-        for (var ind in shafts) {
-            var thisShaft = shafts[ind];
-            if (thisShaft.srcId != srcId) {
-                continue;
+            if (!srcId) {
+                this.log('unable to find source with no link')
+                return false;
             }
 
-            var x = 1,
-                rx = thisShaft.pos.x, // W component of current room
-                ry = thisShaft.pos.y, // N component of current room
-                vector = util.spiral(x);
+        this.log('linking source ' + cand);
 
-            // this.log('here ' + vector + ', (' + rx + ',' + ry + ')..')
-                // return;
-            while (vector[2] <= 2) {
-                var nx = +rx + +vector[0],
-                    ny = +ry + +vector[1];
+        var thisShaft = Game.getObjectById(srcId);
+        // check for defined shafts
 
-                vector = util.spiral(++x);
+        var x = 10,
+            rx = thisShaft.pos.x, // W component of current room
+            ry = thisShaft.pos.y, // N component of current room
+            vector = util.spiral(x);
 
-                if (nx <= 0 || nx >= 49) {
-                    continue;
-                }
-                if (ny <= 0 || ny >= 49) {
-                    continue;
-                }
-                var testSite = {
-                    x: nx,
-                    y: ny
-                }
-                if (this.isAdjacentClear(testSite)) {
-                    // this.log('sothere')
-                    var site = new RoomPosition(nx, ny, this.name);
-                    var res = this.createConstructionSite(site,
-                        STRUCTURE_LINK);
-                    switch (res) {
-                        case OK:
-                            this.log('aux placed');
-                            linkSet[site.x + ',' + site.y] = { // assign it
-                                pos: site,
-                                srcId: srcId,
-                                dir: 'sink',
-                                type: 'aux'
-                            }
-                            return true;
-                            break;
-                            // case ERR_FULL: this.log('construction sites number '+ Game.constructionSites.length);
-                            break;
-                        default:
-                            this.log('error placing aux: ' + util.getError(res));
-                    }
+        // this.log('here ' + vector + ', (' + rx + ',' + ry + ')..')
+        // return;
+        while (vector[2] <= 2) {
+            var nx = +rx + +vector[0],
+                ny = +ry + +vector[1];
+
+            vector = util.spiral(++x);
+
+            if (nx <= 0 || nx >= 49) {
+                continue;
+            }
+            if (ny <= 0 || ny >= 49) {
+                continue;
+            }
+            var testSite = {
+                x: nx,
+                y: ny
+            }
+            this.log('placing ' + nx + ',' +ny)
+            if (this.isAdjacentClear(testSite)) {
+                // this.log('sothere')
+                var site = new RoomPosition(nx, ny, this.name);
+                var res = this.createConstructionSite(site,
+                    STRUCTURE_LINK);
+                this.log(util.getError(res));
+                switch (res) {
+                    case OK:
+                        this.log('aux placed');
+                        linkSet[site.x + ',' + site.y] = { // assign it
+                            pos: site,
+                            srcId: srcId,
+                            dir: 'sink',
+                            type: 'aux'
+                        }
+                        return true;
+                        break;
+                        // case ERR_FULL: this.log('construction sites number '+ Game.constructionSites.length);
+                        break;
+                    default:
+                        this.log('error placing aux: ' + util.getError(res));
                 }
             }
         }
