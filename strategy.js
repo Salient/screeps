@@ -184,12 +184,12 @@ module.exports.strategery = function(room) {
 Room.prototype.bootstrap = function() {
     var strategy = {
         castes: {
-            'worker': [CARRY, WORK, MOVE, MOVE, MOVE],
+            'worker': [CARRY, WORK, MOVE, CARRY, MOVE, MOVE, WORK, MOVE],
             "miner": [MOVE, WORK, WORK, WORK, WORK],
-            "soldier": [MOVE, ATTACK, TOUGH, ATTACK, TOUGH, MOVE, RANGED_ATTACK, RANGED_ATTACK, TOUGH, MOVE],
-            "medic": [MOVE, HEAL, TOUGH],
-            "seedling": [CLAIM, MOVE, TOUGH, MOVE],
-            "scout": [MOVE, MOVE, MOVE, MOVE, MOVE, "end"]
+            "soldier": [MOVE, ATTACK, TOUGH, MOVE, ATTACK, TOUGH, MOVE, RANGED_ATTACK, RANGED_ATTACK, MOVE, TOUGH, MOVE],
+            "medic": [MOVE, HEAL, TOUGH, MOVE],
+            "seedling": [CLAIM, MOVE],
+            "scout": [MOVE, TOUGH, "end"]
         },
         curlvl: 0,
         rulesOfEngagement: 'guard',

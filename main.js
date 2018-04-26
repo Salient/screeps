@@ -208,8 +208,10 @@ module.exports.loop = function() {
             }
         }
 
-        Game.run = function(room) {
-                Game.rooms[room].placeLinks();
+        Game.run = function() {
+            //Game.run = function(room) {
+            // Game.rooms[room].placeLinks();
+                Game.rooms['W5N7'].placeLinks();
             }
             // dlog('\n\n New Tick ---' + Game.cpu.getUsed());
         var looptime = Game.cpu.getUsed();
@@ -359,6 +361,7 @@ module.exports.loop = function() {
             //            }
             //
             baseSupport.towerControl(thisRoom);
+            thisRoom.flushLinks();
             //dlog('after base  CPU ' + thisRoom.name + ': ' + Game.cpu.getUsed());
 
         }

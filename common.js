@@ -56,7 +56,7 @@ module.exports.getError = function(result) {
     }
 }
 
-module.exports.getRand = function getRandomIntInclusive(min, max) {
+function getRand(min,max) { 
     min = Math.ceil(min);
     max = Math.floor(max);
     return Math.floor(Math.random() * (max - min + 1)) + min; // The maximum
@@ -66,6 +66,7 @@ module.exports.getRand = function getRandomIntInclusive(min, max) {
 																// inclusive
 }
 
+module.exports.getRand = getRand;
 
 // Return object with top,left,bottom,right properties a la room position index
 // within boundaries up to [margin] away
@@ -124,11 +125,11 @@ module.exports.sequence = [{
     x: 1,
     y: 0
 }, {
-    x: 1,
-    y: -1
+    x: -1,
+    y: 1
 }, {
-    x: 1,
-    y: 0
+    x: 0,
+    y: 1
 }, {
     x: 1,
     y: 1
@@ -325,7 +326,7 @@ Creep.prototype.leaveRoom = function(dest = "") {
             // this.log('at next hop, currently in ' + lustRoute[0].room + ' on
 			// the way to ' + lustRoute[lustRoute.length - 1].room);
             lustRoute.shift();
-            if (this.memory.role == 'worker') {
+            if (this.memory.role == 'worker' && getRand(1,10) < 4) {
                 this.changeTask('builder'); // stimulate the local economy
             }
         }

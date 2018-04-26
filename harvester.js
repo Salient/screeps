@@ -11,6 +11,35 @@ function dlog(msg, creep) {
     }
 }
 
+Room.prototype.flushLinks = function() {
+
+    // if (this.memory.links && this.memory.links.length > 1){
+    // var linkSet = this.memory.links
+    // }
+
+
+    for (var id in this.memory.links) {
+        var linkObj = Game.getObjectById(id);
+        var linkInfo = this.memory.links[id];
+
+        if (linkObj && linkInfo.dir) {
+            if (linkInfo.dir == 'source' && !isFull(linkObj)) {
+                var to = linkObj;
+                continue;
+            }
+
+            if (linkInfo.dir == 'sink' && isFull(linkObj) && linkObj.cooldown == 0) {
+                var from = linkObj;
+            }
+        }
+
+        if (util.def(to) && util.def(from)) {
+            from.transferEnergy(to);
+        }
+    }
+}
+
+
 Creep.prototype.outsource = function() {
     var ovr = Memory.Overmind.globalTerrain;
 
@@ -119,7 +148,7 @@ Room.prototype.needMiner = function() {
     }
     // WORK parts harvest 2 nrg per tick
 
-    if (horsepower * 2 < 20) { // max useful is 20. added some margin;
+    if (horsepower * 2 < (10 * this.memory.sources.length)) {
         return true
     } else {
         return false
@@ -510,7 +539,7 @@ function gatherer(creep) {
     if (creep.carry.energy == 0) {
         if (creep.taskState == 'SINK' && creep.room.memory.nrgReserve == false) {
             // pop job just in case something else needs doing
-            creep.memory.taskState = "SOURCE";
+            creep.memory.taskState = 'SOURCE';
             return false;
         }
         creep.memory.taskState = 'SOURCE';
@@ -530,11 +559,28 @@ function gatherer(creep) {
     switch (creep.taskState) {
         case 'SINK':
             creep.say('🛢️');
-            return sink();
+            if (sink() && creep.carry.energy == 0) { // successfully dumped everything
+                creep.taskState = 'SOURCE';
+                return source();
+            } else {
+                return false;
+            }
             break;
         case 'SOURCE':
             creep.say('💰');
-            return (source() || creep.outsource());
+            if (source()) {
+                if (creep.carry.energy == creep.carryCapacity) {
+                    creep.taskState = 'SINK';
+                    delete creep.memory.eTarget;
+                    return sink();
+                } else {
+                    return true;
+                }
+            } else {
+                if (!creep.room.memory.nrgReserve) {
+                    return creep.outsource();
+                }else {return true;}
+            }
             break;
         case 'SPECIAL':
             creep.taskState = 'SINK';
@@ -705,6 +751,12 @@ function findCashMoney(creep) {
         })
     ];
 
+    for (var lnk in creep.room.memory.links) {
+        var linkobj = Game.getObjectById(lnk);
+        if (linkobj && !util.def(linkobj.progress)) {
+            cash.push(linkobj);
+        }
+    }
     if (util.def(creep.room.storage)) {
         if (!util.def(creep.room.memory.strategy.economy.energyReservePerLevel)) {
             var storageReserves = 20000 * creep.room.controller.level;
@@ -713,7 +765,10 @@ function findCashMoney(creep) {
         }
 
         if (util.def(creep.room.storage) && creep.room.storage.store[RESOURCE_ENERGY] > storageReserves) {
-            cash.push(creep.room.storage);
+            var chance = util.getRand(1, 10);
+            if (chance < 4) {
+                cash.push(creep.room.storage);
+            }
         }
     }
 
@@ -778,7 +833,10 @@ function findBacon(creep) {
     if (creep.room.memory.nrgReserve) {
         var storage = creep.room.storage;
         if (util.def(storage) && storage.store[RESOURCE_ENERGY] > storageReserves) {
-            cash.push(storage);
+            var chance = util.getRand(1, 10);
+            if (chance < 4) {
+                cash.push(storage);
+            }
         }
     }
 
@@ -839,6 +897,7 @@ function findSink(creep) {
             for (var linkid in linkSet) {
                 if (linkSet[linkid].dir == 'sink') {
                     cache.sinkStructures.ids.push(linkid);
+                    //creep.room.log('adding ' + linkid + 'to front of sinks')
                 }
             }
         }
@@ -848,6 +907,9 @@ function findSink(creep) {
         }
         cache.sinkStructures.expires = Game.time + 200 + util.getRand(1, 20);
     }
+
+
+    sinkPriority.unshift(STRUCTURE_LINK);
 
     var targets = cache.sinkStructures.ids;
 
@@ -863,7 +925,14 @@ function findSink(creep) {
             dlog('smeep')
             continue
         }
-        distance[targets[x]] = creep.pos.getRangeTo(target);
+
+        var effort = creep.pos.getRangeTo(target);
+
+        if (target.structureType == STRUCTURE_LINK && effort > 3) {
+            continue;
+        }
+
+        distance[targets[x]] = effort;
     }
 
     var keysSorted = Object.keys(distance).sort(function(a, b) {
@@ -896,11 +965,14 @@ function findSink(creep) {
                             backup = potential.id;
                         }
 
+
                         for (var dibs in Game.dibsList) {
                             if (potential.id == Game.dibsList[dibs]) {
                                 continue dance;
                             }
                         }
+
+
                         var pew = creep.moveTo(potential, {
                             reusePath: 15,
                             visualizePathStyle: {
@@ -909,6 +981,9 @@ function findSink(creep) {
                             }
                         });
                         if (pew == OK || pew == ERR_TIRED) {
+                            if (backup && backup != potential.id) {
+                                //      creep.log('eficiency!');
+                            }
                             return potential.id;
                         } else {
                             creep.log('found something good but path blocked or something: ' + util.getError(pew))
@@ -1094,14 +1169,9 @@ function findSource(creep) {
 function isFull(sink) {
     // console.log(sink.structureType + ": " + sink.energy +
     // "/"+sink.energyCapacity);
-    if ((sink.structureType == STRUCTURE_EXTENSION) ||
-        (sink.structureType == STRUCTURE_SPAWN)) {
-        // console.log(sink.structureType + ": " + sink.energy +
-        // "/"+sink.energyCapacity);
-        return sink.energy == sink.energyCapacity;
-    } else if (sink.structureType == 'storage') {
-        // console.log(sink.structureType + ": " + sink.store +
-        // "/" + sink.storeCapacity);
+    if (sink.structureType == STRUCTURE_STORAGE) {
         return sink.store[RESOURCE_ENERGY] == sink.storeCapacity;
+    } else {
+        return sink.energy == sink.energyCapacity;
     }
 }

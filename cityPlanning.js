@@ -554,6 +554,99 @@ Room.prototype.checkReserved = function(pos) {
 }
 
 Room.prototype.placeExtensions = function() {
+
+
+    if (!util.def(this.memory.infrastructure) || !util.def(this.memory.infrastructure.paths)) {
+        return false;
+    }
+
+    var placeNum = this.needStructure(STRUCTURE_EXTENSION);
+    var paths = this.memory.infrastructure.paths;
+
+    var tmpmap = [];
+    //   create bit map of paths in room
+    for (var path in paths) {
+        for (var step in paths[path]) {
+            var stone = paths[path][step];
+            if (!tmpmap[stone.x]) {
+                tmpmap[stone.x] = [];
+            }
+            tmpmap[stone.x][stone.y] = 1;
+        }
+    }
+
+    for (var path in paths) {
+
+        for (var step in paths[path]) {
+            if (placeNum == 0) {
+                return true;
+            }
+            var stone = paths[path][step];
+
+            for (var skip in util.sequence) {
+                var hop = util.sequence[skip];
+
+
+                // this.log('testing ' + stone.x + ' + ' + hop.x + ',' + stone.y + ' + ' + hop.y)
+                if (util.def(tmpmap[stone.x + hop.x]) && tmpmap[stone.x + hop.x][stone.y + hop.y] == 1) {
+                    continue;
+                }
+
+                // this.log('hh')
+                if (this.isAdjacentClear({
+                        x: stone.x + hop.x,
+                        y: stone.y + hop.y
+                    })) {
+ 
+                    
+                    var res = this.createConstructionSite(stone.x + hop.x, stone.y + hop.y,
+                        STRUCTURE_EXTENSION);
+                    // if (res == ERR_RCL_NOT_ENOUGH){return}
+                    dlog('placing extension at ' + (stone.x + hop.x) + ',' + (stone.y + hop.y) + ' result: ' + util.getError(res));
+                        
+                    switch (res) {
+                        case OK:
+                            placeNum--;
+                            break;
+                        case ERR_INVALID_TARGET:
+                            break;
+                        case ERR_FULL:
+                            util.purgeOldConstruction();
+                            break;
+                        default:
+                            this
+                                .log('placing extension, result: ' +
+                                    util.getError(res))
+                    }
+                    
+                    
+                    
+                    
+                    this.visual.circle(Number(stone.x + hop.x), Number(stone.y + hop.y), {
+                        //                         width: 0.2,
+                        color: '#22ffff',
+                        opacity: 0.7,
+                        //     lineStyle: 
+                    });
+                }
+            }
+        }
+    }
+
+}
+
+// Room.prototype.placeExtensions = function() {
+ //    var have = this.find(FIND_MY_STRUCTURES, {
+ //        filter: {
+ //            structureType: STRUCTURE_EXTENSION
+ //        }});
+
+ //    for (var damned in have) {
+ //        have[damned].destroy();
+ //    }
+// }
+
+Room.prototype.placeExtensionsOld = function() {
     // Compare number allowed at this controller level vs. how many in room
     // Should only be called if room level has changed!
     var placeNum = this.needStructure(STRUCTURE_EXTENSION);
@@ -634,18 +727,6 @@ Room.prototype.placeLinks = function() {
     if (!this.memory.planned) {
         return false
     }
-    var placeNum = this.needStructure(STRUCTURE_LINK);
-    var origin = Game.getObjectById(this.memory.spawnId).pos;
-
-    if (!util.def(origin)) {
-        dlog('big bad voodoo');
-        return false;
-    }
-
-    if (placeNum == 0) {
-        //this.log('decided that I dont want to place anyt links ')
-        return false;
-    }
 
     var linkSet = this.memory.links;
 
@@ -663,12 +744,9 @@ Room.prototype.placeLinks = function() {
         var link = linkSet[linkId];
         var linkObj = Game.getObjectById(linkId);
 
-        this.log('checking ' + linkId)
+        // this.log('checking ' + linkId)
         if (!util.def(linkObj)) {
             // check if it was a construction site
-
-            this.log(linkId + ' is not valid')
-            util.dumpObj(link)
 
             var site = new RoomPosition(link.pos.x, link.pos.y,
                 link.pos.roomName);
@@ -676,7 +754,7 @@ Room.prototype.placeLinks = function() {
             if (!sitestuff.length) {
                 var sitestuff = site.lookFor(LOOK_CONSTRUCTION_SITES);
             }
-            this.log('stuff is ');
+
             for (var thing in sitestuff) {
                 var newStructure = sitestuff[thing];
                 if (newStructure.structureType == STRUCTURE_LINK) {
@@ -700,6 +778,19 @@ Room.prototype.placeLinks = function() {
         //    		}
         //    	}
         //    }
+    }
+
+    var placeNum = this.needStructure(STRUCTURE_LINK);
+    var origin = Game.getObjectById(this.memory.spawnId).pos;
+
+    if (!util.def(origin)) {
+        dlog('big bad voodoo');
+        return false;
+    }
+
+    if (placeNum == 0) {
+        //this.log('decided that I dont want to place anyt links ')
+        return false;
     }
 
     this.placePrimeLink = function() {
@@ -787,7 +878,7 @@ Room.prototype.placeLinks = function() {
                 x: nx,
                 y: ny
             }
-            this.log('placing ' + nx + ',' +ny)
+            this.log('placing ' + nx + ',' + ny)
             if (this.isAdjacentClear(testSite)) {
                 // this.log('sothere')
                 var site = new RoomPosition(nx, ny, this.name);

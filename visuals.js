@@ -2,6 +2,39 @@
 //
 var util = require('common');
 
+Room.prototype.visualizeMainPaths = function() {
+
+    if (!util.def(this.memory.infrastructure) || !util.def(this.memory.infrastructure.paths)) {
+        return false;
+    }
+
+    var paths = this.memory.infrastructure.paths;
+
+    for (var path in paths) {
+        for (var step in paths[path]) {
+            if (step == Number(paths[path].length) - 1) {
+                break;
+            }
+
+            var stone = paths[path][step];
+            var stun = paths[path][Number(step) + 1];
+            this.visual.line(stone.x, stone.y, stun.x, stun.y,
+                {
+                    width: 0.2,
+                    color: '#ffff22',
+                    opacity: 0.2,
+                    //     lineStyle: 
+                });
+
+            //        this.visual.circle(stone.x, stone.y, {
+            //            fill: 'solid',
+            //            radius: 0.15,
+            //            stroke: 'red'
+            //        });
+        }
+    }
+}
+
 function showFutureRoads(room) {
     if (!util.def(room.memory.planned)) {
         return;
@@ -15,7 +48,7 @@ function showFutureRoads(room) {
         console.log('hwl')
         return
     }
-var vis = room.visual;
+    var vis = room.visual;
     for (var xval in heatm) {
         for (var yval in heatm[xval]) {
             var spot = heatm[xval][yval];
@@ -32,6 +65,10 @@ var vis = room.visual;
         }
     }
 }
+
+
 module.exports = function(room) {
     showFutureRoads(room);
+    room.visualizeMainPaths();
+    // room.placeNeoExtensions();
 }
